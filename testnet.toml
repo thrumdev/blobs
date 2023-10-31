@@ -1,0 +1,26 @@
+[settings]
+timeout = 1000
+
+[relaychain]
+command = "polkadot"
+chain = "rococo-local"
+
+  [[relaychain.nodes]]
+  name = "alice"
+  ws_port = 9944
+  rpc_port = 30444
+
+  [[relaychain.nodes]]
+  name = "bob"
+  ws_port = 9955
+  rpc_port = 30555
+
+[[parachains]]
+id = 100
+
+  [parachains.collator]
+  name = "collator01"
+  command = "sugondat-node"
+  ws_port = 9988
+  rpc_port = 31200
+  args = ["--state-pruning=archive"]

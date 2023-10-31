@@ -1,0 +1,11 @@
+[package]
+name = "sugondat-subxt"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+subxt = { path = "../subxt/subxt", features = ["jsonrpsee"] }
+parity-scale-codec = "3.6.3"
+anyhow = "1.0.68"

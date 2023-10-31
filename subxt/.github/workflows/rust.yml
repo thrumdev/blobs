@@ -1,0 +1,224 @@
+name: Rust
+
+on:
+    push:
+        # Run jobs when commits are pushed to
+        # master or release-like branches:
+        branches:
+            - master
+    pull_request:
+        # Run jobs for any external PR that wants
+        # to merge to master, too:
+        branches:
+            - master
+
+concurrency:
+    group: ${{ github.ref }}-${{ github.workflow }}
+    cancel-in-progress: true
+
+env:
+    CARGO_TERM_COLOR: always
+    # TODO: Currently pointing at latest substrate; is there a suitable binary we can pin to here?
+    SUBSTRATE_URL: https://releases.parity.io/substrate/x86_64-debian:stretch/latest/substrate/substrate
+
+jobs:
+    build:
+        name: Cargo check
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout sources
+              uses: actions/checkout@v3
+
+            - name: Download Substrate
+              run: |
+                  curl $SUBSTRATE_URL --output substrate --location
+                  chmod +x substrate
+                  ./substrate --version
+                  mkdir -p ~/.local/bin
+                  mv substrate ~/.local/bin
+
+            - name: Install Rust stable toolchain
+              uses: actions-rs/toolchain@v1
+              with:
+                  profile: minimal
+                  toolchain: stable
+                  override: true
+
+            - name: Rust Cache
+              uses: Swatinem/rust-cache@988c164c3d0e93c4dbab36aaf5bbeb77425b2894 # v2.4.0
+
+            - name: Install cargo-hack
+              uses: baptiste0928/cargo-install@v2
+              with:
+                  crate: cargo-hack
+                  version: 0.5
+
+            # A basic check over all targets together. This may lead to features being combined etc,
+            # and doesn't test combinations of different features.
+            - name: Cargo check all targets.
+              run: cargo check --all-targets
+
+            # Next, check each feature on its own and compile each crate separately. This is no good
+            # for subxt/examples, which expect default features to be enabled, hence the above check
+            # and why we don'#t do `--all-targets` for this one.
+            - name: Cargo hack; check each feature/crate on its own
+              run: cargo hack --exclude-all-features --each-feature check --workspace
+
+    fmt:
+        name: Cargo fmt
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout sources
+              uses: actions/checkout@v3
+
+            - name: Install Rust nightly toolchain
+              uses: actions-rs/toolchain@v1
+              with:
+                  profile: minimal
+                  toolchain: stable
+                  override: true
+                  components: rustfmt
+
+            - name: Rust Cache
+              uses: Swatinem/rust-cache@988c164c3d0e93c4dbab36aaf5bbeb77425b2894 # v2.4.0
+
+            - name: Cargo fmt
+              uses: actions-rs/cargo@v1.0.3
+              with:
+                  command: fmt
+                  args: --all -- --check
+
+    docs:
+        name: Check documentation and run doc tests
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout sources
+              uses: actions/checkout@v3
+
+            - name: Download Substrate
+              run: |
+                  curl $SUBSTRATE_URL --output substrate --location
+                  chmod +x substrate
+                  ./substrate --version
+                  mkdir -p ~/.local/bin
+                  mv substrate ~/.local/bin
+
+            - name: Install Rust stable toolchain
+              uses: actions-rs/toolchain@v1
+              with:
+                  profile: minimal
+                  toolchain: stable
+                  override: true
+
+            - name: Rust Cache
+              uses: Swatinem/rust-cache@988c164c3d0e93c4dbab36aaf5bbeb77425b2894 # v2.4.0
+
+            - name: Check internal documentation links
+              run: RUSTDOCFLAGS="--deny rustdoc::broken_intra_doc_links" cargo doc -vv --workspace --no-deps --document-private-items
+
+            - name: Run cargo test on documentation
+              uses: actions-rs/cargo@v1.0.3
+              with:
+                  command: test
+                  args: --doc
+
+    nonwasm_tests:
+        name: "Test non-wasm"
+        runs-on: ubuntu-latest-16-cores
+        steps:
+            - name: Checkout sources
+              uses: actions/checkout@v3
+
+            - name: Download Substrate
+              run: |
+                  curl $SUBSTRATE_URL --output substrate --location
+                  chmod +x substrate
+                  ./substrate --version
+                  mkdir -p ~/.local/bin
+                  mv substrate ~/.local/bin
+
+            - name: Install Rust stable toolchain
+              uses: actions-rs/toolchain@v1
+              with:
+                  profile: minimal
+                  toolchain: stable
+                  override: true
+
+            - name: Rust Cache
+              uses: Swatinem/rust-cache@988c164c3d0e93c4dbab36aaf5bbeb77425b2894 # v2.4.0
+
+            - name: Install cargo-nextest
+              run: cargo install cargo-nextest
+
+            - name: Run tests
+              uses: actions-rs/cargo@v1.0.3
+              with:
+                  command: nextest
+                  args: run --workspace
+
+    clippy:
+        name: Cargo clippy
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout sources
+              uses: actions/checkout@v3
+
+            - name: Download Substrate
+              run: |
+                  curl $SUBSTRATE_URL --output substrate --location
+                  chmod +x substrate
+                  ./substrate --version
+                  mkdir -p ~/.local/bin
+                  mv substrate ~/.local/bin
+
+            - name: Install Rust stable toolchain
+              uses: actions-rs/toolchain@v1
+              with:
+                  profile: minimal
+                  toolchain: stable
+                  components: clippy
+                  override: true
+
+            - name: Rust Cache
+              uses: Swatinem/rust-cache@988c164c3d0e93c4dbab36aaf5bbeb77425b2894 # v2.4.0
+
+            - name: Run clippy
+              uses: actions-rs/cargo@v1
+              with:
+                  command: clippy
+                  args: --all-targets -- -D warnings
+
+    wasm_tests:
+        name: Test wasm
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v3.1.0
+
+            - name: Install wasm-pack
+              run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+            - name: Install firefox
+              uses: browser-actions/setup-firefox@latest
+
+            - name: Install chrome
+              uses: browser-actions/setup-chrome@latest
+
+            - name: Rust Cache
+              uses: Swatinem/rust-cache@988c164c3d0e93c4dbab36aaf5bbeb77425b2894 # v2.4.0
+
+            - name: Download Substrate
+              run: |
+                  curl $SUBSTRATE_URL --output substrate --location
+                  chmod +x substrate
+                  ./substrate --version
+                  mkdir -p ~/.local/bin
+                  mv substrate ~/.local/bin
+
+            - name: Run WASM tests
+              run: |
+                  substrate --dev --tmp > /dev/null 2>&1 &
+                  wasm-pack test --headless --firefox
+                  wasm-pack test --headless --chrome
+                  pkill substrate
+              working-directory: testing/wasm-tests

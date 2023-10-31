@@ -1,0 +1,12 @@
+[package]
+name = "sugondat-submit-blob"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+sugondat-da-adapter = { path = "../sugondat-da-adapter" }
+const-rollup-config = { path = "../sovereign-sdk/examples/const-rollup-config" }
+sov-rollup-interface = { path = "../sovereign-sdk/rollup-interface" }
+tokio = { version = "1", features = ["full"] }

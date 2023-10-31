@@ -1,0 +1,23 @@
+[package]
+name = "subxt-macro"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = true
+autotests = false
+
+license.workspace = true
+repository.workspace = true
+documentation.workspace = true
+homepage.workspace = true
+description = "Generate types and helpers for interacting with Substrate runtimes."
+
+[lib]
+proc-macro = true
+
+[dependencies]
+darling = { workspace = true }
+proc-macro-error = { workspace = true }
+syn = { workspace = true }
+subxt-codegen = { workspace = true }

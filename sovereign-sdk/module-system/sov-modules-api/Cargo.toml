@@ -1,0 +1,36 @@
+[package]
+name = "sov-modules-api"
+description = "Defines the interface of the Sovereign SDK module system"
+authors = { workspace = true }
+edition = { workspace = true }
+homepage = { workspace = true }
+license = { workspace = true }
+repository = { workspace = true }
+rust-version = { workspace = true }
+version = { workspace = true }
+readme = "README.md"
+resolver = "2"
+
+[dependencies]
+anyhow = { workspace = true }
+sov-state = { path = "../sov-state", version = "0.1", default-features = false }
+sov-rollup-interface = { path = "../../rollup-interface", version = "0.1" }
+serde = { workspace = true }
+borsh = { workspace = true }
+thiserror = { workspace = true }
+jmt = { workspace = true }
+sha2 = { workspace = true }
+bech32 = { workspace = true }
+derive_more = { workspace = true }
+serde_json = { workspace = true }
+
+ed25519-dalek = { version = "1.0.1", default-features = false, features = ["alloc", "u64_backend"] }
+rand = { version = "0.7", optional = true }
+hex = { workspace = true, optional = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }
+
+[features]
+default = ["native"]
+native = ["sov-state/native", "rand", "hex", "ed25519-dalek/default"]

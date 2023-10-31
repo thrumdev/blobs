@@ -1,0 +1,34 @@
+[package]
+name = "subxt-cli"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = true
+
+license.workspace = true
+repository.workspace = true
+documentation = "https://docs.rs/subxt-cli"
+homepage.workspace = true
+description = "Command line utilities for working with subxt codegen"
+
+[[bin]]
+name = "subxt"
+path = "src/main.rs"
+
+[dependencies]
+subxt-codegen = { workspace = true }
+subxt-metadata = { workspace = true }
+subxt = { workspace = true }
+clap = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+color-eyre = { workspace = true }
+serde_json = { workspace = true }
+hex = { workspace = true }
+frame-metadata = { workspace = true }
+codec = { package = "parity-scale-codec", workspace = true }
+scale-info = { workspace = true }
+scale-value = { workspace = true }
+syn = { workspace = true }
+jsonrpsee = { workspace = true, features = ["async-client", "client-ws-transport", "http-client"] }
+tokio = { workspace = true }

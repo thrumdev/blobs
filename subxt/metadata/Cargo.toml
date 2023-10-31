@@ -1,0 +1,34 @@
+[package]
+name = "subxt-metadata"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = true
+autotests = false
+
+license.workspace = true
+repository.workspace = true
+documentation.workspace = true
+homepage.workspace = true
+description = "Command line utilities for checking metadata compatibility between nodes."
+
+[dependencies]
+codec = { package = "parity-scale-codec", workspace = true, features = ["derive"] }
+frame-metadata = { workspace = true }
+scale-info = { workspace = true }
+sp-core-hashing = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+bitvec = { workspace = true, features = ["alloc"] }
+criterion = { workspace = true }
+scale-info = { workspace = true, features = ["bit-vec"] }
+
+[lib]
+# Without this, libtest cli opts interfere with criteron benches:
+bench = false
+
+[[bench]]
+name = "bench"
+harness = false

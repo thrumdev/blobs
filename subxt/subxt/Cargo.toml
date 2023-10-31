@@ -1,0 +1,92 @@
+[package]
+name = "subxt"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = true
+
+license.workspace = true
+readme = "../README.md"
+repository.workspace = true
+documentation.workspace = true
+homepage.workspace = true
+description = "Submit extrinsics (transactions) to a substrate node via RPC"
+keywords = ["parity", "substrate", "blockchain"]
+
+[features]
+default = ["jsonrpsee-ws", "substrate-compat"]
+
+# Activate this feature to pull in extra Substrate dependencies which make it
+# possible to provide a proper extrinsic Signer implementation (PairSigner).
+substrate-compat = [
+    "sp-core",
+    "sp-runtime"
+]
+
+# Activate this to expose functionality only used for integration testing.
+# The exposed functionality is subject to breaking changes at any point,
+# and should not be relied upon.
+integration-tests = []
+
+# Jsonrpsee if the default RPC provider used in Subxt. However, it can be
+# swapped out for an alternative implementation, and so is optional.
+jsonrpsee-ws = ["jsonrpsee/async-client", "jsonrpsee/client-ws-transport"]
+jsonrpsee-web = ["jsonrpsee/async-wasm-client", "jsonrpsee/client-web-transport"]
+
+# Activate this to fetch and utilize the latest unstabl metadata from a node.
+# The unstable metadata is subject to breaking changes and the subxt might
+# fail to decode the metadata properly. Use this to experiment with the
+# latest features exposed by the metadata.
+unstable-metadata = []
+
+[dependencies]
+codec = { package = "parity-scale-codec", workspace = true, features = ["derive"] }
+scale-info = { workspace = true }
+scale-value = { workspace = true }
+scale-bits = { workspace = true }
+scale-decode = { workspace = true }
+scale-encode = { workspace = true }
+futures = { workspace = true }
+hex = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true, features = ["raw_value"] }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+frame-metadata = { workspace = true }
+derivative = { workspace = true }
+either = { workspace = true }
+
+# Provides some deserialization, types like U256/H256 and hashing impls like twox/blake256:
+impl-serde = { workspace = true }
+primitive-types = { workspace = true }
+sp-core-hashing = { workspace = true }
+
+# For ss58 encoding AccountId32 to serialize them properly:
+base58 = { workspace = true }
+blake2 = { workspace = true }
+
+# Included if one of the jsonrpsee features is enabled.
+jsonrpsee = { workspace = true, optional = true, features = ["jsonrpsee-types"] }
+
+# These are only included is "substrate-compat" is enabled.
+sp-core = { workspace = true, optional = true }
+sp-runtime = { workspace = true, optional = true }
+
+# Other subxt crates we depend on.
+subxt-macro = { workspace = true }
+subxt-metadata = { workspace = true }
+
+[target.wasm32-unknown-unknown.dependencies]
+getrandom = { workspace = true, features = ["js"] }
+
+[dev-dependencies]
+bitvec = { workspace = true }
+codec = { workspace = true, features = ["derive", "bit-vec"] }
+scale-info = { workspace = true, features = ["bit-vec"] }
+tokio = { workspace = true, features = ["macros", "time", "rt-multi-thread"] }
+sp-core = { workspace = true }
+sp-runtime = { workspace = true }
+sp-keyring = { workspace = true }
+sp-version = { workspace = true }
+assert_matches = { workspace = true }

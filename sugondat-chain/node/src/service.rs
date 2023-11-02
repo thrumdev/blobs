@@ -15,12 +15,14 @@ use cumulus_client_consensus_common::{
 use cumulus_client_service::{
 	build_network, build_relay_chain_interface, prepare_node_config, start_collator,
 	start_full_node, BuildNetworkParams, StartCollatorParams, StartFullNodeParams,
+	CollatorSybilResistance,
 };
 use cumulus_primitives_core::ParaId;
 use cumulus_relay_chain_interface::RelayChainInterface;
 
 // Substrate Imports
 use frame_benchmarking_cli::SUBSTRATE_REFERENCE_HARDWARE;
+use sc_client_api::Backend;
 use sc_consensus::ImportQueue;
 use sc_executor::{
 	HeapAllocStrategy, NativeElseWasmExecutor, WasmExecutor, DEFAULT_HEAP_ALLOC_STRATEGY,
@@ -66,7 +68,7 @@ pub fn new_partial(
 		ParachainClient,
 		ParachainBackend,
 		(),
-		sc_consensus::DefaultImportQueue<Block, ParachainClient>,
+		sc_consensus::DefaultImportQueue<Block>,
 		sc_transaction_pool::FullPool<Block, ParachainClient>,
 		(ParachainBlockImport, Option<Telemetry>, Option<TelemetryWorkerHandle>),
 	>,
@@ -190,15 +192,30 @@ async fn start_node_impl(
 			spawn_handle: task_manager.spawn_handle(),
 			relay_chain_interface: relay_chain_interface.clone(),
 			import_queue: params.import_queue,
+			sybil_resistance_level: CollatorSybilResistance::Resistant,
 		})
 		.await?;
 
 	if parachain_config.offchain_worker.enabled {
-		sc_service::build_offchain_workers(
-			&parachain_config,
-			task_manager.spawn_handle(),
-			client.clone(),
-			network.clone(),
+		use futures::FutureExt;
+
+		task_manager.spawn_handle().spawn(
+			"offchain-workers-runner",
+			"offchain-worker",
+			sc_offchain::OffchainWorkers::new(sc_offchain::OffchainWorkerOptions {
+				runtime_api_provider: client.clone(),
+				is_validator: parachain_config.role.is_authority(),
+				keystore: Some(params.keystore_container.keystore()),
+				offchain_db: backend.offchain_storage(),
+				transaction_pool: Some(sc_transaction_pool_api::OffchainTransactionPoolFactory::new(
+					transaction_pool.clone(),
+				)),
+				network_provider: network.clone(),
+				enable_http_requests: true,
+				custom_extensions: |_| vec![],
+			})
+			.run(client.clone(), task_manager.spawn_handle())
+			.boxed(),
 		);
 	}
 
@@ -325,7 +342,7 @@ fn build_import_queue(
 	config: &Configuration,
 	telemetry: Option<TelemetryHandle>,
 	task_manager: &TaskManager,
-) -> Result<sc_consensus::DefaultImportQueue<Block, ParachainClient>, sc_service::Error> {
+) -> Result<sc_consensus::DefaultImportQueue<Block>, sc_service::Error> {
 	let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
 
 	cumulus_client_consensus_aura::import_queue::<

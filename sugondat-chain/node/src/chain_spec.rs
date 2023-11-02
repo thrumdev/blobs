@@ -11,7 +11,7 @@ pub type ChainSpec =
 	sc_service::GenericChainSpec<sugondat_runtime::GenesisConfig, Extensions>;
 
 /// The default XCM version to set in genesis config.
-const SAFE_XCM_VERSION: u32 = xcm::prelude::XCM_VERSION;
+const SAFE_XCM_VERSION: u32 = staging_xcm::prelude::XCM_VERSION;
 
 /// Helper function to generate a crypto pair from seed
 pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
@@ -181,17 +181,21 @@ fn testnet_genesis(
 	invulnerables: Vec<(AccountId, AuraId)>,
 	endowed_accounts: Vec<AccountId>,
 	id: ParaId,
-) -> sugondat_runtime::GenesisConfig {
-	sugondat_runtime::GenesisConfig {
+) -> sugondat_runtime::RuntimeGenesisConfig {
+	sugondat_runtime::RuntimeGenesisConfig {
 		system: sugondat_runtime::SystemConfig {
 			code: sugondat_runtime::WASM_BINARY
 				.expect("WASM binary was not build, please build it!")
 				.to_vec(),
+			..Default::default()
 		},
 		balances: sugondat_runtime::BalancesConfig {
 			balances: endowed_accounts.iter().cloned().map(|k| (k, 1 << 60)).collect(),
 		},
-		parachain_info: sugondat_runtime::ParachainInfoConfig { parachain_id: id },
+		parachain_info: sugondat_runtime::ParachainInfoConfig {
+			parachain_id: id,
+			..Default::default()
+		},
 		collator_selection: sugondat_runtime::CollatorSelectionConfig {
 			invulnerables: invulnerables.iter().cloned().map(|(acc, _)| acc).collect(),
 			candidacy_bond: EXISTENTIAL_DEPOSIT * 16,
@@ -208,6 +212,7 @@ fn testnet_genesis(
 					)
 				})
 				.collect(),
+			..Default::default()
 		},
 		// no need to pass anything to aura, in fact it will panic if we do. Session will take care
 		// of this.
@@ -216,6 +221,7 @@ fn testnet_genesis(
 		parachain_system: Default::default(),
 		polkadot_xcm: sugondat_runtime::PolkadotXcmConfig {
 			safe_xcm_version: Some(SAFE_XCM_VERSION),
+			..Default::default()
 		},
 		transaction_payment: Default::default(),
 	}

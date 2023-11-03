@@ -105,14 +105,14 @@ pub mod pallet {
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		fn on_initialize(_: T::BlockNumber) -> Weight {
+		fn on_initialize(_: BlockNumberFor<T>) -> Weight {
 			let weight = T::DbWeight::get().reads_writes(0, 2);
 			TotalBlobsSize::<T>::kill();
 			BlobList::<T>::kill();
 			weight
 		}
 
-		fn on_finalize(_n: T::BlockNumber) {
+		fn on_finalize(_n: BlockNumberFor<T>) {
 			let blobs = BlobList::<T>::get();
 			let blobs = blobs.into_iter().map(|blob| sugondat_nmt::BlobMetadata {
 				namespace: sugondat_nmt::Namespace::with_namespace_id(blob.namespace_id),

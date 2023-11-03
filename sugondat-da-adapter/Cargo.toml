@@ -12,7 +12,7 @@ sov-rollup-interface =  { path = "../sovereign-sdk/rollup-interface" }
 
 sugondat-subxt = { path = "../sugondat-subxt", optional = true }
 subxt = { path = "../subxt/subxt", optional = true }
-sp-keyring = { git = "https://github.com/paritytech/substrate", optional = true, default-features = false, branch = "polkadot-v0.9.43" }
+sp-keyring = { git = "https://github.com/paritytech/polkadot-sdk", optional = true, default-features = false, branch = "release-polkadot-v1.2.0" }
 tracing = "0.1.37"
 serde = { version = "1", features = ["derive"] }
 hex = { version = "0.4.3", features = ["serde"] }

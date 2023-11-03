@@ -1,14 +1,26 @@
 use crate::spec::DaLayerSpec;
 use alloc::vec::Vec;
+use digest::Digest;
 use serde::{Deserialize, Serialize};
-use sov_rollup_interface::crypto::SimpleHasher;
-use sov_rollup_interface::da::{DaSpec, DaVerifier};
-use sov_rollup_interface::traits::{BlockHeaderTrait, CanonicalHash};
-use sov_rollup_interface::zk::traits::ValidityCondition;
+use sov_rollup_interface::{
+    da::{BlockHeaderTrait, DaSpec, DaVerifier},
+    zk::ValidityCondition,
+};
 use sugondat_nmt::Namespace;
 
 /// A validity condition expressing that a chain of DA layer blocks is contiguous and canonical
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    Hash,
+    borsh::BorshSerialize,
+    borsh::BorshDeserialize,
+)]
 pub struct ChainValidityCondition {
     pub prev_hash: [u8; 32],
     pub block_hash: [u8; 32],
@@ -16,7 +28,7 @@ pub struct ChainValidityCondition {
 
 impl ValidityCondition for ChainValidityCondition {
     type Error = anyhow::Error;
-    fn combine<H: SimpleHasher>(&self, rhs: Self) -> Result<Self, Self::Error> {
+    fn combine<H: Digest>(&self, rhs: Self) -> Result<Self, Self::Error> {
         if self.block_hash != rhs.prev_hash {
             anyhow::bail!("blocks are not consequitive")
         }
@@ -28,13 +40,21 @@ pub struct SugondatVerifier {
     namespace: Namespace,
 }
 
+// NOTE: this method is implemented because in the guest_sugondat (prover)
+// is needed a way to create the verifier without knowing the trait DaVerifier,
+// so without new method
+impl SugondatVerifier {
+    pub fn from_raw(raw_namespace_id: [u8; 4]) -> Self {
+        Self {
+            namespace: Namespace::from_raw_bytes(raw_namespace_id),
+        }
+    }
+}
+
 impl DaVerifier for SugondatVerifier {
     type Spec = DaLayerSpec;
 
     type Error = anyhow::Error;
-
-    /// Any conditions imposed by the DA layer which need to be checked outside of the SNARK
-    type ValidityCondition = ChainValidityCondition;
 
     /// Create a new da verifier with the given chain parameters
     fn new(params: <Self::Spec as DaSpec>::ChainParams) -> Self {
@@ -44,13 +64,14 @@ impl DaVerifier for SugondatVerifier {
     }
 
     // Verify that the given list of blob transactions is complete and correct.
-    fn verify_relevant_tx_list<H: SimpleHasher>(
+
+    fn verify_relevant_tx_list(
         &self,
-        block_header: &<Self::Spec as sov_rollup_interface::da::DaSpec>::BlockHeader,
-        txs: &[<Self::Spec as sov_rollup_interface::da::DaSpec>::BlobTransaction],
-        inclusion_proof: <Self::Spec as sov_rollup_interface::da::DaSpec>::InclusionMultiProof,
-        _completeness_proof: <Self::Spec as sov_rollup_interface::da::DaSpec>::CompletenessProof,
-    ) -> Result<ChainValidityCondition, Self::Error> {
+        block_header: &<Self::Spec as DaSpec>::BlockHeader,
+        txs: &[<Self::Spec as DaSpec>::BlobTransaction],
+        inclusion_proof: <Self::Spec as DaSpec>::InclusionMultiProof,
+        completeness_proof: <Self::Spec as DaSpec>::CompletenessProof,
+    ) -> Result<<Self::Spec as DaSpec>::ValidityCondition, Self::Error> {
         let validity_condition = ChainValidityCondition {
             prev_hash: block_header.prev_hash().0.into(),
             block_hash: block_header.hash().0.into(),

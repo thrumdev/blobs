@@ -1,7 +1,14 @@
+use crate::{
+    spec::{ChainParams, DaLayerSpec},
+    types,
+    verifier::SugondatVerifier,
+};
+use sov_rollup_interface::{da::DaSpec, services::da::DaService};
 use std::{future::Future, pin::Pin};
-
-use crate::spec::{ChainParams, DaLayerSpec};
-use crate::types;
+use subxt::backend::rpc::{rpc_params, RpcClient};
+use sugondat_subxt::sugondat::{
+    runtime_types::bounded_collections::bounded_vec::BoundedVec, storage, timestamp,
+};
 
 mod client;
 
@@ -19,47 +26,67 @@ pub struct DaServiceConfig {
 }
 
 /// Implementation of the DA provider that uses sugondat.
+#[derive(Clone)]
 pub struct DaProvider {
     namespace: sugondat_nmt::Namespace,
     client: Client,
 }
 
-impl sov_rollup_interface::services::da::DaService for DaProvider {
-    type Spec = DaLayerSpec;
-    type Future<T> = Pin<Box<dyn Future<Output = Result<T, Self::Error>> + Send>>;
-    type FilteredBlock = crate::types::Block;
-    type Error = anyhow::Error;
-    type RuntimeConfig = DaServiceConfig;
-
+impl DaProvider {
     /// Creates new instance of the service.
-    fn new(config: DaServiceConfig, chain_params: ChainParams) -> Self {
+    pub fn new(config: DaServiceConfig, chain_params: ChainParams) -> Self {
         let client = Client::new(config.sugondat_rpc);
         Self {
             namespace: sugondat_nmt::Namespace::from_raw_bytes(chain_params.namespace_id),
             client,
         }
     }
+}
+
+impl sov_rollup_interface::services::da::DaService for DaProvider {
+    type Spec = DaLayerSpec;
+    type FilteredBlock = crate::types::Block;
+    type Error = anyhow::Error;
+    type Verifier = SugondatVerifier;
 
     // Make an RPC call to the node to get the finalized block at the given height, if one exists.
     // If no such block exists, block until one does.
-    fn get_finalized_at(&self, height: u64) -> Self::Future<Self::FilteredBlock> {
+    fn get_finalized_at<'life0, 'async_trait>(
+        &'life0 self,
+        height: u64,
+    ) -> Pin<Box<dyn Future<Output = Result<Self::FilteredBlock, Self::Error>> + Send + 'async_trait>>
+    where
+        Self: 'async_trait,
+        'life0: 'async_trait,
+    {
         let client = self.client.clone();
         let namespace = self.namespace;
         Box::pin(async move {
+            let client_url = client.url().await;
             let client = client.client().await?;
 
             loop {
-                let finalized_head = client.rpc().finalized_head().await?;
-                let header = client.rpc().header(Some(finalized_head)).await?.unwrap();
+                let finalized_head = client.backend().latest_finalized_block_ref().await?;
+                let header = client
+                    .backend()
+                    .block_header(finalized_head.hash())
+                    .await?
+                    .unwrap();
                 if header.number as u64 >= height {
                     break;
                 }
                 tokio::time::sleep(std::time::Duration::from_secs(1)).await;
             }
 
-            let hash = client.rpc().block_hash(Some(height.into())).await?.unwrap();
+            // between version 0.29 and 0.32 they remove subxt::rpc::Rpc
+            // so this 'raw' rpc call is required to extract the hash of the block with a certain height
+            let rpc_client = RpcClient::from_url(client_url).await?;
+            let hash: subxt::utils::H256 = rpc_client
+                .request("chain_getBlockHash", rpc_params![height])
+                .await?;
 
             let block = client.blocks().at(hash).await?;
+
             let header = block.header().clone();
 
             let mut nmt_root = None;
@@ -76,24 +103,30 @@ impl sov_rollup_interface::services::da::DaService for DaProvider {
                     _ => {}
                 }
             }
+
+            // fetch timestamp from block
+            let timestamp = block
+                .storage()
+                .fetch(&storage().timestamp().now())
+                .await?
+                .ok_or(anyhow::anyhow!("no timestamp found"))?;
+
             let header = types::Header::new(
                 types::Hash(hash.0),
                 types::Hash(header.parent_hash.0),
                 nmt_root.unwrap(),
+                header.number as u64,
+                timestamp,
             );
 
-            let body = block.body().await?;
             let mut transactions = vec![];
-            for ext in body.extrinsics().iter() {
+            for ext in block.extrinsics().await?.iter() {
                 let ext = ext?;
-                let Some(address) = ext
-                    .address_bytes()
-                    .map(|a| {
-                        tracing::info!("Address: {:?}", hex::encode(&a));
-                        types::Address::try_from(&a[1..]).unwrap()
-                    })
-                else {
-                    continue
+                let Some(address) = ext.address_bytes().map(|a| {
+                    tracing::info!("Address: {:?}", hex::encode(&a));
+                    types::Address::try_from(&a[1..]).unwrap()
+                }) else {
+                    continue;
                 };
                 let Ok(Some(submit_blob_extrinsic)) =
                     ext.as_extrinsic::<sugondat_subxt::sugondat::blob::calls::types::SubmitBlob>()
@@ -112,8 +145,7 @@ impl sov_rollup_interface::services::da::DaService for DaProvider {
                 transactions.push(types::BlobTransaction::new(address, blob_data));
             }
 
-            let address =
-                sugondat_subxt::sugondat::blob::storage::StorageApi.blob_list();
+            let address = sugondat_subxt::sugondat::blob::storage::StorageApi.blob_list();
             let blobs = client
                 .storage()
                 .at(hash)
@@ -147,7 +179,14 @@ impl sov_rollup_interface::services::da::DaService for DaProvider {
 
     // Make an RPC call to the node to get the block at the given height
     // If no such block exists, block until one does.
-    fn get_block_at(&self, height: u64) -> Self::Future<Self::FilteredBlock> {
+    fn get_block_at<'life0, 'async_trait>(
+        &'life0 self,
+        height: u64,
+    ) -> Pin<Box<dyn Future<Output = Result<Self::FilteredBlock, Self::Error>> + Send + 'async_trait>>
+    where
+        Self: 'async_trait,
+        'life0: 'async_trait,
+    {
         self.get_finalized_at(height)
     }
 
@@ -155,70 +194,70 @@ impl sov_rollup_interface::services::da::DaService for DaProvider {
     // This method is usually (but not always) parameterized by some configuration option,
     // such as the rollup's namespace on Celestia. If configuration is needed, it should be provided
     // to the DaProvider struct through its constructor.
-    fn extract_relevant_txs(
+    fn extract_relevant_blobs(
         &self,
         block: &Self::FilteredBlock,
-    ) -> Vec<<Self::Spec as sov_rollup_interface::da::DaSpec>::BlobTransaction> {
+    ) -> Vec<<Self::Spec as DaSpec>::BlobTransaction> {
         block.transactions.clone()
     }
 
-    // Extract the list blob transactions relevant to a particular rollup from a block, along with inclusion and
-    // completeness proofs for that set of transactions. The output of this method will be passed to the verifier.
-    //
-    // Like extract_relevant_txs, This method is usually (but not always) parameterized by some configuration option,
-    // such as the rollup's namespace on Celestia. If configuration is needed, it should be provided
-    // to the DaProvider struct through its constructor.
-    fn extract_relevant_txs_with_proof(
-        &self,
-        block: &Self::FilteredBlock,
-    ) -> (
-        Vec<<Self::Spec as sov_rollup_interface::da::DaSpec>::BlobTransaction>,
-        <Self::Spec as sov_rollup_interface::da::DaSpec>::InclusionMultiProof,
-        <Self::Spec as sov_rollup_interface::da::DaSpec>::CompletenessProof,
-    ) {
-        let txs = self.extract_relevant_txs(block);
-        let (inclusion_proof, completeness_proof) = self.get_extraction_proof(block, &txs);
-        (txs, inclusion_proof, completeness_proof)
+    fn get_extraction_proof<'life0, 'life1, 'life2, 'async_trait>(
+        &'life0 self,
+        block: &'life1 Self::FilteredBlock,
+        blobs: &'life2 [<Self::Spec as DaSpec>::BlobTransaction],
+    ) -> Pin<
+        Box<
+            dyn Future<
+                    Output = (
+                        <Self::Spec as DaSpec>::InclusionMultiProof,
+                        <Self::Spec as DaSpec>::CompletenessProof,
+                    ),
+                > + Send
+                + 'async_trait,
+        >,
+    >
+    where
+        Self: 'async_trait,
+        'life0: 'async_trait,
+        'life1: 'async_trait,
+        'life2: 'async_trait,
+    {
+        Box::pin(async { (block.blob_proof.clone(), ()) })
     }
 
-    fn get_extraction_proof(
-        &self,
-        block: &Self::FilteredBlock,
-        _blobs: &[<Self::Spec as sov_rollup_interface::da::DaSpec>::BlobTransaction],
-    ) -> (
-        <Self::Spec as sov_rollup_interface::da::DaSpec>::InclusionMultiProof,
-        <Self::Spec as sov_rollup_interface::da::DaSpec>::CompletenessProof,
-    ) {
-        (block.blob_proof.clone(), ())
-    }
+    // Send the blob to the DA layer, using the submit_blob extrinsic
+    fn send_transaction<'life0, 'life1, 'async_trait>(
+        &'life0 self,
+        blob: &'life1 [u8],
+    ) -> Pin<Box<dyn Future<Output = Result<(), Self::Error>> + Send + 'async_trait>>
+    where
+        Self: 'async_trait,
+        'life0: 'async_trait,
+        'life1: 'async_trait,
+    {
+        let client = self.client.clone();
+        let blob = blob.to_vec();
+        let namespace_id = self.namespace.namespace_id();
+        Box::pin(async move {
+            use sp_keyring::AccountKeyring;
+            use subxt::tx::Signer;
+            use subxt_signer::sr25519::dev;
 
-    fn send_transaction(&self, blob: &[u8]) -> Self::Future<()> {
-        drop(blob);
-        // TODO: rework this
-        // let client = self.client.clone();
-        // let blob = blob.to_vec();
-        // let namespace_id = self.chain_params.namespace_id;
-        // Box::pin(async move {
-        //     use sp_keyring::AccountKeyring;
-        //     use subxt::tx::PairSigner;
+            let client = client.client().await?;
 
-        //     let client = client.client().await?;
+            let extrinsic = sugondat_subxt::sugondat::tx()
+                .blob()
+                .submit_blob(namespace_id, BoundedVec(blob));
 
-        //     let mut raw = vec![];
-        //     raw.extend_from_slice(namespace_id.as_ref());
-        //     raw.extend_from_slice(&blob);
+            let from = dev::alice();
+            let _events = client
+                .tx()
+                .sign_and_submit_then_watch_default(&extrinsic, &from)
+                .await?
+                .wait_for_finalized_success()
+                .await?;
 
-        //     let extrinsic = sugondat_subxt::sugondat::tx().system().remark(raw);
-        //     let from = PairSigner::new(AccountKeyring::Alice.pair());
-        //     let _events = client
-        //         .tx()
-        //         .sign_and_submit_then_watch_default(&extrinsic, &from)
-        //         .await?
-        //         .wait_for_finalized_success()
-        //         .await?;
-
-        //     Ok(())
-        // })
-        todo!()
+            Ok(())
+        })
     }
 }

@@ -1,11 +1,14 @@
-use core::fmt::{Display, Formatter};
+use core::{
+    fmt::{Display, Formatter},
+    str::FromStr,
+};
 use serde::{Deserialize, Serialize};
-use sov_rollup_interface::traits::AddressTrait;
+use sov_rollup_interface::BasicAddress;
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Eq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Eq, Hash)]
 pub struct Address(pub [u8; 32]);
 
-impl AddressTrait for Address {}
+impl BasicAddress for Address {}
 
 impl Display for Address {
     fn fmt(&self, f: &mut Formatter) -> core::fmt::Result {
@@ -31,5 +34,13 @@ impl<'a> TryFrom<&'a [u8]> for Address {
 
     fn try_from(value: &'a [u8]) -> Result<Self, Self::Error> {
         Ok(Self(<[u8; 32]>::try_from(value)?))
+    }
+}
+
+impl FromStr for Address {
+    type Err = anyhow::Error;
+    fn from_str(_s: &str) -> Result<Self, Self::Err> {
+        // TODO
+        unimplemented!()
     }
 }

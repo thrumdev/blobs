@@ -25,25 +25,28 @@ impl BlobTransaction {
     }
 }
 
-impl sov_rollup_interface::da::BlobTransactionTrait for BlobTransaction {
-    type Data = Bytes;
+impl sov_rollup_interface::da::BlobReaderTrait for BlobTransaction {
     type Address = Address;
 
     fn sender(&self) -> Address {
         self.sender.clone()
     }
 
-    // Creates a new BufWithCounter structure to read the data
-    fn data_mut(&mut self) -> &mut CountedBufReader<Self::Data> {
-        &mut self.blob
-    }
-
-    // Creates a new BufWithCounter structure to read the data
-    fn data(&self) -> &CountedBufReader<Self::Data> {
-        &self.blob
-    }
-
     fn hash(&self) -> [u8; 32] {
         self.hash.0
+    }
+
+    fn verified_data(&self) -> &[u8] {
+        self.blob.accumulator()
+    }
+
+    #[cfg(feature = "native")]
+    fn advance(&mut self, num_bytes: usize) -> &[u8] {
+        self.blob.advance(num_bytes);
+        self.verified_data()
+    }
+
+    fn total_len(&self) -> usize {
+        self.blob.total_len()
     }
 }

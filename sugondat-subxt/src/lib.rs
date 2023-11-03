@@ -3,7 +3,7 @@ use subxt::OnlineClient;
 mod gen;
 
 pub mod sugondat {
-	pub use super::gen::api::*;
+    pub use super::gen::api::*;
 }
 
 pub type SugondatConfig = subxt::SubstrateConfig;
@@ -28,12 +28,12 @@ pub type Header = <SugondatConfig as subxt::Config>::Header;
 
 /// Creates a client and validate the code generation if `validate_codegen == true`.
 pub async fn build_client<U: AsRef<str>>(
-	url: impl AsRef<str>,
-	validate_codegen: bool,
+    url: impl AsRef<str>,
+    validate_codegen: bool,
 ) -> anyhow::Result<Client> {
-	let api = Client::from_url(url).await?;
-	if validate_codegen {
-		sugondat::validate_codegen(&api)?;
-	}
-	Ok(api)
+    let api = Client::from_url(url).await?;
+    if validate_codegen && !sugondat::is_codegen_valid_for(&api.metadata()) {
+        anyhow::bail!("Client metadata not valid")
+    }
+    Ok(api)
 }

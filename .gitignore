@@ -1,3 +1,9 @@
-zombienet/
-target/
+# Common ignores
+.DS_Store
+.idea
+.vscode
+.envrc
+
+/zombienet
+/demo/target
 /demo/demo-rollup/demo_data

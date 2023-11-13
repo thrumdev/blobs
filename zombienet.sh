@@ -1,15 +1,12 @@
 #!/bin/bash
 
-os=$(uname -s)
+# Check if the zombienet binary is available.
+if ! [ -x "$(command -v zombienet)" ]; then
+  echo "\
+zombienet is not found in PATH. Install zombienet.
 
-if [ "$os" == "Darwin" ]; then
-    ./bin/zombienet-macos spawn -p native --dir zombienet testnet.toml
-
-elif [ "$os" == "Linux" ]; then
-    # @gabriele-0201 TODO: find a better way to do this
-    source export_paths.sh
-    ./../zombienet-linux-x64 spawn -p native --dir zombienet testnet.toml
-else
-    echo "Unsupported operating system"
-    exit 1
+Available at https://github.com/paritytech/zombienet"
+  exit 1
 fi
+
+zombienet spawn -p native --dir zombienet testnet.toml

@@ -1,0 +1,7 @@
+[workspace]
+resolver = "2"
+members = [
+    "const-rollup-config",
+    "demo-rollup",
+    "simple-nft-module",
+]

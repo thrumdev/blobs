@@ -1,0 +1,33 @@
+[package]
+name = "simple-nft-module"
+version = "0.3.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+authors = ["Sovereign Labs <info@sovereign.xyz>"]
+publish = false
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = { version = "1.0.68", default-features = false }
+borsh = { version = "0.10.3", default-features = false, features = ["rc"]}
+serde = { version = "1.0.190", default-features = false, features = ["alloc", "derive"] }
+
+sov-modules-api = { git = "https://github.com/Sovereign-Labs/sovereign-sdk", rev = "6058b31" }
+sov-state = { git = "https://github.com/Sovereign-Labs/sovereign-sdk", rev = "6058b31" }
+
+clap = { version = "4.4.7", optional = true, features = ["derive"] }
+schemars = { version = "0.8.12", features = ["derive"], optional = true }
+serde_json = { version = "1.0", default-features = false, features = ["alloc"], optional = true }
+jsonrpsee = { version = "0.20.1", features = ["macros", "client-core", "server", "jsonrpsee-types"], optional = true }
+
+[dev-dependencies]
+sov-rollup-interface = { git = "https://github.com/Sovereign-Labs/sovereign-sdk", rev = "6058b31" }
+tempfile = "3.8"
+simple-nft-module = { version = "*", features = ["native"], path = "." }
+
+
+[features]
+default = []
+native = ["sov-state/native", "sov-modules-api/native", "jsonrpsee", "schemars", "serde_json", "clap"]
+test = ["native"]

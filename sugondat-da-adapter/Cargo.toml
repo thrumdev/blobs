@@ -8,16 +8,17 @@ edition = "2021"
 [dependencies]
 parity-scale-codec = "3.6.3"
 # The only required dependency for a DA adapter is the Sovereign SDK...
-sov-rollup-interface =  { path = "../sovereign-sdk/rollup-interface" }
+sov-rollup-interface =  { git = "https://github.com/Sovereign-Labs/sovereign-sdk", rev = "6058b31" }
 
 sugondat-subxt = { path = "../sugondat-subxt", optional = true }
-subxt = { path = "../subxt/subxt", optional = true }
+subxt = {version = "0.32.1", optional = true }
+subxt-signer = {version = "0.32.1", optional = true, features = ["subxt"] }
 sp-keyring = { git = "https://github.com/paritytech/polkadot-sdk", optional = true, default-features = false, branch = "release-polkadot-v1.2.0" }
 tracing = "0.1.37"
 serde = { version = "1", features = ["derive"] }
 hex = { version = "0.4.3", features = ["serde"] }
 # Derive borsh for instant implementations of the Sovereign SDK's encode/decode traits
-# borsh = { version = "0.10.3", features = ["bytes"] }
+borsh = { version = "0.10.3", features = ["bytes"] }
 
 # While not used by this crate, we need bytes to include serde.
 bytes = { version = "1", features = ["serde"] }
@@ -27,8 +28,9 @@ sugondat-nmt = { path = "../sugondat-nmt", default-features = false }
 
 anyhow = "1.0.68"
 tokio = { version = "1", optional = true }
+digest = "0.10.7"
 
 [features]
 default = ["native"]
-native = ["sugondat-nmt/serde", "sugondat-nmt/native", "dep:sugondat-subxt", "dep:subxt", "dep:sp-keyring", "dep:tokio"]
+native = ["sov-rollup-interface/native", "sugondat-nmt/serde", "sugondat-nmt/native", "dep:sugondat-subxt", "dep:subxt", "dep:subxt-signer", "dep:sp-keyring", "dep:tokio"]
 verifier = ["sugondat-nmt/serde"]

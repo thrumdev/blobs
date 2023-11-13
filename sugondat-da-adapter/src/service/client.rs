@@ -20,6 +20,11 @@ impl Client {
         }
     }
 
+    pub async fn url(&self) -> String {
+        let inner = self.inner.lock().await;
+        inner.url.clone()
+    }
+
     pub async fn client(&self) -> anyhow::Result<sugondat_subxt::Client> {
         let mut inner = self.inner.lock().await;
         if let Some(client) = &inner.client {

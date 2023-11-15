@@ -1,5 +1,5 @@
 [package]
-name = "pallet-sugondat-blob"
+name = "pallet-sugondat-blobs"
 authors = ["Anonymous"]
 description = "FRAME pallet for submitting blobs"
 version = "0.1.0"

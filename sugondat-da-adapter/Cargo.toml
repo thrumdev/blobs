@@ -27,6 +27,7 @@ sha2 = { version = "0.10.6", default-features = false }
 sugondat-nmt = { path = "../sugondat-nmt", default-features = false }
 
 anyhow = "1.0.68"
+async-trait = "0.1.71"
 tokio = { version = "1", optional = true }
 digest = "0.10.7"
 

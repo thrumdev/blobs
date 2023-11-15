@@ -9535,6 +9535,7 @@ name = "sugondat-da-adapter"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "borsh",
  "bytes",
  "digest 0.10.7",

@@ -70,7 +70,7 @@ impl DaVerifier for SugondatVerifier {
         block_header: &<Self::Spec as DaSpec>::BlockHeader,
         txs: &[<Self::Spec as DaSpec>::BlobTransaction],
         inclusion_proof: <Self::Spec as DaSpec>::InclusionMultiProof,
-        completeness_proof: <Self::Spec as DaSpec>::CompletenessProof,
+        _completeness_proof: <Self::Spec as DaSpec>::CompletenessProof,
     ) -> Result<<Self::Spec as DaSpec>::ValidityCondition, Self::Error> {
         let validity_condition = ChainValidityCondition {
             prev_hash: block_header.prev_hash().0.into(),

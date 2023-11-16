@@ -4,11 +4,11 @@ use crate::{
     verifier::SugondatVerifier,
 };
 use async_trait::async_trait;
-use sov_rollup_interface::{da::DaSpec, services::da::DaService};
-use std::{future::Future, pin::Pin};
+use sov_rollup_interface::da::DaSpec;
+
 use subxt::backend::rpc::{rpc_params, RpcClient};
 use sugondat_subxt::sugondat::{
-    runtime_types::bounded_collections::bounded_vec::BoundedVec, storage, timestamp,
+    runtime_types::bounded_collections::bounded_vec::BoundedVec, storage,
 };
 
 mod client;
@@ -190,7 +190,7 @@ impl sov_rollup_interface::services::da::DaService for DaProvider {
     async fn get_extraction_proof(
         &self,
         block: &Self::FilteredBlock,
-        blobs: &[<Self::Spec as DaSpec>::BlobTransaction],
+        _blobs: &[<Self::Spec as DaSpec>::BlobTransaction],
     ) -> (
         <Self::Spec as DaSpec>::InclusionMultiProof,
         <Self::Spec as DaSpec>::CompletenessProof,

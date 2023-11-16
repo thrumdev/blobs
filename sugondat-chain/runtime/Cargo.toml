@@ -22,7 +22,7 @@ scale-info = { version = "2.7.0", default-features = false, features = ["derive"
 smallvec = "1.10.0"
 
 # Local
-pallet-sugondat-blob = { path = "../pallets/template", default-features = false }
+pallet-sugondat-blobs = { path = "../pallets/blobs", default-features = false }
 
 # Substrate
 frame-benchmarking = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, optional = true, branch = "release-polkadot-v1.2.0" }
@@ -101,7 +101,7 @@ std = [
 	"pallet-collator-selection/std",
 	"pallet-session/std",
 	"pallet-sudo/std",
-	"pallet-sugondat-blob/std",
+	"pallet-sugondat-blobs/std",
 	"pallet-timestamp/std",
 	"pallet-transaction-payment-rpc-runtime-api/std",
 	"pallet-transaction-payment/std",
@@ -134,7 +134,7 @@ runtime-benchmarks = [
 	"frame-system/runtime-benchmarks",
 	"pallet-balances/runtime-benchmarks",
 	"pallet-collator-selection/runtime-benchmarks",
-	"pallet-sugondat-blob/runtime-benchmarks",
+	"pallet-sugondat-blobs/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
 	"pallet-xcm/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
@@ -158,7 +158,7 @@ try-runtime = [
 	"pallet-collator-selection/try-runtime",
 	"pallet-session/try-runtime",
 	"pallet-sudo/try-runtime",
-	"pallet-sugondat-blob/try-runtime",
+	"pallet-sugondat-blobs/try-runtime",
 	"pallet-timestamp/try-runtime",
 	"pallet-transaction-payment/try-runtime",
 	"pallet-xcm/try-runtime",

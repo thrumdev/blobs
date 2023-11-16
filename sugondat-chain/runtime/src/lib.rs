@@ -29,7 +29,7 @@ use frame_support::{
 	construct_runtime,
 	dispatch::DispatchClass,
 	parameter_types,
-	traits::{ConstU32, ConstU64, ConstU8, ConstBool, EitherOfDiverse, Everything},
+	traits::{ConstBool, ConstU32, ConstU64, ConstU8, EitherOfDiverse, Everything},
 	weights::{
 		constants::WEIGHT_REF_TIME_PER_SECOND, ConstantMultiplier, Weight, WeightToFeeCoefficient,
 		WeightToFeeCoefficients, WeightToFeePolynomial,
@@ -57,7 +57,7 @@ use weights::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight};
 use staging_xcm::latest::prelude::BodyId;
 use staging_xcm_executor::XcmExecutor;
 
-pub use pallet_sugondat_blob;
+pub use pallet_sugondat_blobs;
 
 /// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
 pub type Signature = MultiSignature;
@@ -460,7 +460,7 @@ parameter_types! {
 	pub const MaxTotalBlobSize: u32 = 2 * 1024 * 1024;
 }
 
-impl pallet_sugondat_blob::Config for Runtime {
+impl pallet_sugondat_blobs::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type MaxBlobs = MaxBlobs;
 	type MaxBlobSize = MaxBlobSize;
@@ -493,7 +493,7 @@ construct_runtime!(
 		CumulusXcm: cumulus_pallet_xcm = 32,
 		DmpQueue: cumulus_pallet_dmp_queue = 33,
 
-		Blob: pallet_sugondat_blob = 40,
+		Blobs: pallet_sugondat_blobs = 40,
 	}
 );
 

@@ -1,4 +1,4 @@
-//! Substrate Parachain Node Template CLI
+//! Substrate Sugondat Node CLI
 
 #![warn(missing_docs)]
 

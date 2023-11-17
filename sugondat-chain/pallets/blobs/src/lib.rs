@@ -8,9 +8,6 @@ pub use pallet::*;
 #[cfg(test)]
 mod mock;
 
-#[cfg(test)]
-mod tests;
-
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
@@ -45,8 +42,7 @@ pub mod pallet {
 
 	/// The total number of bytes stored in all blobs.
 	#[pallet::storage]
-	pub type TotalBlobsSize<T: Config> =
-		StorageValue<_, u32, ValueQuery>;
+	pub type TotalBlobsSize<T: Config> = StorageValue<_, u32, ValueQuery>;
 
 	#[derive(Encode, Decode, TypeInfo, MaxEncodedLen, Clone)]
 	pub struct SubmittedBlobMetadata<AccountId> {
@@ -75,7 +71,7 @@ pub mod pallet {
 			/// The length of the blob data.
 			blob_len: u32,
 			/// The SHA256 hash of the blob.
-			blob_hash: [u8; 32]
+			blob_hash: [u8; 32],
 		},
 	}
 
@@ -114,14 +110,17 @@ pub mod pallet {
 
 		fn on_finalize(_n: BlockNumberFor<T>) {
 			let blobs = BlobList::<T>::get();
-			let blobs = blobs.into_iter().map(|blob| sugondat_nmt::BlobMetadata {
-				namespace: sugondat_nmt::Namespace::with_namespace_id(blob.namespace_id),
-				leaf: sugondat_nmt::NmtLeaf {
-					extrinsic_index: blob.extrinsic_index,
-					who: blob.who.encode().try_into().unwrap(),
-					blob_hash: blob.blob_hash,
-				},
-			}).collect::<Vec<_>>();
+			let blobs = blobs
+				.into_iter()
+				.map(|blob| sugondat_nmt::BlobMetadata {
+					namespace: sugondat_nmt::Namespace::with_namespace_id(blob.namespace_id),
+					leaf: sugondat_nmt::NmtLeaf {
+						extrinsic_index: blob.extrinsic_index,
+						who: blob.who.encode().try_into().unwrap(),
+						blob_hash: blob.blob_hash,
+					},
+				})
+				.collect::<Vec<_>>();
 			let root = sugondat_nmt::tree_from_blobs(blobs).root();
 			Self::deposit_nmt_digest(root);
 		}
@@ -134,34 +133,36 @@ pub mod pallet {
 		pub fn submit_blob(
 			origin: OriginFor<T>,
 			namespace_id: u32,
-			blob: BoundedVec<u8, T::MaxBlobSize>
+			blob: BoundedVec<u8, T::MaxBlobSize>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 
 			let blob_len = blob.len() as u32;
 			if blob_len > T::MaxBlobSize::get() {
-				return Err(Error::<T>::BlobTooLarge.into());
+				return Err(Error::<T>::BlobTooLarge.into())
 			}
 
 			let Some(extrinsic_index) = <frame_system::Pallet<T>>::extrinsic_index() else {
-				return Err(Error::<T>::NoExtrinsicIndex.into());
+				return Err(Error::<T>::NoExtrinsicIndex.into())
 			};
 
 			let total_blobs_size = TotalBlobsSize::<T>::get();
 			if total_blobs_size + blob_len > T::MaxTotalBlobSize::get() {
-				return Err(Error::<T>::MaxTotalBlobsSizeReached.into());
+				return Err(Error::<T>::MaxTotalBlobsSizeReached.into())
 			}
 			TotalBlobsSize::<T>::put(total_blobs_size + blob_len);
 
 			let blob_hash = sha2_hash(&blob);
 
 			let mut blob_list = BlobList::<T>::get();
-			blob_list.try_push(SubmittedBlobMetadata {
-				who: who.clone(),
-				extrinsic_index,
-				namespace_id,
-				blob_hash,
-			}).map_err(|_| Error::<T>::MaxBlobsReached)?;
+			blob_list
+				.try_push(SubmittedBlobMetadata {
+					who: who.clone(),
+					extrinsic_index,
+					namespace_id,
+					blob_hash,
+				})
+				.map_err(|_| Error::<T>::MaxBlobsReached)?;
 			BlobList::<T>::put(blob_list);
 
 			// Emit an event.

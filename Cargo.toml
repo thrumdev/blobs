@@ -1,0 +1,15 @@
+[workspace]
+resolver = "2"
+members = [
+    "sugondat-chain/node",
+    "sugondat-chain/pallets/*",
+    "sugondat-chain/runtime",
+    "sugondat-chain/primitives",
+    "sugondat-da-adapter",
+    "sugondat-nmt",
+    "sugondat-submit-blob",
+    "sugondat-subxt"
+]
+
+[profile.release]
+panic = "unwind"

@@ -27,16 +27,16 @@ use alloc::vec::Vec;
 
 /// Creates a namespaced merkle tree from the list of blob metadata.
 pub fn tree_from_blobs(mut blob_metadata: Vec<BlobMetadata>) -> TreeBuilder {
-    blob_metadata.sort_by_key(|blob| blob.namespace);
+	blob_metadata.sort_by_key(|blob| blob.namespace);
 
-    let mut tree = TreeBuilder::new();
-    for blob in blob_metadata {
-        match tree.push_leaf(blob.namespace, blob.leaf) {
-            Ok(()) => (),
-            Err(PushLeafErr::AscendingOrder) => {
-                panic!("sorted by namespace, so this should not happen")
-            }
-        }
-    }
-    tree
+	let mut tree = TreeBuilder::new();
+	for blob in blob_metadata {
+		match tree.push_leaf(blob.namespace, blob.leaf) {
+			Ok(()) => (),
+			Err(PushLeafErr::AscendingOrder) => {
+				panic!("sorted by namespace, so this should not happen")
+			},
+		}
+	}
+	tree
 }

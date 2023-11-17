@@ -10,12 +10,13 @@ edition = "2021"
 build = "build.rs"
 
 [dependencies]
-clap = { version = "4.2.7", features = ["derive"] }
+clap = { version = "4.4.6", features = ["derive"] }
 log = "0.4.17"
 codec = { package = "parity-scale-codec", version = "3.0.0" }
-serde = { version = "1.0.163", features = ["derive"] }
+serde = { version = "1.0.188", features = ["derive"] }
 jsonrpsee = { version = "0.16.2", features = ["server"] }
 futures = "0.3.28"
+serde_json = "1.0.108"
 
 # Local
 sugondat-runtime = { path = "../runtime" }
@@ -56,12 +57,14 @@ try-runtime-cli = { git = "https://github.com/paritytech/polkadot-sdk", optional
 # Polkadot
 polkadot-cli = { git = "https://github.com/paritytech/polkadot-sdk", features = ["rococo-native"] , branch = "release-polkadot-v1.2.0" }
 polkadot-primitives = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.2.0" }
-staging-xcm = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, branch = "release-polkadot-v1.2.0" }
+xcm = { package = "staging-xcm", git = "https://github.com/paritytech/polkadot-sdk", default-features = false, branch = "release-polkadot-v1.2.0" }
 
 # Cumulus
 cumulus-client-cli = { git = "https://github.com/paritytech/polkadot-sdk.git", branch = "release-polkadot-v1.2.0" }
+cumulus-client-collator = { git = "https://github.com/paritytech/polkadot-sdk.git", branch = "release-polkadot-v1.2.0" }
 cumulus-client-consensus-aura = { git = "https://github.com/paritytech/polkadot-sdk.git", branch = "release-polkadot-v1.2.0" }
 cumulus-client-consensus-common = { git = "https://github.com/paritytech/polkadot-sdk.git", branch = "release-polkadot-v1.2.0" }
+cumulus-client-consensus-proposer = { git = "https://github.com/paritytech/polkadot-sdk.git", branch = "release-polkadot-v1.2.0" }
 cumulus-client-service = { git = "https://github.com/paritytech/polkadot-sdk.git", branch = "release-polkadot-v1.2.0" }
 cumulus-primitives-core = { git = "https://github.com/paritytech/polkadot-sdk.git", branch = "release-polkadot-v1.2.0" }
 cumulus-primitives-parachain-inherent = { git = "https://github.com/paritytech/polkadot-sdk.git", branch = "release-polkadot-v1.2.0" }

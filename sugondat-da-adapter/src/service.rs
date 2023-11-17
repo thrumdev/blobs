@@ -123,7 +123,7 @@ impl sov_rollup_interface::services::da::DaService for DaProvider {
                 continue;
             };
             let Ok(Some(submit_blob_extrinsic)) =
-                ext.as_extrinsic::<sugondat_subxt::sugondat::blob::calls::types::SubmitBlob>()
+                ext.as_extrinsic::<sugondat_subxt::sugondat::blobs::calls::types::SubmitBlob>()
             else {
                 // Not a submit blob extrinsic, skip.
                 continue;
@@ -139,7 +139,7 @@ impl sov_rollup_interface::services::da::DaService for DaProvider {
             transactions.push(types::BlobTransaction::new(address, blob_data));
         }
 
-        let address = sugondat_subxt::sugondat::blob::storage::StorageApi.blob_list();
+        let address = sugondat_subxt::sugondat::blobs::storage::StorageApi.blob_list();
         let blobs = client
             .storage()
             .at(hash)
@@ -208,7 +208,7 @@ impl sov_rollup_interface::services::da::DaService for DaProvider {
         let client = client.client().await?;
 
         let extrinsic = sugondat_subxt::sugondat::tx()
-            .blob()
+            .blobs()
             .submit_blob(namespace_id, BoundedVec(blob));
 
         let from = dev::alice();

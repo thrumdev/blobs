@@ -7,10 +7,11 @@ use sp_runtime::traits::{IdentifyAccount, Verify};
 use sugondat_runtime::{AccountId, AuraId, Signature, EXISTENTIAL_DEPOSIT};
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
-pub type ChainSpec = sc_service::GenericChainSpec<sugondat_runtime::GenesisConfig, Extensions>;
+pub type ChainSpec =
+	sc_service::GenericChainSpec<sugondat_runtime::RuntimeGenesisConfig, Extensions>;
 
 /// The default XCM version to set in genesis config.
-const SAFE_XCM_VERSION: u32 = staging_xcm::prelude::XCM_VERSION;
+const SAFE_XCM_VERSION: u32 = xcm::prelude::XCM_VERSION;
 
 /// Helper function to generate a crypto pair from seed
 pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
@@ -100,6 +101,7 @@ pub fn development_config() -> ChainSpec {
 					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
 					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
 				],
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
 				1000.into(),
 			)
 		},
@@ -155,6 +157,7 @@ pub fn local_testnet_config() -> ChainSpec {
 					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
 					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
 				],
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
 				1000.into(),
 			)
 		},
@@ -179,6 +182,7 @@ pub fn local_testnet_config() -> ChainSpec {
 fn testnet_genesis(
 	invulnerables: Vec<(AccountId, AuraId)>,
 	endowed_accounts: Vec<AccountId>,
+	root: AccountId,
 	id: ParaId,
 ) -> sugondat_runtime::RuntimeGenesisConfig {
 	sugondat_runtime::RuntimeGenesisConfig {
@@ -211,7 +215,6 @@ fn testnet_genesis(
 					)
 				})
 				.collect(),
-			..Default::default()
 		},
 		// no need to pass anything to aura, in fact it will panic if we do. Session will take care
 		// of this.
@@ -223,5 +226,6 @@ fn testnet_genesis(
 			..Default::default()
 		},
 		transaction_payment: Default::default(),
+		sudo: sugondat_runtime::SudoConfig { key: Some(root) },
 	}
 }

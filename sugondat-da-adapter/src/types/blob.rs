@@ -23,6 +23,14 @@ impl BlobTransaction {
             blob: CountedBufReader::new(Bytes::from(blob)),
         }
     }
+
+    pub fn new_with_hash(sender: Address, blob: Vec<u8>, hash: [u8; 32]) -> Self {
+        Self {
+            sender,
+            hash: Hash(hash),
+            blob: CountedBufReader::new(Bytes::from(blob)),
+        }
+    }
 }
 
 impl sov_rollup_interface::da::BlobReaderTrait for BlobTransaction {

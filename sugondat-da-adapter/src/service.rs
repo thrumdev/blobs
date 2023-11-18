@@ -10,6 +10,7 @@ use subxt::backend::rpc::{rpc_params, RpcClient};
 use sugondat_subxt::sugondat::{
     runtime_types::bounded_collections::bounded_vec::BoundedVec, storage,
 };
+use sha2::Digest;
 
 mod client;
 
@@ -133,16 +134,9 @@ impl sov_rollup_interface::services::da::DaService for DaProvider {
                 continue;
             };
 
-            if submit_blob_extrinsic.namespace_id != namespace.namespace_id() {
-                // Not for our app.
-                continue;
-            }
-
             let blob_data = submit_blob_extrinsic.blob.0;
-            tracing::info!("received a blob: {}", hex::encode(&blob_data));
-
-            let blob_transaction = types::BlobTransaction::new(address.clone(), blob_data);
-
+            let blob_hash = sha2::Sha256::digest(&blob_data).into();
+            // Metadata from all namespaces are required to reconstruct the nmt
             let blob_metadata = sugondat_nmt::BlobMetadata {
                 namespace: sugondat_nmt::Namespace::with_namespace_id(
                     submit_blob_extrinsic.namespace_id,
@@ -150,12 +144,18 @@ impl sov_rollup_interface::services::da::DaService for DaProvider {
                 leaf: sugondat_nmt::NmtLeaf {
                     extrinsic_index: ext_index as u32,
                     who: address.0,
-                    blob_hash: blob_transaction.hash.clone().into(),
+                    blob_hash
                 },
             };
-
-            transactions.push(blob_transaction);
             blob_metadatas.push(blob_metadata);
+
+            if submit_blob_extrinsic.namespace_id != namespace.namespace_id() {
+                // Not for our app.
+                continue;
+            }
+
+            tracing::info!("received a blob: {}", hex::encode(&blob_data));
+            transactions.push(types::BlobTransaction::new_with_hash(address.clone(), blob_data, blob_hash));
         }
 
         let mut tree = sugondat_nmt::tree_from_blobs(blob_metadatas);

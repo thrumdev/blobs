@@ -45,8 +45,7 @@ pub mod pallet {
 
 	/// The total number of bytes stored in all blobs.
 	#[pallet::storage]
-	pub type TotalBlobsSize<T: Config> =
-		StorageValue<_, u32, ValueQuery>;
+	pub type TotalBlobsSize<T: Config> = StorageValue<_, u32, ValueQuery>;
 
 	#[derive(Encode, Decode, TypeInfo, MaxEncodedLen, Clone)]
 	pub struct SubmittedBlobMetadata<AccountId> {
@@ -75,7 +74,7 @@ pub mod pallet {
 			/// The length of the blob data.
 			blob_len: u32,
 			/// The SHA256 hash of the blob.
-			blob_hash: [u8; 32]
+			blob_hash: [u8; 32],
 		},
 	}
 
@@ -107,21 +106,25 @@ pub mod pallet {
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(_: BlockNumberFor<T>) -> Weight {
 			let weight = T::DbWeight::get().reads_writes(0, 2);
-			TotalBlobsSize::<T>::kill();
-			BlobList::<T>::kill();
 			weight
 		}
 
 		fn on_finalize(_n: BlockNumberFor<T>) {
-			let blobs = BlobList::<T>::get();
-			let blobs = blobs.into_iter().map(|blob| sugondat_nmt::BlobMetadata {
-				namespace: sugondat_nmt::Namespace::with_namespace_id(blob.namespace_id),
-				leaf: sugondat_nmt::NmtLeaf {
-					extrinsic_index: blob.extrinsic_index,
-					who: blob.who.encode().try_into().unwrap(),
-					blob_hash: blob.blob_hash,
-				},
-			}).collect::<Vec<_>>();
+			// Remove variables from the storage
+			// to avoid committing them to the tree
+			TotalBlobsSize::<T>::kill();
+			let blobs = BlobList::<T>::take();
+			let blobs = blobs
+				.into_iter()
+				.map(|blob| sugondat_nmt::BlobMetadata {
+					namespace: sugondat_nmt::Namespace::with_namespace_id(blob.namespace_id),
+					leaf: sugondat_nmt::NmtLeaf {
+						extrinsic_index: blob.extrinsic_index,
+						who: blob.who.encode().try_into().unwrap(),
+						blob_hash: blob.blob_hash,
+					},
+				})
+				.collect::<Vec<_>>();
 			let root = sugondat_nmt::tree_from_blobs(blobs).root();
 			Self::deposit_nmt_digest(root);
 		}
@@ -134,7 +137,7 @@ pub mod pallet {
 		pub fn submit_blob(
 			origin: OriginFor<T>,
 			namespace_id: u32,
-			blob: BoundedVec<u8, T::MaxBlobSize>
+			blob: BoundedVec<u8, T::MaxBlobSize>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 
@@ -156,12 +159,14 @@ pub mod pallet {
 			let blob_hash = sha2_hash(&blob);
 
 			let mut blob_list = BlobList::<T>::get();
-			blob_list.try_push(SubmittedBlobMetadata {
-				who: who.clone(),
-				extrinsic_index,
-				namespace_id,
-				blob_hash,
-			}).map_err(|_| Error::<T>::MaxBlobsReached)?;
+			blob_list
+				.try_push(SubmittedBlobMetadata {
+					who: who.clone(),
+					extrinsic_index,
+					namespace_id,
+					blob_hash,
+				})
+				.map_err(|_| Error::<T>::MaxBlobsReached)?;
 			BlobList::<T>::put(blob_list);
 
 			// Emit an event.

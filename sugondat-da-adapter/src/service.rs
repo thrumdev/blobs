@@ -114,7 +114,11 @@ impl sov_rollup_interface::services::da::DaService for DaProvider {
         );
 
         let mut transactions = vec![];
-        for ext in block.extrinsics().await?.iter() {
+        let mut blob_metadatas = vec![];
+
+        // TODO: not sure if the extrinsics method return an iterator over
+        // the ORDERED extrinsics
+        for (ext_index, ext) in block.extrinsics().await?.iter().enumerate() {
             let ext = ext?;
             let Some(address) = ext.address_bytes().map(|a| {
                 tracing::info!("Address: {:?}", hex::encode(&a));
@@ -136,31 +140,25 @@ impl sov_rollup_interface::services::da::DaService for DaProvider {
 
             let blob_data = submit_blob_extrinsic.blob.0;
             tracing::info!("received a blob: {}", hex::encode(&blob_data));
-            transactions.push(types::BlobTransaction::new(address, blob_data));
+
+            let blob_transaction = types::BlobTransaction::new(address.clone(), blob_data);
+
+            let blob_metadata = sugondat_nmt::BlobMetadata {
+                namespace: sugondat_nmt::Namespace::with_namespace_id(
+                    submit_blob_extrinsic.namespace_id,
+                ),
+                leaf: sugondat_nmt::NmtLeaf {
+                    extrinsic_index: ext_index as u32,
+                    who: address.0,
+                    blob_hash: blob_transaction.hash.clone().into(),
+                },
+            };
+
+            transactions.push(blob_transaction);
+            blob_metadatas.push(blob_metadata);
         }
 
-        let address = sugondat_subxt::sugondat::blobs::storage::StorageApi.blob_list();
-        let blobs = client
-            .storage()
-            .at(hash)
-            .fetch(&address)
-            .await
-            .unwrap()
-            .map(|x| x.0)
-            .unwrap_or_default();
-
-        let blobs = blobs
-            .into_iter()
-            .map(|blob| sugondat_nmt::BlobMetadata {
-                namespace: sugondat_nmt::Namespace::with_namespace_id(blob.namespace_id),
-                leaf: sugondat_nmt::NmtLeaf {
-                    extrinsic_index: blob.extrinsic_index,
-                    who: blob.who.0,
-                    blob_hash: blob.blob_hash,
-                },
-            })
-            .collect();
-        let mut tree = sugondat_nmt::tree_from_blobs(blobs);
+        let mut tree = sugondat_nmt::tree_from_blobs(blob_metadatas);
         let blob_proof = tree.proof(namespace);
 
         Ok(types::Block {

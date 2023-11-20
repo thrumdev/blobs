@@ -1,9 +1,10 @@
-use std::env;
-use sugondat_da_adapter::service::DaProvider;
-use sugondat_da_adapter::spec::ChainParams;
-use sugondat_da_adapter::service::DaServiceConfig;
 use const_rollup_config::ROLLUP_NAMESPACE_RAW;
 use sov_rollup_interface::services::da::DaService;
+use std::env;
+use sugondat_da_adapter::{
+    service::{DaProvider, DaServiceConfig},
+    spec::ChainParams,
+};
 
 #[tokio::main]
 async fn main() {

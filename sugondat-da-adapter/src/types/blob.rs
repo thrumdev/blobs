@@ -1,8 +1,7 @@
 use super::{Address, Hash};
 use alloc::vec::Vec;
 use serde::{Deserialize, Serialize};
-use sov_rollup_interface::da::CountedBufReader;
-use sov_rollup_interface::Bytes;
+use sov_rollup_interface::{da::CountedBufReader, Bytes};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct BlobTransaction {

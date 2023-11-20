@@ -68,11 +68,7 @@ fn proof_absent_namespace_id() {
     let mut tree = b.tree();
     let proof = tree.proof(Namespace::with_namespace_id(2));
     assert!(proof
-        .verify(
-            &[],
-            tree.root(),
-            Namespace::with_namespace_id(2)
-        )
+        .verify(&[], tree.root(), Namespace::with_namespace_id(2))
         .is_ok());
 }
 
@@ -83,10 +79,6 @@ fn wrong_namespace_id() {
     let mut tree = b.tree();
     let proof = tree.proof(Namespace::with_namespace_id(2));
     assert!(proof
-        .verify(
-            &[],
-            tree.root(),
-            Namespace::with_namespace_id(1)
-        )
+        .verify(&[], tree.root(), Namespace::with_namespace_id(1))
         .is_err());
 }

@@ -1,11 +1,6 @@
-use crate::leaf::NmtLeaf;
-use crate::ns::Namespace;
-use crate::ns_proof::NamespaceProof;
-use crate::root::TreeRoot;
-use crate::NS_ID_SIZE;
+use crate::{leaf::NmtLeaf, ns::Namespace, ns_proof::NamespaceProof, root::TreeRoot, NS_ID_SIZE};
 
-use nmt_rs::simple_merkle::db::MemDb;
-use nmt_rs::{NamespaceMerkleTree, NamespacedHash, NamespacedSha2Hasher};
+use nmt_rs::{simple_merkle::db::MemDb, NamespaceMerkleTree, NamespacedHash, NamespacedSha2Hasher};
 
 #[derive(Debug)]
 pub enum PushLeafErr {

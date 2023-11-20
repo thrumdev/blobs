@@ -1,5 +1,4 @@
-use crate::ns::Namespace;
-use crate::{NmtLeaf, TreeRoot, NS_ID_SIZE};
+use crate::{ns::Namespace, NmtLeaf, TreeRoot, NS_ID_SIZE};
 use alloc::vec::Vec;
 
 #[derive(Debug)]

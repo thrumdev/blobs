@@ -1,5 +1,7 @@
-use crate::types::{Address, BlobTransaction, Hash, Header};
-use crate::verifier::ChainValidityCondition;
+use crate::{
+    types::{Address, BlobTransaction, Hash, Header},
+    verifier::ChainValidityCondition,
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq, Eq, Deserialize, Serialize)]

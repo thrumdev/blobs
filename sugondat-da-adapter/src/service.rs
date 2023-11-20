@@ -117,17 +117,17 @@ impl sov_rollup_interface::services::da::DaService for DaProvider {
         for ext in block.extrinsics().await?.iter() {
             let ext = ext?;
             let Some(address) = ext.address_bytes().map(|a| {
-                tracing::info!("Address: {:?}", hex::encode(&a));
-                types::Address::try_from(&a[1..]).unwrap()
-            }) else {
-                continue;
-            };
+				tracing::info!("Address: {:?}", hex::encode(&a));
+				types::Address::try_from(&a[1..]).unwrap()
+			}) else {
+				continue
+			};
             let Ok(Some(submit_blob_extrinsic)) =
-                ext.as_extrinsic::<sugondat_subxt::sugondat::blobs::calls::types::SubmitBlob>()
-            else {
-                // Not a submit blob extrinsic, skip.
-                continue;
-            };
+				ext.as_extrinsic::<sugondat_subxt::sugondat::blobs::calls::types::SubmitBlob>()
+			else {
+				// Not a submit blob extrinsic, skip.
+				continue
+			};
 
             if submit_blob_extrinsic.namespace_id != namespace.namespace_id() {
                 // Not for our app.

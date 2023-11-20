@@ -7,6 +7,8 @@ members = [
     "sugondat-chain/primitives",
     "sugondat-da-adapter",
     "sugondat-nmt",
+    "sugondat-shim",
+    "sugondat-shim/common/sovereign",
     "sugondat-submit-blob",
     "sugondat-subxt"
 ]

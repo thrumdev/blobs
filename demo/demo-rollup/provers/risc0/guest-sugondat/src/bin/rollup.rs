@@ -23,7 +23,7 @@ pub fn main() {
     let mut stf_verifier = AppVerifier::new(app, SugondatVerifier::from_raw(ROLLUP_NAMESPACE_RAW));
 
     // This block execution implies a commit to the new state root,
-    // the commit will be visible in the recepeit (as public output)
+    // the commit will be visible in the receipt (as public output)
     stf_verifier
         .run_block(guest, storage)
         .expect("Prover must be honest");

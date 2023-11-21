@@ -11,12 +11,12 @@ struct Cli {
     command: Commands,
 }
 
-/// Common parameters for all subcommands.
+/// Common parameters for the adapter subcommands.
 ///
 /// It's not declared on the `Cli` struct with `clap(flatten)` because of how the syntax
 /// `sugondat-shim -p 10 serve --node-url` looks unintuitive.
 #[derive(clap::Args, Debug)]
-pub struct CommonParams {
+pub struct AdapterServerParams {
     /// The address on which the shim should listen for incoming connections from the rollup nodes.
     #[clap(short, long, default_value = "127.0.0.1", group = "listen")]
     pub address: String,
@@ -33,7 +33,7 @@ pub struct CommonParams {
     // TODO: e.g. --submit-key, prometheus stuff, enabled adapters, etc.
 }
 
-impl CommonParams {
+impl AdapterServerParams {
     /// Whether the sovereign adapter should be enabled.
     pub fn enable_sovereign(&self) -> bool {
         true

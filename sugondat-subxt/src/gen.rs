@@ -6,14 +6,13 @@ pub mod api {
     mod root_mod {
         pub use super::*;
     }
-    pub static PALLETS: [&str; 17usize] = [
+    pub static PALLETS: [&str; 16usize] = [
         "System",
         "ParachainSystem",
         "Timestamp",
         "ParachainInfo",
         "Balances",
         "TransactionPayment",
-        "Sudo",
         "Authorship",
         "CollatorSelection",
         "Session",
@@ -23,9 +22,9 @@ pub mod api {
         "PolkadotXcm",
         "CumulusXcm",
         "DmpQueue",
-        "Blobs",
+        "Blob",
     ];
-    pub static RUNTIME_APIS: [&str; 12usize] = [
+    pub static RUNTIME_APIS: [&str; 11usize] = [
         "AuraApi",
         "Core",
         "Metadata",
@@ -37,7 +36,6 @@ pub mod api {
         "TransactionPaymentApi",
         "TransactionPaymentCallApi",
         "CollectCollationInfo",
-        "GenesisBuilder",
     ];
     #[doc = r" The error type returned when there is a runtime issue."]
     pub type DispatchError = runtime_types::sp_runtime::DispatchError;
@@ -103,9 +101,6 @@ pub mod api {
             }
             pub fn collect_collation_info(&self) -> collect_collation_info::CollectCollationInfo {
                 collect_collation_info::CollectCollationInfo
-            }
-            pub fn genesis_builder(&self) -> genesis_builder::GenesisBuilder {
-                genesis_builder::GenesisBuilder
             }
         }
         pub mod aura_api {
@@ -911,9 +906,10 @@ pub mod api {
                         "query_call_info",
                         types::QueryCallInfo { call, len },
                         [
-                            53u8, 207u8, 240u8, 63u8, 63u8, 17u8, 165u8, 113u8, 169u8, 199u8, 26u8,
-                            152u8, 15u8, 166u8, 136u8, 71u8, 145u8, 27u8, 89u8, 14u8, 28u8, 15u8,
-                            42u8, 75u8, 179u8, 28u8, 249u8, 219u8, 51u8, 138u8, 225u8, 41u8,
+                            132u8, 107u8, 80u8, 209u8, 122u8, 250u8, 200u8, 20u8, 122u8, 95u8,
+                            221u8, 185u8, 101u8, 246u8, 109u8, 160u8, 56u8, 205u8, 147u8, 248u8,
+                            58u8, 242u8, 124u8, 168u8, 231u8, 222u8, 122u8, 32u8, 94u8, 68u8, 71u8,
+                            171u8,
                         ],
                     )
                 }
@@ -933,9 +929,9 @@ pub mod api {
                         "query_call_fee_details",
                         types::QueryCallFeeDetails { call, len },
                         [
-                            252u8, 63u8, 199u8, 84u8, 172u8, 129u8, 3u8, 145u8, 182u8, 63u8, 195u8,
-                            54u8, 199u8, 11u8, 115u8, 105u8, 253u8, 211u8, 194u8, 17u8, 185u8,
-                            240u8, 94u8, 51u8, 59u8, 204u8, 42u8, 4u8, 217u8, 110u8, 85u8, 79u8,
+                            143u8, 113u8, 189u8, 249u8, 202u8, 30u8, 0u8, 75u8, 110u8, 169u8,
+                            125u8, 17u8, 6u8, 16u8, 146u8, 89u8, 42u8, 145u8, 73u8, 83u8, 186u8,
+                            112u8, 154u8, 176u8, 74u8, 226u8, 47u8, 18u8, 254u8, 50u8, 59u8, 77u8,
                         ],
                     )
                 }
@@ -1081,88 +1077,6 @@ pub mod api {
                 }
             }
         }
-        pub mod genesis_builder {
-            use super::root_mod;
-            use super::runtime_types;
-            #[doc = " API to interact with GenesisConfig for the runtime"]
-            pub struct GenesisBuilder;
-            impl GenesisBuilder {
-                #[doc = " Creates the default `GenesisConfig` and returns it as a JSON blob."]
-                #[doc = ""]
-                #[doc = " This function instantiates the default `GenesisConfig` struct for the runtime and serializes it into a JSON"]
-                #[doc = " blob. It returns a `Vec<u8>` containing the JSON representation of the default `GenesisConfig`."]
-                pub fn create_default_config(
-                    &self,
-                ) -> ::subxt::runtime_api::Payload<
-                    types::CreateDefaultConfig,
-                    ::std::vec::Vec<::core::primitive::u8>,
-                > {
-                    ::subxt::runtime_api::Payload::new_static(
-                        "GenesisBuilder",
-                        "create_default_config",
-                        types::CreateDefaultConfig {},
-                        [
-                            238u8, 5u8, 139u8, 81u8, 184u8, 155u8, 221u8, 118u8, 190u8, 76u8,
-                            229u8, 67u8, 132u8, 89u8, 83u8, 80u8, 56u8, 171u8, 169u8, 64u8, 123u8,
-                            20u8, 129u8, 159u8, 28u8, 135u8, 84u8, 52u8, 192u8, 98u8, 104u8, 214u8,
-                        ],
-                    )
-                }
-                #[doc = " Build `GenesisConfig` from a JSON blob not using any defaults and store it in the storage."]
-                #[doc = ""]
-                #[doc = " This function deserializes the full `GenesisConfig` from the given JSON blob and puts it into the storage."]
-                #[doc = " If the provided JSON blob is incorrect or incomplete or the deserialization fails, an error is returned."]
-                #[doc = " It is recommended to log any errors encountered during the process."]
-                #[doc = ""]
-                #[doc = " Please note that provided json blob must contain all `GenesisConfig` fields, no defaults will be used."]
-                pub fn build_config(
-                    &self,
-                    json: ::std::vec::Vec<::core::primitive::u8>,
-                ) -> ::subxt::runtime_api::Payload<
-                    types::BuildConfig,
-                    ::core::result::Result<(), ::std::string::String>,
-                > {
-                    ::subxt::runtime_api::Payload::new_static(
-                        "GenesisBuilder",
-                        "build_config",
-                        types::BuildConfig { json },
-                        [
-                            6u8, 98u8, 68u8, 125u8, 157u8, 26u8, 107u8, 86u8, 213u8, 227u8, 26u8,
-                            229u8, 122u8, 161u8, 229u8, 114u8, 123u8, 192u8, 66u8, 231u8, 148u8,
-                            175u8, 5u8, 185u8, 248u8, 88u8, 40u8, 122u8, 230u8, 209u8, 170u8,
-                            254u8,
-                        ],
-                    )
-                }
-            }
-            pub mod types {
-                use super::runtime_types;
-                #[derive(
-                    :: subxt :: ext :: codec :: Decode,
-                    :: subxt :: ext :: codec :: Encode,
-                    :: subxt :: ext :: scale_decode :: DecodeAsType,
-                    :: subxt :: ext :: scale_encode :: EncodeAsType,
-                    Debug,
-                )]
-                # [codec (crate = :: subxt :: ext :: codec)]
-                #[decode_as_type(crate_path = ":: subxt :: ext :: scale_decode")]
-                #[encode_as_type(crate_path = ":: subxt :: ext :: scale_encode")]
-                pub struct CreateDefaultConfig {}
-                #[derive(
-                    :: subxt :: ext :: codec :: Decode,
-                    :: subxt :: ext :: codec :: Encode,
-                    :: subxt :: ext :: scale_decode :: DecodeAsType,
-                    :: subxt :: ext :: scale_encode :: EncodeAsType,
-                    Debug,
-                )]
-                # [codec (crate = :: subxt :: ext :: codec)]
-                #[decode_as_type(crate_path = ":: subxt :: ext :: scale_decode")]
-                #[encode_as_type(crate_path = ":: subxt :: ext :: scale_encode")]
-                pub struct BuildConfig {
-                    pub json: ::std::vec::Vec<::core::primitive::u8>,
-                }
-            }
-        }
     }
     pub fn custom() -> CustomValuesApi {
         CustomValuesApi
@@ -1183,8 +1097,8 @@ pub mod api {
         pub fn transaction_payment(&self) -> transaction_payment::constants::ConstantsApi {
             transaction_payment::constants::ConstantsApi
         }
-        pub fn blobs(&self) -> blobs::constants::ConstantsApi {
-            blobs::constants::ConstantsApi
+        pub fn blob(&self) -> blob::constants::ConstantsApi {
+            blob::constants::ConstantsApi
         }
     }
     pub struct StorageApi;
@@ -1206,9 +1120,6 @@ pub mod api {
         }
         pub fn transaction_payment(&self) -> transaction_payment::storage::StorageApi {
             transaction_payment::storage::StorageApi
-        }
-        pub fn sudo(&self) -> sudo::storage::StorageApi {
-            sudo::storage::StorageApi
         }
         pub fn authorship(&self) -> authorship::storage::StorageApi {
             authorship::storage::StorageApi
@@ -1234,8 +1145,8 @@ pub mod api {
         pub fn dmp_queue(&self) -> dmp_queue::storage::StorageApi {
             dmp_queue::storage::StorageApi
         }
-        pub fn blobs(&self) -> blobs::storage::StorageApi {
-            blobs::storage::StorageApi
+        pub fn blob(&self) -> blob::storage::StorageApi {
+            blob::storage::StorageApi
         }
     }
     pub struct TransactionApi;
@@ -1255,9 +1166,6 @@ pub mod api {
         pub fn balances(&self) -> balances::calls::TransactionApi {
             balances::calls::TransactionApi
         }
-        pub fn sudo(&self) -> sudo::calls::TransactionApi {
-            sudo::calls::TransactionApi
-        }
         pub fn collator_selection(&self) -> collator_selection::calls::TransactionApi {
             collator_selection::calls::TransactionApi
         }
@@ -1276,8 +1184,8 @@ pub mod api {
         pub fn dmp_queue(&self) -> dmp_queue::calls::TransactionApi {
             dmp_queue::calls::TransactionApi
         }
-        pub fn blobs(&self) -> blobs::calls::TransactionApi {
-            blobs::calls::TransactionApi
+        pub fn blob(&self) -> blob::calls::TransactionApi {
+            blob::calls::TransactionApi
         }
     }
     #[doc = r" check whether the metadata provided is aligned with this statically generated code."]
@@ -1289,9 +1197,9 @@ pub mod api {
             .hash();
         runtime_metadata_hash
             == [
-                171u8, 88u8, 112u8, 183u8, 206u8, 137u8, 11u8, 224u8, 109u8, 115u8, 46u8, 243u8,
-                230u8, 216u8, 249u8, 43u8, 5u8, 165u8, 58u8, 252u8, 111u8, 64u8, 31u8, 156u8, 63u8,
-                208u8, 102u8, 23u8, 126u8, 15u8, 240u8, 20u8,
+                189u8, 123u8, 252u8, 48u8, 20u8, 56u8, 6u8, 66u8, 213u8, 23u8, 37u8, 86u8, 1u8,
+                57u8, 52u8, 154u8, 140u8, 188u8, 164u8, 183u8, 237u8, 96u8, 107u8, 121u8, 49u8,
+                81u8, 63u8, 161u8, 0u8, 38u8, 112u8, 170u8,
             ]
     }
     pub mod system {
@@ -2007,9 +1915,10 @@ pub mod api {
                         "Events",
                         vec![],
                         [
-                            100u8, 160u8, 248u8, 180u8, 9u8, 17u8, 105u8, 249u8, 114u8, 61u8, 70u8,
-                            7u8, 120u8, 94u8, 199u8, 165u8, 90u8, 175u8, 104u8, 17u8, 204u8, 152u8,
-                            46u8, 4u8, 86u8, 249u8, 61u8, 159u8, 131u8, 66u8, 194u8, 8u8,
+                            31u8, 63u8, 111u8, 80u8, 134u8, 231u8, 178u8, 125u8, 47u8, 84u8, 249u8,
+                            181u8, 203u8, 48u8, 167u8, 161u8, 102u8, 41u8, 157u8, 50u8, 14u8,
+                            199u8, 151u8, 252u8, 157u8, 245u8, 102u8, 32u8, 144u8, 115u8, 171u8,
+                            205u8,
                         ],
                     )
                 }
@@ -4243,7 +4152,7 @@ pub mod api {
                     ::subxt::storage::address::StaticStorageMapKey,
                     runtime_types::bounded_collections::bounded_vec::BoundedVec<
                         runtime_types::pallet_balances::types::IdAmount<
-                            runtime_types::sugondat_runtime::RuntimeHoldReason,
+                            (),
                             ::core::primitive::u128,
                         >,
                     >,
@@ -4256,9 +4165,10 @@ pub mod api {
                         "Holds",
                         vec![],
                         [
-                            37u8, 176u8, 2u8, 18u8, 109u8, 26u8, 66u8, 81u8, 28u8, 104u8, 149u8,
-                            117u8, 119u8, 114u8, 196u8, 35u8, 172u8, 155u8, 66u8, 195u8, 98u8,
-                            37u8, 134u8, 22u8, 106u8, 221u8, 215u8, 97u8, 25u8, 28u8, 21u8, 206u8,
+                            53u8, 126u8, 215u8, 237u8, 42u8, 223u8, 188u8, 150u8, 230u8, 107u8,
+                            95u8, 24u8, 26u8, 235u8, 158u8, 149u8, 193u8, 191u8, 10u8, 194u8,
+                            231u8, 59u8, 35u8, 167u8, 186u8, 89u8, 43u8, 126u8, 215u8, 117u8, 1u8,
+                            202u8,
                         ],
                     )
                 }
@@ -4270,7 +4180,7 @@ pub mod api {
                     ::subxt::storage::address::StaticStorageMapKey,
                     runtime_types::bounded_collections::bounded_vec::BoundedVec<
                         runtime_types::pallet_balances::types::IdAmount<
-                            runtime_types::sugondat_runtime::RuntimeHoldReason,
+                            (),
                             ::core::primitive::u128,
                         >,
                     >,
@@ -4285,9 +4195,10 @@ pub mod api {
                             _0.borrow(),
                         )],
                         [
-                            37u8, 176u8, 2u8, 18u8, 109u8, 26u8, 66u8, 81u8, 28u8, 104u8, 149u8,
-                            117u8, 119u8, 114u8, 196u8, 35u8, 172u8, 155u8, 66u8, 195u8, 98u8,
-                            37u8, 134u8, 22u8, 106u8, 221u8, 215u8, 97u8, 25u8, 28u8, 21u8, 206u8,
+                            53u8, 126u8, 215u8, 237u8, 42u8, 223u8, 188u8, 150u8, 230u8, 107u8,
+                            95u8, 24u8, 26u8, 235u8, 158u8, 149u8, 193u8, 191u8, 10u8, 194u8,
+                            231u8, 59u8, 35u8, 167u8, 186u8, 89u8, 43u8, 126u8, 215u8, 117u8, 1u8,
+                            202u8,
                         ],
                     )
                 }
@@ -4542,258 +4453,6 @@ pub mod api {
                             28u8, 91u8, 221u8, 64u8, 4u8, 148u8, 201u8, 193u8, 185u8, 66u8, 226u8,
                             114u8, 97u8, 79u8, 62u8, 212u8, 202u8, 114u8, 237u8, 228u8, 183u8,
                             165u8,
-                        ],
-                    )
-                }
-            }
-        }
-    }
-    pub mod sudo {
-        use super::root_mod;
-        use super::runtime_types;
-        #[doc = "Error for the Sudo pallet"]
-        pub type Error = runtime_types::pallet_sudo::pallet::Error;
-        #[doc = "Contains a variant per dispatchable extrinsic that this pallet has."]
-        pub type Call = runtime_types::pallet_sudo::pallet::Call;
-        pub mod calls {
-            use super::root_mod;
-            use super::runtime_types;
-            type DispatchError = runtime_types::sp_runtime::DispatchError;
-            pub mod types {
-                use super::runtime_types;
-                #[derive(
-                    :: subxt :: ext :: codec :: Decode,
-                    :: subxt :: ext :: codec :: Encode,
-                    :: subxt :: ext :: scale_decode :: DecodeAsType,
-                    :: subxt :: ext :: scale_encode :: EncodeAsType,
-                    Debug,
-                )]
-                # [codec (crate = :: subxt :: ext :: codec)]
-                #[decode_as_type(crate_path = ":: subxt :: ext :: scale_decode")]
-                #[encode_as_type(crate_path = ":: subxt :: ext :: scale_encode")]
-                pub struct Sudo {
-                    pub call: ::std::boxed::Box<runtime_types::sugondat_runtime::RuntimeCall>,
-                }
-                impl ::subxt::blocks::StaticExtrinsic for Sudo {
-                    const PALLET: &'static str = "Sudo";
-                    const CALL: &'static str = "sudo";
-                }
-                #[derive(
-                    :: subxt :: ext :: codec :: Decode,
-                    :: subxt :: ext :: codec :: Encode,
-                    :: subxt :: ext :: scale_decode :: DecodeAsType,
-                    :: subxt :: ext :: scale_encode :: EncodeAsType,
-                    Debug,
-                )]
-                # [codec (crate = :: subxt :: ext :: codec)]
-                #[decode_as_type(crate_path = ":: subxt :: ext :: scale_decode")]
-                #[encode_as_type(crate_path = ":: subxt :: ext :: scale_encode")]
-                pub struct SudoUncheckedWeight {
-                    pub call: ::std::boxed::Box<runtime_types::sugondat_runtime::RuntimeCall>,
-                    pub weight: runtime_types::sp_weights::weight_v2::Weight,
-                }
-                impl ::subxt::blocks::StaticExtrinsic for SudoUncheckedWeight {
-                    const PALLET: &'static str = "Sudo";
-                    const CALL: &'static str = "sudo_unchecked_weight";
-                }
-                #[derive(
-                    :: subxt :: ext :: codec :: Decode,
-                    :: subxt :: ext :: codec :: Encode,
-                    :: subxt :: ext :: scale_decode :: DecodeAsType,
-                    :: subxt :: ext :: scale_encode :: EncodeAsType,
-                    Debug,
-                )]
-                # [codec (crate = :: subxt :: ext :: codec)]
-                #[decode_as_type(crate_path = ":: subxt :: ext :: scale_decode")]
-                #[encode_as_type(crate_path = ":: subxt :: ext :: scale_encode")]
-                pub struct SetKey {
-                    pub new: ::subxt::utils::MultiAddress<::subxt::utils::AccountId32, ()>,
-                }
-                impl ::subxt::blocks::StaticExtrinsic for SetKey {
-                    const PALLET: &'static str = "Sudo";
-                    const CALL: &'static str = "set_key";
-                }
-                #[derive(
-                    :: subxt :: ext :: codec :: Decode,
-                    :: subxt :: ext :: codec :: Encode,
-                    :: subxt :: ext :: scale_decode :: DecodeAsType,
-                    :: subxt :: ext :: scale_encode :: EncodeAsType,
-                    Debug,
-                )]
-                # [codec (crate = :: subxt :: ext :: codec)]
-                #[decode_as_type(crate_path = ":: subxt :: ext :: scale_decode")]
-                #[encode_as_type(crate_path = ":: subxt :: ext :: scale_encode")]
-                pub struct SudoAs {
-                    pub who: ::subxt::utils::MultiAddress<::subxt::utils::AccountId32, ()>,
-                    pub call: ::std::boxed::Box<runtime_types::sugondat_runtime::RuntimeCall>,
-                }
-                impl ::subxt::blocks::StaticExtrinsic for SudoAs {
-                    const PALLET: &'static str = "Sudo";
-                    const CALL: &'static str = "sudo_as";
-                }
-            }
-            pub struct TransactionApi;
-            impl TransactionApi {
-                #[doc = "See [`Pallet::sudo`]."]
-                pub fn sudo(
-                    &self,
-                    call: runtime_types::sugondat_runtime::RuntimeCall,
-                ) -> ::subxt::tx::Payload<types::Sudo> {
-                    ::subxt::tx::Payload::new_static(
-                        "Sudo",
-                        "sudo",
-                        types::Sudo {
-                            call: ::std::boxed::Box::new(call),
-                        },
-                        [
-                            123u8, 120u8, 12u8, 40u8, 0u8, 86u8, 237u8, 179u8, 58u8, 209u8, 66u8,
-                            38u8, 135u8, 123u8, 159u8, 165u8, 145u8, 78u8, 187u8, 242u8, 157u8,
-                            131u8, 43u8, 67u8, 236u8, 174u8, 100u8, 213u8, 32u8, 0u8, 190u8, 115u8,
-                        ],
-                    )
-                }
-                #[doc = "See [`Pallet::sudo_unchecked_weight`]."]
-                pub fn sudo_unchecked_weight(
-                    &self,
-                    call: runtime_types::sugondat_runtime::RuntimeCall,
-                    weight: runtime_types::sp_weights::weight_v2::Weight,
-                ) -> ::subxt::tx::Payload<types::SudoUncheckedWeight> {
-                    ::subxt::tx::Payload::new_static(
-                        "Sudo",
-                        "sudo_unchecked_weight",
-                        types::SudoUncheckedWeight {
-                            call: ::std::boxed::Box::new(call),
-                            weight,
-                        },
-                        [
-                            5u8, 184u8, 122u8, 118u8, 226u8, 106u8, 218u8, 88u8, 115u8, 34u8,
-                            186u8, 205u8, 164u8, 178u8, 249u8, 153u8, 133u8, 140u8, 173u8, 171u8,
-                            15u8, 220u8, 142u8, 35u8, 109u8, 96u8, 140u8, 138u8, 29u8, 224u8,
-                            116u8, 67u8,
-                        ],
-                    )
-                }
-                #[doc = "See [`Pallet::set_key`]."]
-                pub fn set_key(
-                    &self,
-                    new: ::subxt::utils::MultiAddress<::subxt::utils::AccountId32, ()>,
-                ) -> ::subxt::tx::Payload<types::SetKey> {
-                    ::subxt::tx::Payload::new_static(
-                        "Sudo",
-                        "set_key",
-                        types::SetKey { new },
-                        [
-                            9u8, 73u8, 39u8, 205u8, 188u8, 127u8, 143u8, 54u8, 128u8, 94u8, 8u8,
-                            227u8, 197u8, 44u8, 70u8, 93u8, 228u8, 196u8, 64u8, 165u8, 226u8,
-                            158u8, 101u8, 192u8, 22u8, 193u8, 102u8, 84u8, 21u8, 35u8, 92u8, 198u8,
-                        ],
-                    )
-                }
-                #[doc = "See [`Pallet::sudo_as`]."]
-                pub fn sudo_as(
-                    &self,
-                    who: ::subxt::utils::MultiAddress<::subxt::utils::AccountId32, ()>,
-                    call: runtime_types::sugondat_runtime::RuntimeCall,
-                ) -> ::subxt::tx::Payload<types::SudoAs> {
-                    ::subxt::tx::Payload::new_static(
-                        "Sudo",
-                        "sudo_as",
-                        types::SudoAs {
-                            who,
-                            call: ::std::boxed::Box::new(call),
-                        },
-                        [
-                            82u8, 14u8, 134u8, 229u8, 142u8, 183u8, 64u8, 127u8, 103u8, 146u8,
-                            205u8, 73u8, 183u8, 15u8, 172u8, 24u8, 150u8, 0u8, 47u8, 189u8, 114u8,
-                            71u8, 203u8, 58u8, 47u8, 243u8, 44u8, 33u8, 61u8, 20u8, 145u8, 104u8,
-                        ],
-                    )
-                }
-            }
-        }
-        #[doc = "The `Event` enum of this pallet"]
-        pub type Event = runtime_types::pallet_sudo::pallet::Event;
-        pub mod events {
-            use super::runtime_types;
-            #[derive(
-                :: subxt :: ext :: codec :: Decode,
-                :: subxt :: ext :: codec :: Encode,
-                :: subxt :: ext :: scale_decode :: DecodeAsType,
-                :: subxt :: ext :: scale_encode :: EncodeAsType,
-                Debug,
-            )]
-            # [codec (crate = :: subxt :: ext :: codec)]
-            #[decode_as_type(crate_path = ":: subxt :: ext :: scale_decode")]
-            #[encode_as_type(crate_path = ":: subxt :: ext :: scale_encode")]
-            #[doc = "A sudo call just took place."]
-            pub struct Sudid {
-                pub sudo_result:
-                    ::core::result::Result<(), runtime_types::sp_runtime::DispatchError>,
-            }
-            impl ::subxt::events::StaticEvent for Sudid {
-                const PALLET: &'static str = "Sudo";
-                const EVENT: &'static str = "Sudid";
-            }
-            #[derive(
-                :: subxt :: ext :: codec :: Decode,
-                :: subxt :: ext :: codec :: Encode,
-                :: subxt :: ext :: scale_decode :: DecodeAsType,
-                :: subxt :: ext :: scale_encode :: EncodeAsType,
-                Debug,
-            )]
-            # [codec (crate = :: subxt :: ext :: codec)]
-            #[decode_as_type(crate_path = ":: subxt :: ext :: scale_decode")]
-            #[encode_as_type(crate_path = ":: subxt :: ext :: scale_encode")]
-            #[doc = "The sudo key has been updated."]
-            pub struct KeyChanged {
-                pub old_sudoer: ::core::option::Option<::subxt::utils::AccountId32>,
-            }
-            impl ::subxt::events::StaticEvent for KeyChanged {
-                const PALLET: &'static str = "Sudo";
-                const EVENT: &'static str = "KeyChanged";
-            }
-            #[derive(
-                :: subxt :: ext :: codec :: Decode,
-                :: subxt :: ext :: codec :: Encode,
-                :: subxt :: ext :: scale_decode :: DecodeAsType,
-                :: subxt :: ext :: scale_encode :: EncodeAsType,
-                Debug,
-            )]
-            # [codec (crate = :: subxt :: ext :: codec)]
-            #[decode_as_type(crate_path = ":: subxt :: ext :: scale_decode")]
-            #[encode_as_type(crate_path = ":: subxt :: ext :: scale_encode")]
-            #[doc = "A [sudo_as](Pallet::sudo_as) call just took place."]
-            pub struct SudoAsDone {
-                pub sudo_result:
-                    ::core::result::Result<(), runtime_types::sp_runtime::DispatchError>,
-            }
-            impl ::subxt::events::StaticEvent for SudoAsDone {
-                const PALLET: &'static str = "Sudo";
-                const EVENT: &'static str = "SudoAsDone";
-            }
-        }
-        pub mod storage {
-            use super::runtime_types;
-            pub struct StorageApi;
-            impl StorageApi {
-                #[doc = " The `AccountId` of the sudo key."]
-                pub fn key(
-                    &self,
-                ) -> ::subxt::storage::address::Address<
-                    ::subxt::storage::address::StaticStorageMapKey,
-                    ::subxt::utils::AccountId32,
-                    ::subxt::storage::address::Yes,
-                    (),
-                    (),
-                > {
-                    ::subxt::storage::address::Address::new_static(
-                        "Sudo",
-                        "Key",
-                        vec![],
-                        [
-                            72u8, 14u8, 225u8, 162u8, 205u8, 247u8, 227u8, 105u8, 116u8, 57u8, 4u8,
-                            31u8, 84u8, 137u8, 227u8, 228u8, 133u8, 245u8, 206u8, 227u8, 117u8,
-                            36u8, 252u8, 151u8, 107u8, 15u8, 180u8, 4u8, 4u8, 152u8, 195u8, 144u8,
                         ],
                     )
                 }
@@ -8724,13 +8383,13 @@ pub mod api {
             }
         }
     }
-    pub mod blobs {
+    pub mod blob {
         use super::root_mod;
         use super::runtime_types;
         #[doc = "The `Error` enum of this pallet."]
-        pub type Error = runtime_types::pallet_sugondat_blobs::pallet::Error;
+        pub type Error = runtime_types::pallet_sugondat_blob::pallet::Error;
         #[doc = "Contains a variant per dispatchable extrinsic that this pallet has."]
-        pub type Call = runtime_types::pallet_sugondat_blobs::pallet::Call;
+        pub type Call = runtime_types::pallet_sugondat_blob::pallet::Call;
         pub mod calls {
             use super::root_mod;
             use super::runtime_types;
@@ -8754,7 +8413,7 @@ pub mod api {
                     >,
                 }
                 impl ::subxt::blocks::StaticExtrinsic for SubmitBlob {
-                    const PALLET: &'static str = "Blobs";
+                    const PALLET: &'static str = "Blob";
                     const CALL: &'static str = "submit_blob";
                 }
             }
@@ -8769,7 +8428,7 @@ pub mod api {
                     >,
                 ) -> ::subxt::tx::Payload<types::SubmitBlob> {
                     ::subxt::tx::Payload::new_static(
-                        "Blobs",
+                        "Blob",
                         "submit_blob",
                         types::SubmitBlob { namespace_id, blob },
                         [
@@ -8782,7 +8441,7 @@ pub mod api {
             }
         }
         #[doc = "The `Event` enum of this pallet"]
-        pub type Event = runtime_types::pallet_sugondat_blobs::pallet::Event;
+        pub type Event = runtime_types::pallet_sugondat_blob::pallet::Event;
         pub mod events {
             use super::runtime_types;
             #[derive(
@@ -8804,7 +8463,7 @@ pub mod api {
                 pub blob_hash: [::core::primitive::u8; 32usize],
             }
             impl ::subxt::events::StaticEvent for BlobStored {
-                const PALLET: &'static str = "Blobs";
+                const PALLET: &'static str = "Blob";
                 const EVENT: &'static str = "BlobStored";
             }
         }
@@ -8823,7 +8482,7 @@ pub mod api {
                     (),
                 > {
                     ::subxt::storage::address::Address::new_static(
-                        "Blobs",
+                        "Blob",
                         "TotalBlobsSize",
                         vec![],
                         [
@@ -8839,7 +8498,7 @@ pub mod api {
                 ) -> ::subxt::storage::address::Address<
                     ::subxt::storage::address::StaticStorageMapKey,
                     runtime_types::bounded_collections::bounded_vec::BoundedVec<
-                        runtime_types::pallet_sugondat_blobs::pallet::SubmittedBlobMetadata<
+                        runtime_types::pallet_sugondat_blob::pallet::SubmittedBlobMetadata<
                             ::subxt::utils::AccountId32,
                         >,
                     >,
@@ -8848,7 +8507,7 @@ pub mod api {
                     (),
                 > {
                     ::subxt::storage::address::Address::new_static(
-                        "Blobs",
+                        "Blob",
                         "BlobList",
                         vec![],
                         [
@@ -8868,7 +8527,7 @@ pub mod api {
                 #[doc = " The maximum number of blobs per block."]
                 pub fn max_blobs(&self) -> ::subxt::constants::Address<::core::primitive::u32> {
                     ::subxt::constants::Address::new_static(
-                        "Blobs",
+                        "Blob",
                         "MaxBlobs",
                         [
                             98u8, 252u8, 116u8, 72u8, 26u8, 180u8, 225u8, 83u8, 200u8, 157u8,
@@ -8881,7 +8540,7 @@ pub mod api {
                 #[doc = " The maximum number of bytes in a blob."]
                 pub fn max_blob_size(&self) -> ::subxt::constants::Address<::core::primitive::u32> {
                     ::subxt::constants::Address::new_static(
-                        "Blobs",
+                        "Blob",
                         "MaxBlobSize",
                         [
                             98u8, 252u8, 116u8, 72u8, 26u8, 180u8, 225u8, 83u8, 200u8, 157u8,
@@ -8896,7 +8555,7 @@ pub mod api {
                     &self,
                 ) -> ::subxt::constants::Address<::core::primitive::u32> {
                     ::subxt::constants::Address::new_static(
-                        "Blobs",
+                        "Blob",
                         "MaxTotalBlobSize",
                         [
                             98u8, 252u8, 116u8, 72u8, 26u8, 180u8, 225u8, 83u8, 200u8, 157u8,
@@ -10632,94 +10291,7 @@ pub mod api {
                 }
             }
         }
-        pub mod pallet_sudo {
-            use super::runtime_types;
-            pub mod pallet {
-                use super::runtime_types;
-                #[derive(
-                    :: subxt :: ext :: codec :: Decode,
-                    :: subxt :: ext :: codec :: Encode,
-                    :: subxt :: ext :: scale_decode :: DecodeAsType,
-                    :: subxt :: ext :: scale_encode :: EncodeAsType,
-                    Debug,
-                )]
-                # [codec (crate = :: subxt :: ext :: codec)]
-                #[decode_as_type(crate_path = ":: subxt :: ext :: scale_decode")]
-                #[encode_as_type(crate_path = ":: subxt :: ext :: scale_encode")]
-                #[doc = "Contains a variant per dispatchable extrinsic that this pallet has."]
-                pub enum Call {
-                    #[codec(index = 0)]
-                    #[doc = "See [`Pallet::sudo`]."]
-                    sudo {
-                        call: ::std::boxed::Box<runtime_types::sugondat_runtime::RuntimeCall>,
-                    },
-                    #[codec(index = 1)]
-                    #[doc = "See [`Pallet::sudo_unchecked_weight`]."]
-                    sudo_unchecked_weight {
-                        call: ::std::boxed::Box<runtime_types::sugondat_runtime::RuntimeCall>,
-                        weight: runtime_types::sp_weights::weight_v2::Weight,
-                    },
-                    #[codec(index = 2)]
-                    #[doc = "See [`Pallet::set_key`]."]
-                    set_key {
-                        new: ::subxt::utils::MultiAddress<::subxt::utils::AccountId32, ()>,
-                    },
-                    #[codec(index = 3)]
-                    #[doc = "See [`Pallet::sudo_as`]."]
-                    sudo_as {
-                        who: ::subxt::utils::MultiAddress<::subxt::utils::AccountId32, ()>,
-                        call: ::std::boxed::Box<runtime_types::sugondat_runtime::RuntimeCall>,
-                    },
-                }
-                #[derive(
-                    :: subxt :: ext :: codec :: Decode,
-                    :: subxt :: ext :: codec :: Encode,
-                    :: subxt :: ext :: scale_decode :: DecodeAsType,
-                    :: subxt :: ext :: scale_encode :: EncodeAsType,
-                    Debug,
-                )]
-                # [codec (crate = :: subxt :: ext :: codec)]
-                #[decode_as_type(crate_path = ":: subxt :: ext :: scale_decode")]
-                #[encode_as_type(crate_path = ":: subxt :: ext :: scale_encode")]
-                #[doc = "Error for the Sudo pallet"]
-                pub enum Error {
-                    #[codec(index = 0)]
-                    #[doc = "Sender must be the Sudo account"]
-                    RequireSudo,
-                }
-                #[derive(
-                    :: subxt :: ext :: codec :: Decode,
-                    :: subxt :: ext :: codec :: Encode,
-                    :: subxt :: ext :: scale_decode :: DecodeAsType,
-                    :: subxt :: ext :: scale_encode :: EncodeAsType,
-                    Debug,
-                )]
-                # [codec (crate = :: subxt :: ext :: codec)]
-                #[decode_as_type(crate_path = ":: subxt :: ext :: scale_decode")]
-                #[encode_as_type(crate_path = ":: subxt :: ext :: scale_encode")]
-                #[doc = "The `Event` enum of this pallet"]
-                pub enum Event {
-                    #[codec(index = 0)]
-                    #[doc = "A sudo call just took place."]
-                    Sudid {
-                        sudo_result:
-                            ::core::result::Result<(), runtime_types::sp_runtime::DispatchError>,
-                    },
-                    #[codec(index = 1)]
-                    #[doc = "The sudo key has been updated."]
-                    KeyChanged {
-                        old_sudoer: ::core::option::Option<::subxt::utils::AccountId32>,
-                    },
-                    #[codec(index = 2)]
-                    #[doc = "A [sudo_as](Pallet::sudo_as) call just took place."]
-                    SudoAsDone {
-                        sudo_result:
-                            ::core::result::Result<(), runtime_types::sp_runtime::DispatchError>,
-                    },
-                }
-            }
-        }
-        pub mod pallet_sugondat_blobs {
+        pub mod pallet_sugondat_blob {
             use super::runtime_types;
             pub mod pallet {
                 use super::runtime_types;
@@ -14832,8 +14404,6 @@ pub mod api {
                 ParachainInfo(runtime_types::parachain_info::pallet::Call),
                 #[codec(index = 10)]
                 Balances(runtime_types::pallet_balances::pallet::Call),
-                #[codec(index = 15)]
-                Sudo(runtime_types::pallet_sudo::pallet::Call),
                 #[codec(index = 21)]
                 CollatorSelection(runtime_types::pallet_collator_selection::pallet::Call),
                 #[codec(index = 22)]
@@ -14847,7 +14417,7 @@ pub mod api {
                 #[codec(index = 33)]
                 DmpQueue(runtime_types::cumulus_pallet_dmp_queue::pallet::Call),
                 #[codec(index = 40)]
-                Blobs(runtime_types::pallet_sugondat_blobs::pallet::Call),
+                Blob(runtime_types::pallet_sugondat_blob::pallet::Call),
             }
             #[derive(
                 :: subxt :: ext :: codec :: Decode,
@@ -14866,8 +14436,6 @@ pub mod api {
                 ParachainSystem(runtime_types::cumulus_pallet_parachain_system::pallet::Error),
                 #[codec(index = 10)]
                 Balances(runtime_types::pallet_balances::pallet::Error),
-                #[codec(index = 15)]
-                Sudo(runtime_types::pallet_sudo::pallet::Error),
                 #[codec(index = 21)]
                 CollatorSelection(runtime_types::pallet_collator_selection::pallet::Error),
                 #[codec(index = 22)]
@@ -14881,7 +14449,7 @@ pub mod api {
                 #[codec(index = 33)]
                 DmpQueue(runtime_types::cumulus_pallet_dmp_queue::pallet::Error),
                 #[codec(index = 40)]
-                Blobs(runtime_types::pallet_sugondat_blobs::pallet::Error),
+                Blob(runtime_types::pallet_sugondat_blob::pallet::Error),
             }
             #[derive(
                 :: subxt :: ext :: codec :: Decode,
@@ -14902,8 +14470,6 @@ pub mod api {
                 Balances(runtime_types::pallet_balances::pallet::Event),
                 #[codec(index = 11)]
                 TransactionPayment(runtime_types::pallet_transaction_payment::pallet::Event),
-                #[codec(index = 15)]
-                Sudo(runtime_types::pallet_sudo::pallet::Event),
                 #[codec(index = 21)]
                 CollatorSelection(runtime_types::pallet_collator_selection::pallet::Event),
                 #[codec(index = 22)]
@@ -14917,19 +14483,8 @@ pub mod api {
                 #[codec(index = 33)]
                 DmpQueue(runtime_types::cumulus_pallet_dmp_queue::pallet::Event),
                 #[codec(index = 40)]
-                Blobs(runtime_types::pallet_sugondat_blobs::pallet::Event),
+                Blob(runtime_types::pallet_sugondat_blob::pallet::Event),
             }
-            #[derive(
-                :: subxt :: ext :: codec :: Decode,
-                :: subxt :: ext :: codec :: Encode,
-                :: subxt :: ext :: scale_decode :: DecodeAsType,
-                :: subxt :: ext :: scale_encode :: EncodeAsType,
-                Debug,
-            )]
-            # [codec (crate = :: subxt :: ext :: codec)]
-            #[decode_as_type(crate_path = ":: subxt :: ext :: scale_decode")]
-            #[encode_as_type(crate_path = ":: subxt :: ext :: scale_encode")]
-            pub enum RuntimeHoldReason {}
             #[derive(
                 :: subxt :: ext :: codec :: Decode,
                 :: subxt :: ext :: codec :: Encode,

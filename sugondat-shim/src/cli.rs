@@ -11,6 +11,10 @@ struct Cli {
     command: Commands,
 }
 
+/// The environment variable used to override the default port to listen to when serving or to
+/// connect to when running RPCs.
+const SUGONDAT_SHIM_PORT_ENV: &str = "SUGONDAT_SHIM_PORT";
+
 /// Common parameters for the adapter subcommands.
 ///
 /// It's not declared on the `Cli` struct with `clap(flatten)` because of how the syntax
@@ -25,7 +29,7 @@ pub struct AdapterServerParams {
     #[clap(
         short,
         long,
-        env = "SUGONDAT_SHIM_PORT",
+        env = SUGONDAT_SHIM_PORT_ENV,
         default_value = "10995",
         group = "listen"
     )]

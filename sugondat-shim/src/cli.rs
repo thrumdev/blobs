@@ -100,6 +100,11 @@ pub mod serve {
 pub mod query {
     //! CLI definition for the `query` subcommand.
 
+    // TODO: I envision several subcommands here. For example:
+    // - query block <block_hash/number> — returns the information about a block and header.
+    // - query blob <id> - returns the blob for a given key. The key here is the same sense as
+    //   described here https://github.com/thrumdev/sugondat/issues/9#issuecomment-1814005570.
+
     use super::{SugondatRpcParams, ENV_SUGONDAT_NAMESPACE};
     use clap::{Args, Subcommand};
 

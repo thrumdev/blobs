@@ -1,3 +1,4 @@
+use anyhow::Context;
 use subxt::{backend::rpc::RpcClient, rpc_params, utils::H256, OnlineClient};
 use sugondat_nmt::Namespace;
 use sugondat_subxt::{
@@ -78,11 +79,13 @@ impl Client {
         })
     }
 
+    /// Submit a blob with the given namespace. Returns a block hash in which the extrinsic was
+    /// included.
     pub async fn submit_blob(
         &self,
         blob: Vec<u8>,
         namespace: sugondat_nmt::Namespace,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<[u8; 32]> {
         use subxt_signer::sr25519::dev;
 
         let namespace_id = namespace.namespace_id();
@@ -91,14 +94,21 @@ impl Client {
             .submit_blob(namespace_id, BoundedVec(blob));
 
         let from = dev::alice();
-        let _events = self
+        let signed = self
             .subxt
             .tx()
-            .sign_and_submit_then_watch_default(&extrinsic, &from)
-            .await?
+            .create_signed(&extrinsic, &from, Default::default())
+            .await
+            .with_context(|| format!("failed to validate or sign extrinsic with dev key pair"))?;
+
+        let events = signed
+            .submit_and_watch()
+            .await
+            .with_context(|| format!("failed to submit extrinsic"))?
             .wait_for_finalized_success()
             .await?;
-        Ok(())
+        let block_hash = events.block_hash();
+        Ok(block_hash.0)
     }
 }
 

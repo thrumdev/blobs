@@ -6,8 +6,12 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+sugondat-nmt = { path = "../sugondat-nmt", features = ["serde"] }
+sugondat-subxt = { path = "../sugondat-subxt" }
+sugondat-shim-common-sovereign = { path = "common/sovereign", features = ["server"] }
+
 anyhow = "1.0.75"
-clap = { version = "4.4.8", features = ["derive", "env", "wrap_help"] }
+clap = { version = "4.4.8", features = ["derive", "env"] }
 futures = "0.3.29"
 jsonrpsee = { version = "0.20.3", features = ["ws-client", "server"] }
 tracing = "0.1.40"
@@ -17,7 +21,4 @@ async-trait = "0.1.74"
 subxt = { version = "0.32.1" }
 subxt-signer = {version = "0.32.1", features = ["subxt"] }
 sha2 = "0.10.8"
-
-sugondat-nmt = { path = "../sugondat-nmt", features = ["serde"] }
-sugondat-subxt = { path = "../sugondat-subxt" }
-sugondat-shim-common-sovereign = { path = "common/sovereign", features = ["server"] }
+hex = "0.4.3"

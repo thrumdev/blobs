@@ -1,20 +1,12 @@
 use crate::{
-    adapters::sovereign::SovereignAdapter, cli::AdapterServerParams, sugondat_rpc::Client,
+    adapters::sovereign::SovereignAdapter,
+    cli::{serve::Params, AdapterServerParams},
+    sugondat_rpc::Client,
 };
-use clap::Args;
+
 use jsonrpsee::{server::Server, Methods};
 use sugondat_shim_common_sovereign::SovereignRPCServer;
 use tracing::{debug, info};
-
-#[derive(Debug, Args)]
-pub struct Params {
-    /// The address of the sugondat-node to connect to.
-    #[clap(long, default_value = "ws://localhost:9944")]
-    node_url: String,
-
-    #[clap(flatten)]
-    adapter: AdapterServerParams,
-}
 
 pub async fn run(params: Params) -> anyhow::Result<()> {
     info!(
@@ -23,7 +15,7 @@ pub async fn run(params: Params) -> anyhow::Result<()> {
     );
     let listen_on = (params.adapter.address.as_str(), params.adapter.port);
     let server = Server::builder().build(listen_on).await?;
-    let client = connect_client(&params.node_url).await?;
+    let client = connect_client(&params.rpc.node_url).await?;
     let handle = server.start(init_adapters(client, &params.adapter));
     handle.stopped().await;
     Ok(())

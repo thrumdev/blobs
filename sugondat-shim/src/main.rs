@@ -5,5 +5,5 @@ mod sugondat_rpc;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    cli::run().await
+    cmd::dispatch().await
 }

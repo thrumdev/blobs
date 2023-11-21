@@ -8,12 +8,8 @@ edition = "2021"
 [dependencies]
 parity-scale-codec = "3.6.3"
 # The only required dependency for a DA adapter is the Sovereign SDK...
-sov-rollup-interface =  { git = "https://github.com/Sovereign-Labs/sovereign-sdk", rev = "6058b31" }
+sov-rollup-interface = { git = "https://github.com/Sovereign-Labs/sovereign-sdk", rev = "6058b31" }
 
-sugondat-subxt = { path = "../sugondat-subxt", optional = true }
-subxt = {version = "0.32.1", optional = true }
-subxt-signer = {version = "0.32.1", optional = true, features = ["subxt"] }
-sp-keyring = { git = "https://github.com/paritytech/polkadot-sdk", optional = true, default-features = false, branch = "release-polkadot-v1.2.0" }
 tracing = "0.1.37"
 serde = { version = "1", features = ["derive"] }
 hex = { version = "0.4.3", features = ["serde"] }
@@ -25,13 +21,23 @@ bytes = { version = "1", features = ["serde"] }
 
 sha2 = { version = "0.10.6", default-features = false }
 sugondat-nmt = { path = "../sugondat-nmt", default-features = false }
-
+jsonrpsee = { version = "0.20.3", optional = true, features = ["ws-client"] }
+tokio = { version = "1", optional = true }
+sugondat-shim-common-sovereign = { path = "../sugondat-shim/common/sovereign", optional = true, default-features = false, features = [
+    "client",
+] }
 anyhow = "1.0.68"
 async-trait = "0.1.71"
-tokio = { version = "1", optional = true }
 digest = "0.10.7"
 
 [features]
 default = ["native"]
-native = ["sov-rollup-interface/native", "sugondat-nmt/serde", "sugondat-nmt/native", "dep:sugondat-subxt", "dep:subxt", "dep:subxt-signer", "dep:sp-keyring", "dep:tokio"]
+native = [
+    "sov-rollup-interface/native",
+    "sugondat-nmt/serde",
+    "sugondat-nmt/native",
+    "dep:tokio",
+    "dep:jsonrpsee",
+    "dep:sugondat-shim-common-sovereign",
+]
 verifier = ["sugondat-nmt/serde"]

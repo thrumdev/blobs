@@ -10,7 +10,20 @@ pub struct Client {
 
 struct Inner {
     url: String,
-    client: Option<sugondat_subxt::Client>,
+    client: Option<ClientRef>,
+}
+
+#[derive(Clone)]
+pub struct ClientRef {
+    client: Arc<jsonrpsee::ws_client::WsClient>,
+}
+
+impl std::ops::Deref for ClientRef {
+    type Target = jsonrpsee::ws_client::WsClient;
+
+    fn deref(&self) -> &Self::Target {
+        &self.client
+    }
 }
 
 impl Client {
@@ -20,18 +33,18 @@ impl Client {
         }
     }
 
-    pub async fn url(&self) -> String {
-        let inner = self.inner.lock().await;
-        inner.url.clone()
-    }
-
-    pub async fn client(&self) -> anyhow::Result<sugondat_subxt::Client> {
+    pub async fn ensure_connected(&self) -> anyhow::Result<ClientRef> {
         let mut inner = self.inner.lock().await;
         if let Some(client) = &inner.client {
             return Ok(client.clone());
         }
 
-        let client = sugondat_subxt::Client::from_url(&inner.url).await?;
+        let client = jsonrpsee::ws_client::WsClientBuilder::new()
+            .build(inner.url.clone())
+            .await?;
+        let client = ClientRef {
+            client: Arc::new(client),
+        };
         inner.client = Some(client.clone());
         Ok(client)
     }

@@ -1,7 +1,9 @@
-use jsonrpsee::{proc_macros::rpc, types::ErrorObjectOwned};
+use jsonrpsee::proc_macros::rpc;
 
 #[cfg(not(any(feature = "server", feature = "client")))]
 compile_error!("either feature \"server\" or \"client\" must be enabled");
+
+pub type JsonRPCError = jsonrpsee::types::ErrorObjectOwned;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Block {
@@ -31,12 +33,12 @@ pub trait SovereignRPC {
         &self,
         height: u64,
         namespace: sugondat_nmt::Namespace,
-    ) -> Result<Block, ErrorObjectOwned>;
+    ) -> Result<Block, JsonRPCError>;
 
     #[method(name = "sovereign_submitBlob")]
     async fn submit_blob(
         &self,
         blob: Vec<u8>,
         namespace: sugondat_nmt::Namespace,
-    ) -> Result<(), ErrorObjectOwned>;
+    ) -> Result<(), JsonRPCError>;
 }

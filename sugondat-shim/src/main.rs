@@ -1,6 +1,6 @@
 mod adapters;
 mod cli;
-mod serve;
+mod cmd;
 mod sugondat_rpc;
 
 #[tokio::main]

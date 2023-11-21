@@ -1,4 +1,4 @@
-use crate::serve;
+use crate::cmd::serve;
 use anyhow::bail;
 use clap::{Parser, Subcommand};
 use tracing_subscriber::fmt;

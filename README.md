@@ -9,6 +9,12 @@ Now you can launch 2 polkadot validators and one sugondat-chain collator
 ./zombienet.sh
 ```
 
+Then launch the sugondat-shim with:
+``` sh
+cd sugondat-shim/
+cargo run -p sugondat-shim serve --node-url=ws://localhost:9988/
+``````
+
 launch the demo rollup with:
 ``` sh
 cd demo/demo-rollup

@@ -84,7 +84,7 @@ pub struct AdapterServerParams {
 #[derive(clap::Args, Debug)]
 pub struct SugondatRpcParams {
     /// The address of the sugondat-node to connect to.
-    #[clap(long, default_value = "ws://localhost:9944", env = ENV_SUGONDAT_NODE_URL)]
+    #[clap(long, default_value = "ws://localhost:9988", env = ENV_SUGONDAT_NODE_URL)]
     pub node_url: String,
 }
 

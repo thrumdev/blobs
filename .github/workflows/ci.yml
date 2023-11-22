@@ -21,5 +21,5 @@ jobs:
       - run: rustup update ${{ matrix.toolchain }} && rustup default ${{ matrix.toolchain }}
       - run: rustup target add wasm32-unknown-unknown
       - run: rustup install nightly && rustup target add wasm32-unknown-unknown --toolchain nightly
-      - run: cargo build --verbose --all
-      - run: cargo test --verbose --all
+      - run: cargo build --verbose --workspace
+      - run: cargo test --verbose --workspace

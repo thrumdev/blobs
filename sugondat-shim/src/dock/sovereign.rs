@@ -4,19 +4,19 @@ use tracing::info;
 
 use crate::{key::Keypair, sugondat_rpc};
 
-pub struct SovereignAdapter {
+pub struct SovereignDock {
     client: sugondat_rpc::Client,
     submit_key: Option<Keypair>,
 }
 
-impl SovereignAdapter {
+impl SovereignDock {
     pub fn new(client: sugondat_rpc::Client, submit_key: Option<Keypair>) -> Self {
         Self { client, submit_key }
     }
 }
 
 #[async_trait::async_trait]
-impl SovereignRPCServer for SovereignAdapter {
+impl SovereignRPCServer for SovereignDock {
     async fn get_block(
         &self,
         height: u64,

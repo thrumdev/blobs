@@ -8,8 +8,8 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build_and_test:
-    name: Sugondat - latest
+  test:
+    name: test
     runs-on: ubuntu-latest
     strategy:
       matrix:

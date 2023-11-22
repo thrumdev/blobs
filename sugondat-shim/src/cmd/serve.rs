@@ -1,5 +1,5 @@
 use crate::{
-    adapters::sovereign::SovereignAdapter,
+    dock::sovereign::SovereignAdapter,
     cli::{serve::Params, AdapterServerParams},
     key::Keypair,
     sugondat_rpc::Client,
@@ -29,7 +29,7 @@ async fn connect_client(url: &str) -> anyhow::Result<Client> {
 }
 
 fn init_adapters(
-    client: Client, 
+    client: Client,
     adapter: &AdapterServerParams,
     maybe_key: Option<Keypair>,
 ) -> Methods {

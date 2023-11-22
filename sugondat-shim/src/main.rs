@@ -1,4 +1,4 @@
-mod adapters;
+mod dock;
 mod cli;
 mod cmd;
 mod key;

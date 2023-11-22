@@ -46,6 +46,8 @@ pub struct Cli {
 pub struct KeyManagementParams {
     /// Use the Alice development key to sign blob transactions.
     ///
+    /// This key is enabled when running sugondat-node in the local development mode.
+    ///
     /// Cannot be used in conjunction with the `--submit-private-key` flag.
     #[arg(long)]
     pub submit_dev_alice: bool,

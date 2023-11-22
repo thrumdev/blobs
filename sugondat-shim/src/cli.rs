@@ -37,9 +37,32 @@ pub struct Cli {
     pub command: Commands,
 }
 
+/// Common parameters for key management subcommand.
+#[derive(clap::Args, Debug)]
+#[group(required = true, multiple = false)]
+pub struct KeyManagementParams {
+    /// Use the Alice development key to sign blob transactions.
+    ///
+    /// Cannot be used in conjunction with the `--submit-private-key` flag.
+    #[arg(long)]
+    pub submit_dev_alice: bool,
+
+    /// Use the keyfile at the provided path to sign blob transactions.
+    ///
+    /// The keyfile should be 32 bytes of unencrypted, hex-encoded sr25519
+    /// seed material.
+    ///
+    /// Cannot be used in conjunction with the `--submit-dev-alice` flag.
+    #[arg(long, value_name = "PATH")]
+    pub submit_private_key: Option<std::path::PathBuf>,
+}
+
 /// Common parameters for the adapter subcommands.
 #[derive(clap::Args, Debug)]
 pub struct AdapterServerParams {
+    #[clap(flatten)]
+    pub key_management: KeyManagementParams,
+
     /// The address on which the shim should listen for incoming connections from the rollup nodes.
     #[clap(short, long, default_value = "127.0.0.1", group = "listen")]
     pub address: String,
@@ -53,7 +76,8 @@ pub struct AdapterServerParams {
         group = "listen"
     )]
     pub port: u16,
-    // TODO: e.g. --submit-key, prometheus stuff, enabled adapters, etc.
+
+    // TODO: e.g. prometheus stuff, enabled adapters, etc.
 }
 
 /// Common parameters for that commands that connect to the sugondat-node.
@@ -105,7 +129,7 @@ pub mod query {
     // - query blob <id> - returns the blob for a given key. The key here is the same sense as
     //   described here https://github.com/thrumdev/sugondat/issues/9#issuecomment-1814005570.
 
-    use super::{SugondatRpcParams, ENV_SUGONDAT_NAMESPACE};
+    use super::{SugondatRpcParams, KeyManagementParams, ENV_SUGONDAT_NAMESPACE};
     use clap::{Args, Subcommand};
 
     #[derive(Debug, Args)]
@@ -123,7 +147,7 @@ pub mod query {
     pub mod submit {
         //! CLI definition for the `query submit` subcommand.
 
-        use super::{SugondatRpcParams, ENV_SUGONDAT_NAMESPACE};
+        use super::{SugondatRpcParams, KeyManagementParams, ENV_SUGONDAT_NAMESPACE};
         use clap::Args;
 
         #[derive(Debug, Args)]
@@ -141,6 +165,9 @@ pub mod query {
 
             /// The file path of the blob to submit. Pass `-` to read from stdin.
             pub blob_path: String,
+
+            #[clap(flatten)]
+            pub key_management: KeyManagementParams,
         }
     }
 }

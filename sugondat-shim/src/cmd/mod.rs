@@ -1,4 +1,5 @@
 use crate::cli::{Cli, Commands};
+use crate::key;
 use clap::Parser;
 
 pub mod query;
@@ -28,4 +29,17 @@ fn init_logging() -> anyhow::Result<()> {
         .with(filter)
         .try_init()?;
     Ok(())
+}
+
+fn fetch_key(params: crate::cli::KeyManagementParams) -> anyhow::Result<key::Keypair> {
+    if params.submit_dev_alice {
+        return Ok(key::alice())
+    }
+
+    if let Some(path) = params.submit_private_key {
+        return key::load(path)
+    }
+
+    // sanity: clap is supposed to prevent this
+    return Err(anyhow::anyhow!("No blob submission key specified. See --help"))
 }

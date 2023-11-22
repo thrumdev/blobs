@@ -8,6 +8,7 @@ pub async fn run(params: Params) -> anyhow::Result<()> {
         blob_path,
         namespace,
         rpc,
+        key_management,
     } = params;
     let blob = read_blob(&blob_path)
         .with_context(|| format!("cannot read blob file path '{}'", blob_path))?;

@@ -4,6 +4,7 @@ use sugondat_nmt::Namespace;
 use sugondat_subxt::{
     sugondat::runtime_types::bounded_collections::bounded_vec::BoundedVec, Header,
 };
+use crate::key::Keypair;
 
 // NOTE: we specifically avoid prolifiration of subxt types around the codebase. To that end, we
 //       avoid returning H256 and instead return [u8; 32] directly.
@@ -79,25 +80,24 @@ impl Client {
         })
     }
 
-    /// Submit a blob with the given namespace. Returns a block hash in which the extrinsic was
-    /// included.
+    /// Submit a blob with the given namespace and signed with the given key.
+    ///
+    /// Returns a block hash in which the extrinsic was included.
     pub async fn submit_blob(
         &self,
         blob: Vec<u8>,
         namespace: sugondat_nmt::Namespace,
+        key: Keypair,
     ) -> anyhow::Result<[u8; 32]> {
-        use subxt_signer::sr25519::dev;
-
         let namespace_id = namespace.namespace_id();
         let extrinsic = sugondat_subxt::sugondat::tx()
             .blob()
             .submit_blob(namespace_id, BoundedVec(blob));
 
-        let from = dev::alice();
         let signed = self
             .subxt
             .tx()
-            .create_signed(&extrinsic, &from, Default::default())
+            .create_signed(&extrinsic, &key, Default::default())
             .await
             .with_context(|| format!("failed to validate or sign extrinsic with dev key pair"))?;
 

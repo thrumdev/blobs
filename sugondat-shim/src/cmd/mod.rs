@@ -31,15 +31,12 @@ fn init_logging() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn fetch_key(params: crate::cli::KeyManagementParams) -> anyhow::Result<key::Keypair> {
+fn load_key(params: crate::cli::KeyManagementParams) -> anyhow::Result<Option<key::Keypair>> {
     if params.submit_dev_alice {
-        return Ok(key::alice())
+        Ok(Some(key::alice()))
+    } else if let Some(path) = params.submit_private_key {
+        Ok(Some(key::load(path)?))
+    } else {
+        Ok(None)
     }
-
-    if let Some(path) = params.submit_private_key {
-        return key::load(path)
-    }
-
-    // sanity: clap is supposed to prevent this
-    return Err(anyhow::anyhow!("No blob submission key specified. See --help"))
 }

@@ -1,6 +1,7 @@
 mod adapters;
 mod cli;
 mod cmd;
+mod key;
 mod sugondat_rpc;
 
 #[tokio::main]

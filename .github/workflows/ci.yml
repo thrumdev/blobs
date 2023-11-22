@@ -8,6 +8,13 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  fmt:
+    name: fmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: cargo fmt --version
+      - run: cargo fmt --all -- --check
   test:
     name: test
     runs-on: ubuntu-latest

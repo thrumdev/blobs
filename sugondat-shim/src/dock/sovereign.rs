@@ -1,16 +1,23 @@
-use jsonrpsee::types::ErrorObjectOwned;
+use jsonrpsee::{types::ErrorObjectOwned, Methods};
 use sugondat_shim_common_sovereign::{Block, SovereignRPCServer};
-use tracing::info;
+use tracing::{debug, info};
 
 use crate::{key::Keypair, sugondat_rpc};
 
-pub struct SovereignDock {
+/// Registers the sovereign dock in the given methods.
+pub fn register(methods: &mut Methods, config: &super::Config) {
+    debug!("enabling sovereign adapter dock");
+    let dock = SovereignDock::new(config.client.clone(), config.submit_key.clone());
+    methods.merge(dock.into_rpc()).unwrap();
+}
+
+struct SovereignDock {
     client: sugondat_rpc::Client,
     submit_key: Option<Keypair>,
 }
 
 impl SovereignDock {
-    pub fn new(client: sugondat_rpc::Client, submit_key: Option<Keypair>) -> Self {
+    fn new(client: sugondat_rpc::Client, submit_key: Option<Keypair>) -> Self {
         Self { client, submit_key }
     }
 }
@@ -54,14 +61,19 @@ impl SovereignRPCServer for SovereignDock {
 
         let submit_key = match self.submit_key.as_ref() {
             Some(k) => k.clone(),
-            None => return Err(ErrorObjectOwned::owned(
-                jsonrpsee::types::error::INTERNAL_ERROR_CODE,
-                "Internal Error: no key for signing blobs",
-                None::<()>,
-            )),
+            None => {
+                return Err(ErrorObjectOwned::owned(
+                    jsonrpsee::types::error::INTERNAL_ERROR_CODE,
+                    "Internal Error: no key for signing blobs",
+                    None::<()>,
+                ))
+            }
         };
 
-        self.client.submit_blob(blob, namespace, submit_key).await.unwrap();
+        self.client
+            .submit_blob(blob, namespace, submit_key)
+            .await
+            .unwrap();
         Ok(())
     }
 }

@@ -38,7 +38,7 @@ pub struct Cli {
 }
 
 /// Common parameters for key management in a subcommand.
-// TODO: for adapters, this should not be required and for query submit it should
+// TODO: for docks, this should not be required and for query submit it should
 // be. Unfortunately, clap doesn't support this easily so it is handled manually
 // within the command execution for submit.
 #[derive(clap::Args, Debug)]
@@ -62,9 +62,9 @@ pub struct KeyManagementParams {
     pub submit_private_key: Option<std::path::PathBuf>,
 }
 
-/// Common parameters for the adapter subcommands.
+/// Common parameters for the subcommands that run docks.
 #[derive(clap::Args, Debug)]
-pub struct AdapterServerParams {
+pub struct DockParams {
     /// The address on which the shim should listen for incoming connections from the rollup nodes.
     #[clap(short, long, default_value = "127.0.0.1", group = "listen")]
     pub address: String,
@@ -79,7 +79,7 @@ pub struct AdapterServerParams {
     )]
     pub port: u16,
 
-    // TODO: e.g. prometheus stuff, enabled adapters, etc.
+    // TODO: e.g. prometheus stuff, enabled docks, etc.
 }
 
 /// Common parameters for that commands that connect to the sugondat-node.
@@ -90,8 +90,8 @@ pub struct SugondatRpcParams {
     pub node_url: String,
 }
 
-impl AdapterServerParams {
-    /// Whether the sovereign adapter should be enabled.
+impl DockParams {
+    /// Whether the sovereign dock should be enabled.
     pub fn enable_sovereign(&self) -> bool {
         true
     }
@@ -110,7 +110,7 @@ pub enum Commands {
 pub mod serve {
     //! CLI definition for the `serve` subcommand.
 
-    use super::{AdapterServerParams, KeyManagementParams, SugondatRpcParams};
+    use super::{DockParams, KeyManagementParams, SugondatRpcParams};
     use clap::Args;
 
     #[derive(Debug, Args)]
@@ -119,7 +119,7 @@ pub mod serve {
         pub rpc: SugondatRpcParams,
 
         #[clap(flatten)]
-        pub adapter: AdapterServerParams,
+        pub dock: DockParams,
 
         #[clap(flatten)]
         pub key_management: KeyManagementParams,

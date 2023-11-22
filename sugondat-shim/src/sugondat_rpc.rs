@@ -1,10 +1,10 @@
+use crate::key::Keypair;
 use anyhow::Context;
 use subxt::{backend::rpc::RpcClient, rpc_params, utils::H256, OnlineClient};
 use sugondat_nmt::Namespace;
 use sugondat_subxt::{
     sugondat::runtime_types::bounded_collections::bounded_vec::BoundedVec, Header,
 };
-use crate::key::Keypair;
 
 // NOTE: we specifically avoid prolifiration of subxt types around the codebase. To that end, we
 //       avoid returning H256 and instead return [u8; 32] directly.

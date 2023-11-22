@@ -1,8 +1,8 @@
 //! Key management: sr25519 account key used for signing blob submission
 //! transactions.
 
-use subxt_signer::sr25519::Seed;
 use std::path::Path;
+use subxt_signer::sr25519::Seed;
 
 pub use subxt_signer::sr25519::Keypair;
 

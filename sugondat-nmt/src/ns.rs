@@ -38,7 +38,6 @@ impl Namespace {
     }
 }
 
-
 impl fmt::Display for Namespace {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         // Print the namespace as a 4-byte hex string. We don't use `hex` crate here to avoid

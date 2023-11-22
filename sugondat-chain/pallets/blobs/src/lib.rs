@@ -143,8 +143,8 @@ pub mod pallet {
             }
 
             let Some(extrinsic_index) = <frame_system::Pallet<T>>::extrinsic_index() else {
-				return Err(Error::<T>::NoExtrinsicIndex.into())
-			};
+                return Err(Error::<T>::NoExtrinsicIndex.into());
+            };
 
             let total_blobs_size = TotalBlobsSize::<T>::get();
             if total_blobs_size + blob_len > T::MaxTotalBlobSize::get() {

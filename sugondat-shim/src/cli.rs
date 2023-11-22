@@ -78,7 +78,6 @@ pub struct DockParams {
         group = "listen"
     )]
     pub port: u16,
-
     // TODO: e.g. prometheus stuff, enabled docks, etc.
 }
 
@@ -134,7 +133,7 @@ pub mod query {
     // - query blob <id> - returns the blob for a given key. The key here is the same sense as
     //   described here https://github.com/thrumdev/sugondat/issues/9#issuecomment-1814005570.
 
-    use super::{SugondatRpcParams, KeyManagementParams, ENV_SUGONDAT_NAMESPACE};
+    use super::{KeyManagementParams, SugondatRpcParams, ENV_SUGONDAT_NAMESPACE};
     use clap::{Args, Subcommand};
 
     #[derive(Debug, Args)]
@@ -152,7 +151,7 @@ pub mod query {
     pub mod submit {
         //! CLI definition for the `query submit` subcommand.
 
-        use super::{SugondatRpcParams, KeyManagementParams, ENV_SUGONDAT_NAMESPACE};
+        use super::{KeyManagementParams, SugondatRpcParams, ENV_SUGONDAT_NAMESPACE};
         use clap::Args;
 
         #[derive(Debug, Args)]

@@ -1,6 +1,6 @@
-mod dock;
 mod cli;
 mod cmd;
+mod dock;
 mod key;
 mod sugondat_rpc;
 

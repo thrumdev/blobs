@@ -2,15 +2,16 @@ use jsonrpsee::types::ErrorObjectOwned;
 use sugondat_shim_common_sovereign::{Block, SovereignRPCServer};
 use tracing::info;
 
-use crate::sugondat_rpc;
+use crate::{key::Keypair, sugondat_rpc};
 
 pub struct SovereignAdapter {
     client: sugondat_rpc::Client,
+    submit_key: Option<Keypair>,
 }
 
 impl SovereignAdapter {
-    pub fn new(client: sugondat_rpc::Client) -> Self {
-        Self { client }
+    pub fn new(client: sugondat_rpc::Client, submit_key: Option<Keypair>) -> Self {
+        Self { client, submit_key }
     }
 }
 
@@ -50,7 +51,17 @@ impl SovereignRPCServer for SovereignAdapter {
         namespace: sugondat_nmt::Namespace,
     ) -> Result<(), ErrorObjectOwned> {
         info!("submit_blob({}, {:?})", blob.len(), namespace);
-        self.client.submit_blob(blob, namespace).await.unwrap();
+
+        let submit_key = match self.submit_key.as_ref() {
+            Some(k) => k.clone(),
+            None => return Err(ErrorObjectOwned::owned(
+                jsonrpsee::types::error::INTERNAL_ERROR_CODE,
+                "Internal Error: no key for signing blobs",
+                None::<()>,
+            )),
+        };
+
+        self.client.submit_blob(blob, namespace, submit_key).await.unwrap();
         Ok(())
     }
 }

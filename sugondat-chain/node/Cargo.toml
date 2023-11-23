@@ -77,11 +77,16 @@ substrate-build-script-utils = { git = "https://github.com/paritytech/polkadot-s
 [features]
 default = []
 runtime-benchmarks = [
-	"try-runtime-cli/try-runtime",
+	"frame-benchmarking-cli/runtime-benchmarks",
+	"frame-benchmarking/runtime-benchmarks",
 	"sugondat-runtime/runtime-benchmarks",
 	"polkadot-cli/runtime-benchmarks",
+	"polkadot-primitives/runtime-benchmarks",
+	"sc-service/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
 ]
 try-runtime = [
-	"try-runtime-cli/try-runtime",
-	"sugondat-runtime/try-runtime"
+	"sugondat-runtime/try-runtime",
+	"polkadot-cli/try-runtime",
+	"sp-runtime/try-runtime",
 ]

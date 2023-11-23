@@ -491,6 +491,7 @@ impl pallet_sugondat_blobs::Config for Runtime {
     type MaxBlobs = MaxBlobs;
     type MaxBlobSize = MaxBlobSize;
     type MaxTotalBlobSize = MaxTotalBlobSize;
+    type WeightInfo = pallet_sugondat_blobs::weights::SubstrateWeight<Runtime>;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -537,6 +538,7 @@ mod benches {
         [pallet_sudo, Sudo]
         [pallet_collator_selection, CollatorSelection]
         [cumulus_pallet_xcmp_queue, XcmpQueue]
+        [pallet_sugondat_blobs, Blobs]
     );
 }
 

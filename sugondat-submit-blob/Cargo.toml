@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 sugondat-da-adapter = { path = "../sugondat-da-adapter" }
-const-rollup-config = { path = "../demo/const-rollup-config" }
+const-rollup-config = { path = "../demo/sovereign/const-rollup-config" }
 sov-rollup-interface = { git = "https://github.com/Sovereign-Labs/sovereign-sdk", features = [
     "native",
 ], rev = "6058b31" }

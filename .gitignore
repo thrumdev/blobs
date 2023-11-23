@@ -5,6 +5,6 @@
 .envrc
 
 /zombienet
-/demo/target
-/demo/demo-rollup/demo_data
+/demo/sovereign/target
+/demo/sovereign/demo-rollup/demo_data
 /target

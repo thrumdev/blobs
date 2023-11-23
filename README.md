@@ -17,13 +17,13 @@ cargo run -p sugondat-shim -- serve --submit-dev-alice
 
 launch the demo rollup with:
 ``` sh
-cd demo/demo-rollup
+cd demo/sovereign/demo-rollup
 cargo run
 ```
 
 execute the test
 ```
-cd demo/demo-rollup
+cd demo/sovereign/demo-rollup
 ./test_create_token.sh
 ```
 
@@ -33,7 +33,7 @@ If you want to re-run zombienet and the demo rollup remember token
 
 ``` sh
 rm -r zombienet
-cd demo/demo-rollup
+cd demo/sovereign/demo-rollup
 # clean the ledger db
 make clean
 ```

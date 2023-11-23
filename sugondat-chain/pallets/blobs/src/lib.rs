@@ -7,16 +7,22 @@ pub use pallet::*;
 
 #[cfg(test)]
 mod mock;
+#[cfg(test)]
+mod tests;
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
+pub mod weights;
 
 #[frame_support::pallet]
 pub mod pallet {
-    use sp_std::prelude::*;
-
-    use frame_support::{dispatch::DispatchResultWithPostInfo, pallet_prelude::*};
+    pub use crate::weights::WeightInfo;
+    use frame_support::{
+        dispatch::DispatchResultWithPostInfo,
+        pallet_prelude::{ValueQuery, *},
+    };
     use frame_system::pallet_prelude::*;
+    use sp_std::prelude::*;
 
     /// Configure the pallet by specifying the parameters and types on which it depends.
     #[pallet::config]
@@ -35,6 +41,9 @@ pub mod pallet {
         /// The maximum number of bytes of all blobs in a block.
         #[pallet::constant]
         type MaxTotalBlobSize: Get<u32>;
+
+        // The weight information of this pallet.
+        type WeightInfo: WeightInfo;
     }
 
     #[pallet::pallet]
@@ -44,18 +53,22 @@ pub mod pallet {
     #[pallet::storage]
     pub type TotalBlobsSize<T: Config> = StorageValue<_, u32, ValueQuery>;
 
+    #[pallet::storage]
+    pub type TotalBlobs<T: Config> = StorageValue<_, u32, ValueQuery>;
+
     #[derive(Encode, Decode, TypeInfo, MaxEncodedLen, Clone)]
     pub struct SubmittedBlobMetadata<AccountId> {
-        who: AccountId,
-        extrinsic_index: u32,
-        namespace_id: u32,
-        blob_hash: [u8; 32],
+        pub who: AccountId,
+        pub extrinsic_index: u32,
+        pub namespace_id: u32,
+        pub blob_hash: [u8; 32],
     }
 
     /// The list of all submitted blobs.
     #[pallet::storage]
+    #[pallet::unbounded]
     pub type BlobList<T: Config> =
-        StorageValue<_, BoundedVec<SubmittedBlobMetadata<T::AccountId>, T::MaxBlobs>, ValueQuery>;
+        StorageValue<_, Vec<SubmittedBlobMetadata<T::AccountId>>, ValueQuery>;
 
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -102,16 +115,17 @@ pub mod pallet {
     #[pallet::hooks]
     impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
         fn on_initialize(_: BlockNumberFor<T>) -> Weight {
-            let weight = T::DbWeight::get().reads_writes(0, 2);
+            let weight = T::DbWeight::get().reads_writes(1, 0);
             TotalBlobsSize::<T>::kill();
+            TotalBlobs::<T>::kill();
             BlobList::<T>::kill();
             weight
         }
 
         fn on_finalize(_n: BlockNumberFor<T>) {
-            let blobs = BlobList::<T>::get();
-            let blobs = blobs
-                .into_iter()
+            let blobs_metadata = BlobList::<T>::get();
+            let blobs = blobs_metadata
+                .iter()
                 .map(|blob| sugondat_nmt::BlobMetadata {
                     namespace: sugondat_nmt::Namespace::with_namespace_id(blob.namespace_id),
                     leaf: sugondat_nmt::NmtLeaf {
@@ -121,6 +135,7 @@ pub mod pallet {
                     },
                 })
                 .collect::<Vec<_>>();
+
             let root = sugondat_nmt::tree_from_blobs(blobs).root();
             Self::deposit_nmt_digest(root);
         }
@@ -129,7 +144,17 @@ pub mod pallet {
     #[pallet::call]
     impl<T: Config> Pallet<T> {
         #[pallet::call_index(0)]
-        #[pallet::weight(Weight::from_parts(10_000, 0) + T::DbWeight::get().writes(1))]
+        // The main cost is the amount of elements in the BlobList,
+        // to split the cost among everyone the amount of already present element
+        // is set to half of the max possible elements
+        //
+        // To the submit_blob weight is added a flat cost relative to the on_finalize execution
+        // the amount is equal to the entire weight of on_finalized divided by 1/4 of the MaxBlobs
+        // this covers perfectly the on_finalize cost if on avarage 1/4 of the possible blobs are submitted in one block
+        #[pallet::weight(
+            T::WeightInfo::submit_blob(T::MaxBlobs::get() / 2, blob.len() as u32)
+            .saturating_add(T::WeightInfo::on_finalize(0) / (T::MaxBlobs::get() / 4) as u64)
+        )]
         pub fn submit_blob(
             origin: OriginFor<T>,
             namespace_id: u32,
@@ -146,6 +171,12 @@ pub mod pallet {
                 return Err(Error::<T>::NoExtrinsicIndex.into());
             };
 
+            let total_blobs = TotalBlobs::<T>::get();
+            if total_blobs + 1 > T::MaxBlobs::get() {
+                return Err(Error::<T>::MaxBlobsReached.into());
+            }
+            TotalBlobs::<T>::put(total_blobs + 1);
+
             let total_blobs_size = TotalBlobsSize::<T>::get();
             if total_blobs_size + blob_len > T::MaxTotalBlobSize::get() {
                 return Err(Error::<T>::MaxTotalBlobsSizeReached.into());
@@ -154,16 +185,12 @@ pub mod pallet {
 
             let blob_hash = sha2_hash(&blob);
 
-            let mut blob_list = BlobList::<T>::get();
-            blob_list
-                .try_push(SubmittedBlobMetadata {
-                    who: who.clone(),
-                    extrinsic_index,
-                    namespace_id,
-                    blob_hash,
-                })
-                .map_err(|_| Error::<T>::MaxBlobsReached)?;
-            BlobList::<T>::put(blob_list);
+            BlobList::<T>::append(SubmittedBlobMetadata {
+                extrinsic_index,
+                who: who.clone(),
+                namespace_id,
+                blob_hash,
+            });
 
             // Emit an event.
             Self::deposit_event(Event::<T>::BlobStored {

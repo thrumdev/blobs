@@ -1,15 +1,15 @@
-use frame_support::{
-    parameter_types,
-    traits::{ConstU32, Everything},
-};
-use frame_system as system;
+use crate as pallet_blobs;
+use frame_support::{parameter_types, traits::ConstU32};
 use sp_core::H256;
 use sp_runtime::{
-    traits::{BlakeTwo256, IdentityLookup},
-    BuildStorage,
+    traits::{BlakeTwo256, IdentifyAccount, IdentityLookup, Verify},
+    BuildStorage, MultiSignature,
 };
 
 type Block = frame_system::mocking::MockBlock<Test>;
+
+// Real accounts must be used to test and benchmark on_finalize
+pub type AccountId = <<MultiSignature as Verify>::Signer as IdentifyAccount>::AccountId;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -24,8 +24,8 @@ parameter_types! {
     pub const SS58Prefix: u8 = 42;
 }
 
-impl system::Config for Test {
-    type BaseCallFilter = Everything;
+impl frame_system::Config for Test {
+    type BaseCallFilter = frame_support::traits::Everything;
     type BlockWeights = ();
     type BlockLength = ();
     type DbWeight = ();
@@ -34,7 +34,7 @@ impl system::Config for Test {
     type Nonce = u64;
     type Hash = H256;
     type Hashing = BlakeTwo256;
-    type AccountId = u64;
+    type AccountId = AccountId;
     type Lookup = IdentityLookup<Self::AccountId>;
     type Block = Block;
     type RuntimeEvent = RuntimeEvent;
@@ -50,18 +50,19 @@ impl system::Config for Test {
     type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
-impl crate::Config for Test {
+impl pallet_blobs::Config for Test {
     type RuntimeEvent = RuntimeEvent;
-    type MaxBlobs = ConstU32<16>;
-    type MaxBlobSize = ConstU32<1024>;
-    type MaxTotalBlobSize = ConstU32<2048>;
+    type MaxBlobs = ConstU32<{ 100 * 1024 }>;
+    type MaxBlobSize = ConstU32<{ 100 * 1024 }>;
+    type MaxTotalBlobSize = ConstU32<{ 2 * 1024 * 1024 }>;
+    type WeightInfo = ();
 }
 
 // Build genesis storage according to the mock runtime.
 // TODO: https://github.com/thrumdev/sugondat/issues/28
 #[allow(unused)]
 pub fn new_test_ext() -> sp_io::TestExternalities {
-    system::GenesisConfig::<Test>::default()
+    frame_system::GenesisConfig::<Test>::default()
         .build_storage()
         .unwrap()
         .into()

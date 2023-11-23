@@ -6,12 +6,16 @@ use subxt_signer::sr25519::Keypair;
 
 use crate::sugondat_rpc;
 
+mod rollkit;
 mod sovereign;
 
 /// A configuration for initializing all docks.
 pub struct Config {
     /// Whether or not to enable the sovereign dock.
     pub enable_sovereign: bool,
+
+    /// Whether or not to enable the rollkit dock.
+    pub enable_rollkit: bool,
 
     /// The RPC client handle to the sugondat node.
     pub client: sugondat_rpc::Client,
@@ -26,6 +30,9 @@ pub fn init(config: Config) -> Methods {
     let mut methods = Methods::new();
     if config.enable_sovereign {
         sovereign::register(&mut methods, &config);
+    }
+    if config.enable_rollkit {
+        rollkit::register(&mut methods, &config);
     }
     methods
 }

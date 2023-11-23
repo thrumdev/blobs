@@ -15,6 +15,7 @@ pub async fn run(params: Params) -> anyhow::Result<()> {
         // TODO: whenever there are more docks, the logic of checking if any at least one is enabled
         //       and other similar stuff should be in CLI.
         enable_sovereign: params.dock.enable_sovereign(),
+        enable_rollkit: params.dock.enable_rollkit(),
         client,
         submit_key,
     });

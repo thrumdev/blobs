@@ -94,6 +94,11 @@ impl DockParams {
     pub fn enable_sovereign(&self) -> bool {
         true
     }
+
+    /// Whether the rollkit dock should be enabled.
+    pub fn enable_rollkit(&self) -> bool {
+        true
+    }
 }
 
 #[derive(Subcommand, Debug)]

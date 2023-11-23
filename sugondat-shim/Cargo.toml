@@ -9,6 +9,7 @@ edition = "2021"
 sugondat-nmt = { path = "../sugondat-nmt", features = ["serde"] }
 sugondat-subxt = { path = "../sugondat-subxt" }
 sugondat-shim-common-sovereign = { path = "common/sovereign", features = ["server"] }
+sugondat-shim-common-rollkit = { path = "common/rollkit" }
 
 anyhow = "1.0.75"
 clap = { version = "4.4.8", features = ["derive", "env"] }

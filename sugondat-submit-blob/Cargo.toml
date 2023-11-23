@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-sugondat-da-adapter = { path = "../sugondat-da-adapter" }
+sugondat-da-adapter = { path = "../adapters/sovereign" }
 const-rollup-config = { path = "../demo/sovereign/const-rollup-config" }
 sov-rollup-interface = { git = "https://github.com/Sovereign-Labs/sovereign-sdk", features = [
     "native",

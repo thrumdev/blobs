@@ -12,7 +12,6 @@ Project structure:
 │   ├── <a href="./demo/sovereign">sovereign</a>: Sovereign Demo Rollup.
 ├──<a href="./sugondat-chain">sugondat-chain</a>: Implementation of sugondat parachain.
 ├──<a href="./sugondat-shim">sugondat-shim</a>: Shim between sugondat parachain RPC and RDK adapters.
-├──<a href="./sugondat-submit-blob">sugondat-submit-blob</a>: A tool for submitting blobs to sugondat parachain.
 ├──<a href="./sugondat-subxt">sugondat-subxt</a>: Bindings to Sugondat RPC.
 </pre>
 

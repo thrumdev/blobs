@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::key::Keypair;
 use anyhow::Context;
 use subxt::{backend::rpc::RpcClient, rpc_params, utils::H256, OnlineClient};
@@ -5,6 +7,7 @@ use sugondat_nmt::Namespace;
 use sugondat_subxt::{
     sugondat::runtime_types::bounded_collections::bounded_vec::BoundedVec, Header,
 };
+use tokio::sync::watch;
 
 // NOTE: we specifically avoid prolifiration of subxt types around the codebase. To that end, we
 //       avoid returning H256 and instead return [u8; 32] directly.
@@ -18,6 +21,7 @@ use sugondat_subxt::{
 pub struct Client {
     raw: RpcClient,
     subxt: sugondat_subxt::Client,
+    finalized: Arc<FinalizedHeadWatcher>,
 }
 
 impl Client {
@@ -25,28 +29,18 @@ impl Client {
     pub async fn new(rpc_url: String) -> anyhow::Result<Self> {
         let raw = RpcClient::from_url(&rpc_url).await?;
         let subxt = sugondat_subxt::Client::from_rpc_client(raw.clone()).await?;
-        Ok(Self { raw, subxt })
+        let finalized = Arc::new(FinalizedHeadWatcher::spawn(subxt.clone()).await);
+        Ok(Self {
+            raw,
+            subxt,
+            finalized,
+        })
     }
 
-    /// Blocks until the sugondat node has finalized a block at the given height.
-    pub async fn wait_finalized_height(&self, height: u64) -> anyhow::Result<[u8; 32]> {
-        loop {
-            let finalized_head = self.subxt.backend().latest_finalized_block_ref().await?;
-            let header = self
-                .subxt
-                .backend()
-                .block_header(finalized_head.hash())
-                .await?
-                .unwrap();
-            if header.number as u64 >= height {
-                break;
-            }
-            tracing::info!(
-                "waiting for sugondat node to finalize block at height {}",
-                height
-            );
-            tokio::time::sleep(std::time::Duration::from_secs(1)).await;
-        }
+    /// Blocks until the sugondat node has finalized a block at the given height. Returns
+    /// the block hash of the block at the given height.
+    pub async fn wait_finalized_height(&self, height: u64) -> [u8; 32] {
+        self.finalized.wait_until_finalized(self, height).await
     }
 
     /// Returns the block hash of the block at the given height.
@@ -178,6 +172,85 @@ fn tree_root(header: &Header) -> Option<sugondat_nmt::TreeRoot> {
         }
     }
     nmt_root
+}
+
+/// A small gadget that watches the finalized block headers and remembers the last one.
+struct FinalizedHeadWatcher {
+    /// The last finalized block header watch value.
+    ///
+    /// Initialized with 0 as a dummy value.
+    rx: watch::Receiver<(u64, [u8; 32])>,
+    /// The join handle of the task that watches the finalized block headers.
+    handle: tokio::task::JoinHandle<()>,
+}
+
+impl FinalizedHeadWatcher {
+    /// Spawns the watch task.
+    async fn spawn(subxt: sugondat_subxt::Client) -> Self {
+        let (tx, rx) = watch::channel((0, [0; 32]));
+        let handle = tokio::spawn({
+            async move {
+                let mut first_attempt = true;
+                'resubscribe: loop {
+                    if !first_attempt {
+                        first_attempt = false;
+                        tracing::debug!("resubscribing to finalized block headers in 1 sec");
+                        tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+                    }
+                    let Ok(mut stream) = subxt.backend().stream_finalized_block_headers().await
+                    else {
+                        continue 'resubscribe;
+                    };
+                    while let Some(header) = stream.next().await {
+                        let Ok((header, block_ref)) = header else {
+                            continue 'resubscribe;
+                        };
+                        let _ = tx.send((header.number as u64, block_ref.hash().0));
+                    }
+                }
+            }
+        });
+        Self { rx, handle }
+    }
+
+    /// Wait until the sugondat node has finalized a block at the given height. Returns the block
+    /// hash of that finalized block.
+    async fn wait_until_finalized(&self, client: &Client, height: u64) -> [u8; 32] {
+        let mut rx = self.rx.clone();
+        let (finalized_height, block_hash) = loop {
+            if let Err(_) = rx.changed().await {
+                // The sender half was dropped, meaning something happened to the watch task.
+                // It's either shutdown or panicked. Here we hold a reference to `self` meaning
+                // that no it ain't shutdown. Therefore, it must have panicked but it's not supposed
+                // to, so we cascade the panic.
+                panic!("finalized block header watcher task has died")
+            }
+            let (finalized_height, block_hash) = *rx.borrow();
+            if finalized_height < height {
+                continue;
+            }
+            break (finalized_height, block_hash);
+        };
+        if finalized_height == height {
+            // The common case: the finalized block is at the height we're looking for.
+            block_hash
+        } else {
+            // The finalized block is already past the height we're looking for, but we need to
+            // return the block hash of the block at the given height. Therefore, we query it.
+            loop {
+                let Ok(Some(block_hash)) = client.block_hash(height).await else {
+                    continue;
+                };
+                break block_hash.0;
+            }
+        }
+    }
+}
+
+impl Drop for FinalizedHeadWatcher {
+    fn drop(&mut self) {
+        self.handle.abort();
+    }
 }
 
 mod err {

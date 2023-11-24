@@ -47,11 +47,23 @@ impl Client {
             );
             tokio::time::sleep(std::time::Duration::from_secs(1)).await;
         }
+    }
+
+    /// Returns the block hash of the block at the given height.
+    ///
+    /// If there is no block at the given height, returns `None`.
+    pub async fn block_hash(&self, height: u64) -> Result<Option<H256>, anyhow::Error> {
         let block_hash: H256 = self
             .raw
             .request("chain_getBlockHash", rpc_params![height])
             .await?;
-        Ok(block_hash.0)
+        if block_hash == H256::zero() {
+            // Little known fact: the sugondat node returns a zero block hash if there is no block
+            // at the given height.
+            return Ok(None);
+        } else {
+            Ok(Some(block_hash))
+        }
     }
 
     pub async fn get_block_at(&self, block_hash: [u8; 32]) -> anyhow::Result<Block> {

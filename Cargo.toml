@@ -8,6 +8,7 @@ members = [
     "adapters/sovereign",
     "sugondat-nmt",
     "sugondat-shim",
+    "sugondat-shim/common/rollkit",
     "sugondat-shim/common/sovereign",
     "sugondat-submit-blob",
     "sugondat-subxt"

@@ -13475,11 +13475,23 @@ dependencies = [
  "subxt",
  "subxt-signer",
  "sugondat-nmt",
+ "sugondat-shim-common-rollkit",
  "sugondat-shim-common-sovereign",
  "sugondat-subxt",
  "tokio",
  "tracing",
  "tracing-subscriber 0.3.18",
+]
+
+[[package]]
+name = "sugondat-shim-common-rollkit"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "base64 0.21.5",
+ "jsonrpsee 0.20.3",
+ "serde",
+ "sugondat-nmt",
 ]
 
 [[package]]

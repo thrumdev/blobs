@@ -99,7 +99,7 @@ impl Client {
             .tx()
             .create_signed(&extrinsic, &key, Default::default())
             .await
-            .with_context(|| format!("failed to validate or sign extrinsic with dev key pair"))?;
+            .with_context(|| format!("failed to validate or sign extrinsic"))?;
 
         let events = signed
             .submit_and_watch()

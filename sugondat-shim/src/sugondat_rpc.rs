@@ -25,6 +25,7 @@ impl Client {
     pub async fn new(rpc_url: String) -> anyhow::Result<Self> {
         let raw = RpcClient::from_url(&rpc_url).await?;
         let subxt = sugondat_subxt::Client::from_rpc_client(raw.clone()).await?;
+        check_if_compatible(&subxt)?;
         Ok(Self { raw, subxt })
     }
 
@@ -110,6 +111,20 @@ impl Client {
         let block_hash = events.block_hash();
         Ok(block_hash.0)
     }
+}
+
+/// Tries to find the `Blob` pallet in the runtime metadata. If it's not there, then we are not
+/// connected to a Sugondat node.
+fn check_if_compatible(client: &sugondat_subxt::Client) -> anyhow::Result<()> {
+    assert!(sugondat_subxt::sugondat::PALLETS.contains(&"Blob"));
+    if let Some(pallet) = client.metadata().pallet_by_name("Blob") {
+        if pallet.call_variant_by_name("submit_blob").is_some() {
+            return Ok(());
+        }
+    }
+    Err(anyhow::anyhow!(
+        "connected to a Substrate node that is not Sugondat"
+    ))
 }
 
 /// Iterates over the extrinsics in a block and extracts the submit_blob extrinsics.

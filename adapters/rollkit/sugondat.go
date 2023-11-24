@@ -1,3 +1,21 @@
+// Rollkit DA layer client for Sugondat.
+//
+// This adapter implements the `DataAvailabilityLayerClient` and `BlockRetriever` interfaces. It
+// connects to a running sugondat-shim RPC server and uses it to submit and retrieve blocks.
+//
+// The intended usage is to add this module to your application and call `Register()`. This will
+// make the sugondat adapter available to Rollkit.
+//
+// To start your rollkit rollup with this adapter, you will need to run your blockchain with the
+// following arguments (assuming `gmd`).
+//
+// ```
+//
+//	gmd \
+//	    --rollkit.da_layer sugondat
+//	    --rollkit.da_config='{"base_url":"http://localhost:10995","namespace":"0102030405060708"}'
+//
+// ```
 package sugondat
 
 import (
@@ -12,12 +30,15 @@ import (
 	"github.com/rollkit/rollkit/types"
 )
 
+// A data package that contains the rollup specific data.
 type Blob struct {
-	Data []byte `json:"data"`
+	Data []byte `json:"data"` // base64 encoded blob data.
 }
 
+// Declaration of JSON-RPC API for sugondat-shim.
 type SugondatAPI struct {
 	// Retrieves the blobs at the given height from the data availability layer at the given namespace.
+	// Returns the blobs.
 	Retrieve func(string, uint64) ([]*Blob, error)
 	// Submits the given blobs to the data availability layer at the given namespace.
 	// Returns the height of the block that contains the blobs.
@@ -29,6 +50,7 @@ type RpcClient struct {
 	api    SugondatAPI
 }
 
+// Main adapter struct.
 type DataAvailabilityLayerClient struct {
 	logger log.Logger
 	config Config
@@ -38,11 +60,14 @@ type DataAvailabilityLayerClient struct {
 var _ da.DataAvailabilityLayerClient = &DataAvailabilityLayerClient{}
 var _ da.BlockRetriever = &DataAvailabilityLayerClient{}
 
+// Configuration of the Sugondat adapter.
 type Config struct {
-	BaseURL   string `json:"base_url"`
-	Namespace string `json:"namespace"`
+	BaseURL   string `json:"base_url"`  // The base URL of the sugondat-shim RPC server.
+	Namespace string `json:"namespace"` // HEX encoded namespace ID. Cannot be empty.
 }
 
+// Register the `sugondat` adapter with the da adapter registry. Must be called to make the adapter
+// available via `--da.layer sugondat`.
 func Register() error {
 	return registry.Register("sugondat", func() da.DataAvailabilityLayerClient {
 		return &DataAvailabilityLayerClient{}
@@ -60,6 +85,9 @@ func (c *DataAvailabilityLayerClient) Init(namespaceID types.NamespaceID, config
 	return nil
 }
 
+// Starts the RPC client.
+//
+// Expected to be called before `SubmitBlocks` or `RetrieveBlocks`.
 func (c *DataAvailabilityLayerClient) Start() error {
 	c.logger.Info("starting Sugondat Data Availability Layer Client", "baseURL", c.config.BaseURL)
 	closer, err := jsonrpc.NewClient(context.Background(), c.config.BaseURL, "Rollkit", &c.rpc.api, nil)
@@ -70,6 +98,7 @@ func (c *DataAvailabilityLayerClient) Start() error {
 	return nil
 }
 
+// Tears down the RPC client.
 func (c *DataAvailabilityLayerClient) Stop() error {
 	c.logger.Info("stopping Sugondat Data Availability Layer Client")
 	c.rpc.closer()

@@ -1,6 +1,6 @@
 # Sugondat
 
-Project structure:
+## Project Structure
 
 <pre>
 <a href=".">sugondat</a>: The sugondat monorepo.
@@ -15,7 +15,7 @@ Project structure:
 ├──<a href="./sugondat-subxt">sugondat-subxt</a>: Bindings to Sugondat RPC.
 </pre>
 
-## Running demos
+## Running Demos
 
 ### Prerequisites
 

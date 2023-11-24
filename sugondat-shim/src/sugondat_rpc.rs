@@ -150,22 +150,16 @@ fn extract_blobs(
 }
 
 /// Examines the header and extracts the tree root committed as one of the logs.
+///
+/// Returns None if no tree root was found or if the tree root was malformed.
 fn tree_root(header: &Header) -> Option<sugondat_nmt::TreeRoot> {
-    let mut nmt_root = None;
-    for log in &header.digest.logs {
-        match log {
-            subxt::config::substrate::DigestItem::Other(ref bytes) => {
-                if bytes.starts_with(b"snmt") {
-                    nmt_root = Some(sugondat_nmt::TreeRoot::from_raw_bytes(
-                        bytes[4..].try_into().unwrap(),
-                    ));
-                    break;
-                }
-            }
-            _ => {}
-        }
-    }
-    nmt_root
+    use subxt::config::substrate::DigestItem;
+    let nmt_digest_bytes = header.digest.logs.iter().find_map(|log| match log {
+        DigestItem::Other(ref bytes) if bytes.starts_with(b"snmt") => Some(&bytes[4..]),
+        _ => None,
+    })?;
+    let nmt_root: [u8; 68] = nmt_digest_bytes.try_into().ok()?;
+    Some(sugondat_nmt::TreeRoot::from_raw_bytes(&nmt_root))
 }
 
 mod err {

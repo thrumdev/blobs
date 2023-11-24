@@ -2,13 +2,16 @@ use jsonrpsee::Methods;
 use sugondat_shim_common_rollkit::{Blob, JsonRPCError, RollkitRPCServer};
 use tracing::{debug, info};
 
+use super::rpc_error as err;
 use crate::{key::Keypair, sugondat_rpc};
 
 /// Registers the sovereign dock in the given methods.
 pub fn register(methods: &mut Methods, config: &super::Config) {
     debug!("enabling rollkit adapter dock");
     let dock = RollkitDock::new(config.client.clone(), config.submit_key.clone());
-    methods.merge(dock.into_rpc()).unwrap();
+    methods
+        .merge(dock.into_rpc())
+        .expect("adapter namespace must be unique");
 }
 
 struct RollkitDock {
@@ -53,30 +56,10 @@ impl RollkitRPCServer for RollkitDock {
             self.client
                 .submit_blob(blob.data, namespace, submit_key.clone())
                 .await
-                .unwrap();
+                .map_err(|_| err::submission_error())?;
         }
         // TODO:
         Ok(0)
-    }
-}
-
-mod err {
-    use sugondat_shim_common_rollkit::JsonRPCError;
-
-    pub fn bad_namespace() -> JsonRPCError {
-        JsonRPCError::owned(
-            jsonrpsee::types::error::INVALID_PARAMS_CODE,
-            "Invalid namespace",
-            None::<()>,
-        )
-    }
-
-    pub fn no_signing_key() -> JsonRPCError {
-        JsonRPCError::owned(
-            jsonrpsee::types::error::INTERNAL_ERROR_CODE,
-            "Internal Error: no key for signing blobs",
-            None::<()>,
-        )
     }
 }
 

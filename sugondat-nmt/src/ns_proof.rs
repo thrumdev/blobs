@@ -38,7 +38,9 @@ impl NamespaceProof {
             if leaf.len() != 68 {
                 return Err(VerifyErr::MalformedLeaf(i));
             }
-            let leaf = NmtLeaf::from_raw_bytes(leaf.as_slice().try_into().unwrap());
+            let leaf = NmtLeaf::from_raw_bytes(
+                leaf.as_slice().try_into().expect("verified to be 68 bytes"),
+            );
             if leaf.blob_hash != blob_hashes[i] {
                 return Err(VerifyErr::BlobHashMismatch(i));
             }

@@ -8,6 +8,7 @@ use crate::sugondat_rpc;
 
 mod rollkit;
 mod sovereign;
+mod rpc_error;
 
 /// A configuration for initializing all docks.
 pub struct Config {

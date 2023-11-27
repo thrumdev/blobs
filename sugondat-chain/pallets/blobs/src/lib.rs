@@ -128,7 +128,7 @@ pub mod pallet {
             let blobs = blobs_metadata
                 .iter()
                 .map(|blob| sugondat_nmt::BlobMetadata {
-                    namespace: sugondat_nmt::Namespace::with_namespace_id(blob.namespace_id),
+                    namespace: sugondat_nmt::Namespace::from_u32_be(blob.namespace_id),
                     leaf: sugondat_nmt::NmtLeaf {
                         extrinsic_index: blob.extrinsic_index,
                         who: blob.who.encode().try_into().unwrap(),

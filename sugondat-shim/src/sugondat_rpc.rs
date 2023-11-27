@@ -90,7 +90,7 @@ impl Client {
         namespace: sugondat_nmt::Namespace,
         key: Keypair,
     ) -> anyhow::Result<[u8; 32]> {
-        let namespace_id = namespace.namespace_id();
+        let namespace_id = namespace.to_u32_be();
         let extrinsic = sugondat_subxt::sugondat::tx()
             .blob()
             .submit_blob(namespace_id, BoundedVec(blob));
@@ -154,7 +154,7 @@ fn extract_blobs(
         let data = submit_blob_extrinsic.blob.0;
         blobs.push(Blob {
             extrinsic_index: extrinsic_index as u32,
-            namespace: sugondat_nmt::Namespace::with_namespace_id(
+            namespace: sugondat_nmt::Namespace::from_u32_be(
                 submit_blob_extrinsic.namespace_id,
             ),
             sender,

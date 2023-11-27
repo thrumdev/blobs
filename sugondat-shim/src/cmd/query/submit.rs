@@ -44,7 +44,7 @@ fn read_blob(path: &str) -> anyhow::Result<Vec<u8>> {
 /// a more human-readable format, which is an unsigned 32-bit integer. To distinguish between the
 /// two, the byte vector must be prefixed with `0x`.
 ///
-/// The integer is interpreted as little-endian.
+/// The integer is interpreted as big-endian.
 fn read_namespace(namespace: &str) -> anyhow::Result<sugondat_nmt::Namespace> {
     if let Some(hex) = namespace.strip_prefix("0x") {
         let namespace = hex::decode(hex)?;
@@ -57,5 +57,5 @@ fn read_namespace(namespace: &str) -> anyhow::Result<sugondat_nmt::Namespace> {
     let namespace_id = namespace
         .parse::<u32>()
         .with_context(|| format!("cannot parse namespace id '{}'", namespace))?;
-    Ok(sugondat_nmt::Namespace::with_namespace_id(namespace_id))
+    Ok(sugondat_nmt::Namespace::from_u32_be(namespace_id))
 }

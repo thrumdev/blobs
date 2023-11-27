@@ -1,34 +1,48 @@
 use crate::NS_ID_SIZE;
 use core::fmt;
 
-/// The namespace. A blob is submitted into a namespace. A namespace is a 4 byte vector.
-/// The convention is that the namespace id is a 4-byte little-endian integer.
+/// Namespace identifier type.
+///
+/// Blobs are submitted into a namespace. Namepsace is a 4 byte vector. Namespaces define ordering
+/// lexicographically.
+///
+/// For convenience, a namespace can be created from an unsigned 32-bit integer. Conventionally,
+/// big-endian representation of the integer is used as that is more intuitive. As one may expect:
+///
+/// ```
+/// # use sugondat_nmt::Namespace;
+/// assert!(Namespace::from_u32_be(0x0100) > Namespace::from_u32_be(0x00FF));
+/// ````
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Namespace(u32);
+pub struct Namespace([u8; NS_ID_SIZE]);
 
 impl Namespace {
-    pub fn from_raw_bytes(raw_namespace_id: [u8; 4]) -> Self {
-        let namespace_id = u32::from_le_bytes(raw_namespace_id);
-        Self(namespace_id)
+    /// Creates a namespace from the given raw bytes.
+    pub fn from_raw_bytes(raw_namespace_id: [u8; NS_ID_SIZE]) -> Self {
+        Self(raw_namespace_id)
     }
 
-    /// Returns a namespace with the given namespace id.
-    pub fn with_namespace_id(namespace_id: u32) -> Self {
-        Self(namespace_id)
-    }
-
-    pub(crate) fn with_nmt_namespace_id(nmt_namespace_id: nmt_rs::NamespaceId<NS_ID_SIZE>) -> Self {
-        let namespace_id = u32::from_le_bytes(nmt_namespace_id.0);
-        Self(namespace_id)
-    }
-
-    pub fn namespace_id(&self) -> u32 {
+    /// Returns the raw bytes of the namespace ID.
+    pub fn to_raw_bytes(&self) -> [u8; NS_ID_SIZE] {
         self.0
     }
 
-    pub fn to_raw_bytes(&self) -> [u8; 4] {
-        self.0.to_le_bytes()
+    /// A convenience function to create a namespace from an unsigned 32-bit integer.
+    ///
+    /// This function will take the given integer (which is assumed to be in host byte order), and
+    /// take its big-endian representation as the namespace ID.
+    pub fn from_u32_be(namespace_id: u32) -> Self {
+        Self(namespace_id.to_be_bytes())
+    }
+
+    /// Reinterpret the namespace ID as a big-endian 32-bit integer and return.
+    pub fn to_u32_be(&self) -> u32 {
+        u32::from_be_bytes(self.0)
+    }
+
+    pub(crate) fn with_nmt_namespace_id(nmt_namespace_id: nmt_rs::NamespaceId<NS_ID_SIZE>) -> Self {
+        Self(nmt_namespace_id.0)
     }
 
     pub(crate) fn nmt_namespace_id(&self) -> nmt_rs::NamespaceId<NS_ID_SIZE> {

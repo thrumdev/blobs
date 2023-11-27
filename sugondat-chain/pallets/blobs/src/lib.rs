@@ -57,6 +57,7 @@ pub mod pallet {
     pub type TotalBlobs<T: Config> = StorageValue<_, u32, ValueQuery>;
 
     #[derive(Encode, Decode, TypeInfo, MaxEncodedLen, Clone)]
+    #[cfg_attr(test, derive(Debug, PartialEq, Eq))]
     pub struct SubmittedBlobMetadata<AccountId> {
         pub who: AccountId,
         pub extrinsic_index: u32,
@@ -163,11 +164,6 @@ pub mod pallet {
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
 
-            let blob_len = blob.len() as u32;
-            if blob_len > T::MaxBlobSize::get() {
-                return Err(Error::<T>::BlobTooLarge.into());
-            }
-
             let Some(extrinsic_index) = <frame_system::Pallet<T>>::extrinsic_index() else {
                 return Err(Error::<T>::NoExtrinsicIndex.into());
             };
@@ -178,6 +174,7 @@ pub mod pallet {
             }
             TotalBlobs::<T>::put(total_blobs + 1);
 
+            let blob_len = blob.len() as u32;
             let total_blobs_size = TotalBlobsSize::<T>::get();
             if total_blobs_size + blob_len > T::MaxTotalBlobSize::get() {
                 return Err(Error::<T>::MaxTotalBlobsSizeReached.into());

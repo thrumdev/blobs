@@ -13465,6 +13465,7 @@ dependencies = [
  "sugondat-shim-common-rollkit",
  "sugondat-shim-common-sovereign",
  "sugondat-subxt",
+ "temp-dir",
  "tokio",
  "tracing",
  "tracing-subscriber 0.3.18",
@@ -13566,6 +13567,12 @@ name = "target-lexicon"
 version = "0.12.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "14c39fd04924ca3a864207c66fc2cd7d22d7c016007f9ce846cbb9326331930a"
+
+[[package]]
+name = "temp-dir"
+version = "0.1.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "af547b166dd1ea4b472165569fc456cfb6818116f854690b0ff205e636523dab"
 
 [[package]]
 name = "tempfile"

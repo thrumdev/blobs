@@ -9,6 +9,9 @@ pub async fn run(params: Params) -> anyhow::Result<()> {
     );
     let listen_on = (params.dock.address.as_str(), params.dock.port);
     let submit_key = crate::cmd::load_key(params.key_management)?;
+    if submit_key.is_none() {
+        tracing::info!("no submit key provided, will not be able to submit blobs");
+    }
     let server = Server::builder().build(listen_on).await?;
     let client = connect_client(&params.rpc.node_url).await?;
     let methods = dock::init(dock::Config {

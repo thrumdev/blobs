@@ -167,8 +167,8 @@ pub mod query {
             /// The namespace to submit the blob into.
             ///
             /// The namespace can be specified either as a 4-byte vector, or as an unsigned 32-bit
-            /// integer. To distinguish between the two, the byte vector must be prefixed with
-            /// `0x`.
+            /// big-endian integer. To distinguish between the two, the byte vector must be prefixed
+            ///  with `0x`.
             #[clap(long, short, env = ENV_SUGONDAT_NAMESPACE)]
             pub namespace: String,
 

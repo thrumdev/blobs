@@ -30,15 +30,15 @@ impl MockBuilder {
 #[test]
 fn two_same_blobs() {
     let mut b = MockBuilder::new();
-    b.push_blob([1u8; 32], Namespace::with_namespace_id(1), [2u8; 32]);
-    b.push_blob([1u8; 32], Namespace::with_namespace_id(1), [2u8; 32]);
+    b.push_blob([1u8; 32], Namespace::from_u32_be(1), [2u8; 32]);
+    b.push_blob([1u8; 32], Namespace::from_u32_be(1), [2u8; 32]);
     let mut tree = b.tree();
-    let proof = tree.proof(Namespace::with_namespace_id(1));
+    let proof = tree.proof(Namespace::from_u32_be(1));
     assert!(proof
         .verify(
             &[[2u8; 32], [2u8; 32]],
             tree.root(),
-            Namespace::with_namespace_id(1)
+            Namespace::from_u32_be(1)
         )
         .is_ok());
 }
@@ -46,39 +46,39 @@ fn two_same_blobs() {
 #[test]
 fn empty() {
     let mut tree = MockBuilder::new().tree();
-    let proof = tree.proof(Namespace::with_namespace_id(1));
+    let proof = tree.proof(Namespace::from_u32_be(1));
     assert!(proof
-        .verify(&[], tree.root(), Namespace::with_namespace_id(1))
+        .verify(&[], tree.root(), Namespace::from_u32_be(1))
         .is_ok());
 }
 
 #[test]
 fn empty_absent_namespace_id() {
     let mut tree = MockBuilder::new().tree();
-    let proof = tree.proof(Namespace::with_namespace_id(1));
+    let proof = tree.proof(Namespace::from_u32_be(1));
     assert!(proof
-        .verify(&[], tree.root(), Namespace::with_namespace_id(2))
+        .verify(&[], tree.root(), Namespace::from_u32_be(2))
         .is_ok());
 }
 
 #[test]
 fn proof_absent_namespace_id() {
     let mut b = MockBuilder::new();
-    b.push_blob([1u8; 32], Namespace::with_namespace_id(1), [2u8; 32]);
+    b.push_blob([1u8; 32], Namespace::from_u32_be(1), [2u8; 32]);
     let mut tree = b.tree();
-    let proof = tree.proof(Namespace::with_namespace_id(2));
+    let proof = tree.proof(Namespace::from_u32_be(2));
     assert!(proof
-        .verify(&[], tree.root(), Namespace::with_namespace_id(2))
+        .verify(&[], tree.root(), Namespace::from_u32_be(2))
         .is_ok());
 }
 
 #[test]
 fn wrong_namespace_id() {
     let mut b = MockBuilder::new();
-    b.push_blob([1u8; 32], Namespace::with_namespace_id(1), [2u8; 32]);
+    b.push_blob([1u8; 32], Namespace::from_u32_be(1), [2u8; 32]);
     let mut tree = b.tree();
-    let proof = tree.proof(Namespace::with_namespace_id(2));
+    let proof = tree.proof(Namespace::from_u32_be(2));
     assert!(proof
-        .verify(&[], tree.root(), Namespace::with_namespace_id(1))
+        .verify(&[], tree.root(), Namespace::from_u32_be(1))
         .is_err());
 }

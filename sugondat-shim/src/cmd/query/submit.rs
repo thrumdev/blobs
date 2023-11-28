@@ -46,17 +46,16 @@ fn read_blob(path: &str) -> anyhow::Result<Vec<u8>> {
 ///
 /// The integer is interpreted as little-endian.
 fn read_namespace(namespace: &str) -> anyhow::Result<sugondat_nmt::Namespace> {
-    if namespace.starts_with("0x") {
-        let namespace = namespace.trim_start_matches("0x");
-        let namespace = hex::decode(namespace)?;
+    if let Some(hex) = namespace.strip_prefix("0x") {
+        let namespace = hex::decode(hex)?;
         let namespace: [u8; 4] = namespace.try_into().map_err(|e: Vec<u8>| {
             anyhow::anyhow!("namespace must be 4 bytes long, but was {}", e.len())
         })?;
-        Ok(sugondat_nmt::Namespace::from_raw_bytes(namespace))
-    } else {
-        let namespace_id = namespace
-            .parse::<u32>()
-            .with_context(|| format!("cannot parse namespace id '{}'", namespace))?;
-        Ok(sugondat_nmt::Namespace::with_namespace_id(namespace_id))
+        return Ok(sugondat_nmt::Namespace::from_raw_bytes(namespace));
     }
+
+    let namespace_id = namespace
+        .parse::<u32>()
+        .with_context(|| format!("cannot parse namespace id '{}'", namespace))?;
+    Ok(sugondat_nmt::Namespace::with_namespace_id(namespace_id))
 }

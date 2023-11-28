@@ -13,7 +13,7 @@ risc0-zkvm-platform = "0.18"
 demo-stf = { path = "../../../stf" }
 sov-risc0-adapter = { git = "https://github.com/Sovereign-Labs/sovereign-sdk", rev = "6058b31" }
 const-rollup-config = { path = "../../../../const-rollup-config" }
-sugondat-da-adapter = { path = "../../../../../adapters/sovereign", default-features = false, features = ["verifier"] }
+sugondat-da-adapter = { path = "../../../../../../adapters/sovereign", default-features = false, features = ["verifier"] }
 sov-modules-api = { git = "https://github.com/Sovereign-Labs/sovereign-sdk", rev = "6058b31" }
 sov-state = { git = "https://github.com/Sovereign-Labs/sovereign-sdk", rev = "6058b31" }
 sov-modules-stf-template = { git = "https://github.com/Sovereign-Labs/sovereign-sdk", rev = "6058b31" }

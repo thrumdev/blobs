@@ -1,8 +1,8 @@
 [package]
-name = "sugondat-runtime"
+name = "sugondat-kusama-runtime"
 version = "0.1.0"
 authors = ["Anonymous"]
-description = "A new Cumulus FRAME-based Substrate Runtime, ready for hacking together a parachain."
+description = "Sugondat Kusama Runtime"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/thrumdev/sugondat"
 edition = "2021"
@@ -21,7 +21,7 @@ scale-info = { version = "2.10.0", default-features = false, features = ["derive
 smallvec = "1.10.0"
 
 # Local
-pallet-sugondat-blobs = { path = "../pallets/blobs", default-features = false }
+pallet-sugondat-blobs = { path = "../../pallets/blobs", default-features = false }
 
 # Substrate
 frame-benchmarking = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, optional = true, branch = "release-polkadot-v1.2.0" }
@@ -54,7 +54,9 @@ sp-version = { git = "https://github.com/paritytech/polkadot-sdk", default-featu
 
 # Polkadot
 pallet-xcm = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, branch = "release-polkadot-v1.2.0" }
+polkadot-core-primitives = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, branch = "release-polkadot-v1.2.0" }
 polkadot-parachain-primitives = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, branch = "release-polkadot-v1.2.0" }
+polkadot-primitives = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, branch = "release-polkadot-v1.2.0" }
 polkadot-runtime-common = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, branch = "release-polkadot-v1.2.0" }
 xcm = { package = "staging-xcm",git = "https://github.com/paritytech/polkadot-sdk", default-features = false, branch = "release-polkadot-v1.2.0" }
 xcm-builder = { package = "staging-xcm-builder", git = "https://github.com/paritytech/polkadot-sdk", default-features = false, branch = "release-polkadot-v1.2.0" }
@@ -73,7 +75,7 @@ cumulus-primitives-utility = { git = "https://github.com/paritytech/polkadot-sdk
 pallet-collator-selection = { git = "https://github.com/paritytech/polkadot-sdk.git", branch = "release-polkadot-v1.2.0", default-features = false }
 parachain-info = { git = "https://github.com/paritytech/polkadot-sdk.git", branch = "release-polkadot-v1.2.0", default-features = false }
 
-sugondat-primitives = { path = "../primitives" }
+sugondat-primitives = { path = "../../primitives" }
 
 
 [features]
@@ -108,7 +110,9 @@ std = [
 	"pallet-transaction-payment/std",
 	"pallet-xcm/std",
 	"parachain-info/std",
+	"polkadot-core-primitives/std",
 	"polkadot-parachain-primitives/std",
+	"polkadot-primitives/std",
 	"polkadot-runtime-common/std",
 	"scale-info/std",
 	"sp-api/std",

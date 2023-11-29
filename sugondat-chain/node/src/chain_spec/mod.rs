@@ -4,11 +4,11 @@ use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
-use sugondat_runtime::{AccountId, AuraId, Signature, EXISTENTIAL_DEPOSIT};
+use sugondat_test_runtime::{AccountId, AuraId, Signature, EXISTENTIAL_DEPOSIT};
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
 pub type ChainSpec =
-    sc_service::GenericChainSpec<sugondat_runtime::RuntimeGenesisConfig, Extensions>;
+    sc_service::GenericChainSpec<sugondat_test_runtime::RuntimeGenesisConfig, Extensions>;
 
 /// The default XCM version to set in genesis config.
 const SAFE_XCM_VERSION: u32 = xcm::prelude::XCM_VERSION;
@@ -57,8 +57,8 @@ where
 /// Generate the session keys from individual elements.
 ///
 /// The input must be a tuple of individual keys (a single arg for now since we have just one key).
-pub fn template_session_keys(keys: AuraId) -> sugondat_runtime::SessionKeys {
-    sugondat_runtime::SessionKeys { aura: keys }
+pub fn template_session_keys(keys: AuraId) -> sugondat_test_runtime::SessionKeys {
+    sugondat_test_runtime::SessionKeys { aura: keys }
 }
 
 pub fn development_config() -> ChainSpec {
@@ -184,31 +184,31 @@ fn testnet_genesis(
     endowed_accounts: Vec<AccountId>,
     root: AccountId,
     id: ParaId,
-) -> sugondat_runtime::RuntimeGenesisConfig {
-    sugondat_runtime::RuntimeGenesisConfig {
-        system: sugondat_runtime::SystemConfig {
-            code: sugondat_runtime::WASM_BINARY
+) -> sugondat_test_runtime::RuntimeGenesisConfig {
+    sugondat_test_runtime::RuntimeGenesisConfig {
+        system: sugondat_test_runtime::SystemConfig {
+            code: sugondat_test_runtime::WASM_BINARY
                 .expect("WASM binary was not build, please build it!")
                 .to_vec(),
             ..Default::default()
         },
-        balances: sugondat_runtime::BalancesConfig {
+        balances: sugondat_test_runtime::BalancesConfig {
             balances: endowed_accounts
                 .iter()
                 .cloned()
                 .map(|k| (k, 1 << 60))
                 .collect(),
         },
-        parachain_info: sugondat_runtime::ParachainInfoConfig {
+        parachain_info: sugondat_test_runtime::ParachainInfoConfig {
             parachain_id: id,
             ..Default::default()
         },
-        collator_selection: sugondat_runtime::CollatorSelectionConfig {
+        collator_selection: sugondat_test_runtime::CollatorSelectionConfig {
             invulnerables: invulnerables.iter().cloned().map(|(acc, _)| acc).collect(),
             candidacy_bond: EXISTENTIAL_DEPOSIT * 16,
             ..Default::default()
         },
-        session: sugondat_runtime::SessionConfig {
+        session: sugondat_test_runtime::SessionConfig {
             keys: invulnerables
                 .into_iter()
                 .map(|(acc, aura)| {
@@ -225,11 +225,11 @@ fn testnet_genesis(
         aura: Default::default(),
         aura_ext: Default::default(),
         parachain_system: Default::default(),
-        polkadot_xcm: sugondat_runtime::PolkadotXcmConfig {
+        polkadot_xcm: sugondat_test_runtime::PolkadotXcmConfig {
             safe_xcm_version: Some(SAFE_XCM_VERSION),
             ..Default::default()
         },
         transaction_payment: Default::default(),
-        sudo: sugondat_runtime::SudoConfig { key: Some(root) },
+        sudo: sugondat_test_runtime::SudoConfig { key: Some(root) },
     }
 }

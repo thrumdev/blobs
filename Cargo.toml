@@ -3,7 +3,7 @@ resolver = "2"
 members = [
     "sugondat-chain/node",
     "sugondat-chain/pallets/*",
-    "sugondat-chain/runtime",
+    "sugondat-chain/runtimes/*",
     "sugondat-chain/primitives",
     "adapters/sovereign",
     "sugondat-nmt",

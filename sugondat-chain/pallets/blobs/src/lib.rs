@@ -64,7 +64,8 @@ pub mod pallet {
         pub blob_hash: [u8; 32],
     }
 
-    /// The list of all submitted blobs.
+    /// The list of all submitted blobs, the size of the unbounded vector
+    /// is tracked by TotalBlobs and bounded by MaxBlobs
     #[pallet::storage]
     #[pallet::unbounded]
     pub type BlobList<T: Config> =

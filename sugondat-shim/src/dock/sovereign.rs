@@ -33,7 +33,7 @@ impl SovereignRPCServer for SovereignDock {
         namespace: sugondat_nmt::Namespace,
     ) -> Result<Block, ErrorObjectOwned> {
         info!("get_block({})", height);
-        let block_hash = self.client.wait_finalized_height(height).await.unwrap();
+        let block_hash = self.client.wait_finalized_height(height).await;
         let block = self.client.get_block_at(block_hash).await.unwrap();
         let proof = make_namespace_proof(&block, namespace);
         let blobs = block

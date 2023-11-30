@@ -12,6 +12,8 @@ pub type Client = OnlineClient<SugondatConfig>;
 
 pub type Header = <SugondatConfig as subxt::Config>::Header;
 
+pub type ExtrinsicDetails = subxt::blocks::ExtrinsicDetails<SugondatConfig, Client>;
+
 // #[derive(Clone, Debug, Default)]
 // pub struct SugondatConfig;
 

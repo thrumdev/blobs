@@ -9,7 +9,7 @@ use sc_cli::{
 };
 use sc_service::config::{BasePath, PrometheusConfig};
 use sp_runtime::traits::AccountIdConversion;
-use sugondat_test_runtime::Block;
+use sugondat_primitives::opaque::Block;
 
 use crate::{
     chain_spec,

@@ -2,10 +2,10 @@ use super::{
     AccountId, AllPalletsWithSystem, Balances, ParachainInfo, ParachainSystem, PolkadotXcm,
     Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, WeightToFee, XcmpQueue,
 };
-use cumulus_primitives_core::{ParaId, IsSystem};
+use cumulus_primitives_core::{IsSystem, ParaId};
 use frame_support::{
     match_types, parameter_types,
-    traits::{ConstU32, Everything, Nothing, ContainsPair},
+    traits::{ConstU32, ContainsPair, Everything, Nothing},
     weights::Weight,
 };
 use frame_system::EnsureRoot;
@@ -14,12 +14,12 @@ use polkadot_parachain_primitives::primitives::Sibling;
 use polkadot_runtime_common::impls::ToAuthor;
 use xcm::latest::prelude::*;
 use xcm_builder::{
-    AccountId32Aliases, AllowExplicitUnpaidExecutionFrom, AllowTopLevelPaidExecutionFrom, AllowSubscriptionsFrom,
-    CurrencyAdapter, DenyReserveTransferToRelayChain, DenyThenTry, EnsureXcmOrigin,
-    FixedWeightBounds, IsConcrete, ParentAsSuperuser, ParentIsPreset, RelayChainAsNative,
-    SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
-    SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit, TrailingSetTopicAsId,
-    UsingComponents, WithComputedOrigin, WithUniqueTopic,
+    AccountId32Aliases, AllowExplicitUnpaidExecutionFrom, AllowSubscriptionsFrom,
+    AllowTopLevelPaidExecutionFrom, CurrencyAdapter, DenyReserveTransferToRelayChain, DenyThenTry,
+    EnsureXcmOrigin, FixedWeightBounds, IsConcrete, ParentAsSuperuser, ParentIsPreset,
+    RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
+    SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
+    TrailingSetTopicAsId, UsingComponents, WithComputedOrigin, WithUniqueTopic,
 };
 use xcm_executor::XcmExecutor;
 
@@ -31,14 +31,14 @@ parameter_types! {
 }
 
 match_types! {
-	pub type ParentOrParentsPlurality: impl Contains<MultiLocation> = {
-		MultiLocation { parents: 1, interior: Here } |
-		MultiLocation { parents: 1, interior: X1(Plurality { .. }) }
-	};
-	pub type ParentOrSiblings: impl Contains<MultiLocation> = {
-		MultiLocation { parents: 1, interior: Here } |
-		MultiLocation { parents: 1, interior: X1(_) }
-	};
+    pub type ParentOrParentsPlurality: impl Contains<MultiLocation> = {
+        MultiLocation { parents: 1, interior: Here } |
+        MultiLocation { parents: 1, interior: X1(Plurality { .. }) }
+    };
+    pub type ParentOrSiblings: impl Contains<MultiLocation> = {
+        MultiLocation { parents: 1, interior: Here } |
+        MultiLocation { parents: 1, interior: X1(_) }
+    };
 }
 
 /// Type for specifying how a `MultiLocation` can be converted into an `AccountId`. This is used
@@ -55,16 +55,16 @@ pub type LocationToAccountId = (
 
 /// Means for transacting the native currency on this chain.
 pub type CurrencyTransactor = CurrencyAdapter<
-	// Use this currency:
-	Balances,
-	// Use this currency when it is a fungible asset matching the given location or name:
-	IsConcrete<KusamaLocation>,
-	// Convert an XCM MultiLocation into a local account id:
-	LocationToAccountId,
-	// Our chain's account ID type (we can't get away without mentioning it explicitly):
-	AccountId,
-	// We don't track any teleports of `Balances`.
-	(),
+    // Use this currency:
+    Balances,
+    // Use this currency when it is a fungible asset matching the given location or name:
+    IsConcrete<KusamaLocation>,
+    // Convert an XCM MultiLocation into a local account id:
+    LocationToAccountId,
+    // Our chain's account ID type (we can't get away without mentioning it explicitly):
+    AccountId,
+    // We don't track any teleports of `Balances`.
+    (),
 >;
 
 /// This is the type we use to convert an (incoming) XCM origin into a local `Origin` instance,
@@ -81,9 +81,9 @@ pub type XcmOriginToTransactDispatchOrigin = (
     // Native converter for sibling Parachains; will convert to a `SiblingPara` origin when
     // recognized.
     SiblingParachainAsNative<cumulus_pallet_xcm::Origin, RuntimeOrigin>,
-	// Superuser converter for the Relay-chain (Parent) location. This will allow it to issue a
-	// transaction from the Root origin.
-	ParentAsSuperuser<RuntimeOrigin>,
+    // Superuser converter for the Relay-chain (Parent) location. This will allow it to issue a
+    // transaction from the Root origin.
+    ParentAsSuperuser<RuntimeOrigin>,
     // Native signed account converter; this just converts an `AccountId32` origin into a normal
     // `RuntimeOrigin::Signed` origin of the same 32-byte value.
     SignedAccountId32AsNative<RelayNetwork, RuntimeOrigin>,
@@ -115,8 +115,8 @@ pub type Barrier = TrailingSetTopicAsId<
                     AllowTopLevelPaidExecutionFrom<Everything>,
                     // Parents or their pluralities (governnace) get free execution.
                     AllowExplicitUnpaidExecutionFrom<ParentOrParentsExecutivePlurality>,
-					// Subscriptions for version tracking are OK.
-					AllowSubscriptionsFrom<ParentOrSiblings>,
+                    // Subscriptions for version tracking are OK.
+                    AllowSubscriptionsFrom<ParentOrSiblings>,
                 ),
                 UniversalLocation,
                 ConstU32<8>,
@@ -132,8 +132,8 @@ impl xcm_executor::Config for XcmConfig {
     // How to withdraw and deposit an asset.
     type AssetTransactor = CurrencyTransactor;
     type OriginConverter = XcmOriginToTransactDispatchOrigin;
-	// Sugondat does not recognize a reserve location for any asset. Users must teleport KSM
-	// where allowed (e.g. with the Relay Chain).
+    // Sugondat does not recognize a reserve location for any asset. Users must teleport KSM
+    // where allowed (e.g. with the Relay Chain).
     type IsReserve = ();
     type IsTeleporter = TrustedTeleporters;
     type UniversalLocation = UniversalLocation;
@@ -173,19 +173,24 @@ pub type XcmRouter = WithUniqueTopic<(
 /// Accepts an asset if it is a concrete asset from the system (Relay Chain or system parachain).
 pub struct KusamaAndSystemAsset;
 impl ContainsPair<MultiAsset, MultiLocation> for KusamaAndSystemAsset {
-	fn contains(asset: &MultiAsset, origin: &MultiLocation) -> bool {
-		log::trace!(target: "xcm::contains", "KusamaAndSystemAsset asset: {:?}, origin: {:?}", asset, origin);
-		let is_system = match origin {
-			// The Relay Chain
-			MultiLocation { parents: 1, interior: Here } => true,
-			// System parachain
-			MultiLocation { parents: 1, interior: X1(Parachain(id)) } =>
-				ParaId::from(*id).is_system(),
-			// Others
-			_ => false,
-		};
-		matches!(asset.id, Concrete(id) if id == KusamaLocation::get()) && is_system
-	}
+    fn contains(asset: &MultiAsset, origin: &MultiLocation) -> bool {
+        log::trace!(target: "xcm::contains", "KusamaAndSystemAsset asset: {:?}, origin: {:?}", asset, origin);
+        let is_system = match origin {
+            // The Relay Chain
+            MultiLocation {
+                parents: 1,
+                interior: Here,
+            } => true,
+            // System parachain
+            MultiLocation {
+                parents: 1,
+                interior: X1(Parachain(id)),
+            } => ParaId::from(*id).is_system(),
+            // Others
+            _ => false,
+        };
+        matches!(asset.id, Concrete(id) if id == KusamaLocation::get()) && is_system
+    }
 }
 
 /// Cases where a remote origin is accepted as trusted Teleporter for a given asset:
@@ -221,7 +226,7 @@ impl pallet_xcm::Config for Runtime {
     type TrustedLockers = ();
     type SovereignAccountOf = LocationToAccountId;
     type MaxLockers = ConstU32<8>;
-	// TODO: needs benchmarked weights
+    // TODO: needs benchmarked weights
     type WeightInfo = pallet_xcm::TestWeightInfo;
     #[cfg(feature = "runtime-benchmarks")]
     type ReachableDest = ReachableDest;

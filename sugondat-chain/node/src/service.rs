@@ -4,11 +4,7 @@
 use std::{sync::Arc, time::Duration};
 
 use cumulus_client_cli::CollatorOptions;
-// Local Runtime Types
-use sugondat_test_runtime::{
-    opaque::{Block, Hash},
-    RuntimeApi,
-};
+use sugondat_primitives::opaque::{Block, Hash};
 
 // Cumulus Imports
 use cumulus_client_collator::service::CollatorService;
@@ -25,9 +21,7 @@ use cumulus_relay_chain_interface::{OverseerHandle, RelayChainInterface};
 use frame_benchmarking_cli::SUBSTRATE_REFERENCE_HARDWARE;
 use sc_client_api::Backend;
 use sc_consensus::ImportQueue;
-use sc_executor::{
-    HeapAllocStrategy, NativeElseWasmExecutor, WasmExecutor, DEFAULT_HEAP_ALLOC_STRATEGY,
-};
+use sc_executor::{HeapAllocStrategy, WasmExecutor, DEFAULT_HEAP_ALLOC_STRATEGY};
 use sc_network::NetworkBlock;
 use sc_network_sync::SyncingService;
 use sc_service::{Configuration, PartialComponents, TFullBackend, TFullClient, TaskManager};
@@ -36,24 +30,29 @@ use sc_transaction_pool_api::OffchainTransactionPoolFactory;
 use sp_keystore::KeystorePtr;
 use substrate_prometheus_endpoint::Registry;
 
-/// Native executor type.
-pub struct ParachainNativeExecutor;
+// This is fine, even for the Kusama and Polkadot parachains.
+//
+// Runtime API invocations are one of the dumbest things in Substrate:
+//
+// Traits are auto-implemented for a struct based on an `impl_runtime_apis!` macro in the runtime code we're linking to,
+// but the implementation always calls into the underlying code executor because there is no guarantee that the
+// current runtime code on-chain is the same version as what we built this against.
+//
+// Basically, it's OK to always use the same Runtime API struct here, because the end result is that we always call
+// into the runtime. This could become a problem if some of the runtimes implement different runtime APIs from each other,
+// but that's not very likely for this use-case.
+type RuntimeApi = sugondat_test_runtime::RuntimeApi;
 
-impl sc_executor::NativeExecutionDispatch for ParachainNativeExecutor {
-    type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
+#[cfg(not(feature = "runtime-benchmarks"))]
+type HostFunctions = sp_io::SubstrateHostFunctions;
 
-    fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-        sugondat_test_runtime::api::dispatch(method, data)
-    }
+#[cfg(feature = "runtime-benchmarks")]
+type HostFunctions = (
+    sp_io::SubstrateHostFunctions,
+    frame_benchmarking::benchmarking::HostFunctions,
+);
 
-    fn native_version() -> sc_executor::NativeVersion {
-        sugondat_test_runtime::native_version()
-    }
-}
-
-type ParachainExecutor = NativeElseWasmExecutor<ParachainNativeExecutor>;
-
-type ParachainClient = TFullClient<Block, RuntimeApi, ParachainExecutor>;
+type ParachainClient = TFullClient<Block, RuntimeApi, WasmExecutor<HostFunctions>>;
 
 type ParachainBackend = TFullBackend<Block>;
 
@@ -97,15 +96,13 @@ pub fn new_partial(
             extra_pages: h as _,
         });
 
-    let wasm = WasmExecutor::builder()
+    let executor = WasmExecutor::<HostFunctions>::builder()
         .with_execution_method(config.wasm_method)
         .with_onchain_heap_alloc_strategy(heap_pages)
         .with_offchain_heap_alloc_strategy(heap_pages)
         .with_max_runtime_instances(config.max_runtime_instances)
         .with_runtime_cache_size(config.runtime_cache_size)
         .build();
-
-    let executor = ParachainExecutor::new_with_wasm_executor(wasm);
 
     let (client, backend, keystore_container, task_manager) =
         sc_service::new_full_parts::<Block, RuntimeApi, _>(

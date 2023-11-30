@@ -13434,11 +13434,15 @@ dependencies = [
  "sp-io",
  "sp-keystore",
  "sp-runtime",
+ "sp-session",
  "sp-timestamp",
+ "sp-transaction-pool",
  "staging-xcm",
  "substrate-build-script-utils",
  "substrate-frame-rpc-system",
  "substrate-prometheus-endpoint",
+ "sugondat-kusama-runtime",
+ "sugondat-primitives",
  "sugondat-test-runtime",
  "try-runtime-cli",
 ]
@@ -13447,6 +13451,7 @@ dependencies = [
 name = "sugondat-primitives"
 version = "0.1.0"
 dependencies = [
+ "sp-consensus-aura",
  "sp-core",
  "sp-runtime",
 ]

@@ -4,7 +4,8 @@ use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
-use sugondat_test_runtime::{AccountId, AuraId, Signature, EXISTENTIAL_DEPOSIT};
+use sugondat_primitives::{AccountId, AuraId, Signature};
+use sugondat_test_runtime::EXISTENTIAL_DEPOSIT as TEST_EXISTENTIAL_DEPOSIT;
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
 pub type ChainSpec =
@@ -205,7 +206,7 @@ fn testnet_genesis(
         },
         collator_selection: sugondat_test_runtime::CollatorSelectionConfig {
             invulnerables: invulnerables.iter().cloned().map(|(acc, _)| acc).collect(),
-            candidacy_bond: EXISTENTIAL_DEPOSIT * 16,
+            candidacy_bond: TEST_EXISTENTIAL_DEPOSIT * 16,
             ..Default::default()
         },
         session: sugondat_test_runtime::SessionConfig {

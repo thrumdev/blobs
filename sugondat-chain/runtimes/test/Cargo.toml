@@ -23,6 +23,7 @@ smallvec = "1.10.0"
 
 # Local
 pallet-sugondat-blobs = { path = "../../pallets/blobs", default-features = false }
+sugondat-primitives = { path = "../../primitives", default-features = false }
 
 # Substrate
 frame-benchmarking = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, optional = true, branch = "release-polkadot-v1.2.0" }
@@ -73,8 +74,6 @@ cumulus-primitives-timestamp = { git = "https://github.com/paritytech/polkadot-s
 cumulus-primitives-utility = { git = "https://github.com/paritytech/polkadot-sdk.git", branch = "release-polkadot-v1.2.0", default-features = false }
 pallet-collator-selection = { git = "https://github.com/paritytech/polkadot-sdk.git", branch = "release-polkadot-v1.2.0", default-features = false }
 parachain-info = { git = "https://github.com/paritytech/polkadot-sdk.git", branch = "release-polkadot-v1.2.0", default-features = false }
-
-sugondat-primitives = { path = "../../primitives" }
 
 
 [features]

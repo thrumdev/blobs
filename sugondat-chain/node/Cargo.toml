@@ -20,6 +20,8 @@ serde_json = "1.0.108"
 
 # Local
 sugondat-test-runtime = { path = "../runtimes/test" }
+sugondat-kusama-runtime = { path = "../runtimes/sugondat-kusama" }
+sugondat-primitives = { path = "../primitives" }
 
 # Substrate
 frame-benchmarking = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.2.0" }
@@ -49,7 +51,9 @@ sp-core = { git = "https://github.com/paritytech/polkadot-sdk", branch = "releas
 sp-keystore = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.2.0" }
 sp-io = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.2.0" }
 sp-runtime = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.2.0" }
+sp-session = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.2.0" }
 sp-timestamp = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.2.0" }
+sp-transaction-pool = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.2.0" }
 substrate-frame-rpc-system = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.2.0" }
 substrate-prometheus-endpoint = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.2.0" }
 try-runtime-cli = { git = "https://github.com/paritytech/polkadot-sdk", optional = true , branch = "release-polkadot-v1.2.0" }

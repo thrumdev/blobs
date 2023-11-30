@@ -7,7 +7,7 @@
 
 use std::sync::Arc;
 
-use sugondat_test_runtime::{opaque::Block, AccountId, Balance, Nonce};
+use sugondat_primitives::{opaque::Block, AccountId, Balance, Nonce};
 
 use sc_client_api::AuxStore;
 pub use sc_rpc::DenyUnsafe;

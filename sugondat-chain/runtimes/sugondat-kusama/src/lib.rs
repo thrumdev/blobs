@@ -15,9 +15,9 @@ use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
-    traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify},
+    traits::{AccountIdLookup, BlakeTwo256, Block as BlockT},
     transaction_validity::{TransactionSource, TransactionValidity},
-    ApplyExtrinsicResult, MultiSignature,
+    ApplyExtrinsicResult,
 };
 
 use sp_std::prelude::*;
@@ -25,15 +25,15 @@ use sp_std::prelude::*;
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
+use constants::consensus::*;
+use constants::kusama::{currency::*, fee::WeightToFee};
 use frame_support::{
     construct_runtime,
     dispatch::DispatchClass,
     genesis_builder_helper::{build_config, create_default_config},
     parameter_types,
     traits::{ConstBool, ConstU32, ConstU64, ConstU8, EitherOfDiverse, Everything},
-    weights::{
-        ConstantMultiplier, Weight,
-    },
+    weights::{ConstantMultiplier, Weight},
     PalletId,
 };
 use frame_system::{
@@ -41,10 +41,9 @@ use frame_system::{
     EnsureRoot,
 };
 use pallet_xcm::{EnsureXcm, IsVoiceOfBody};
-use constants::kusama::{currency::*, fee::WeightToFee};
-use constants::consensus::*;
 
-pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
+use sugondat_primitives::{AccountId, AuraId, Balance, BlockNumber, Nonce, Signature};
+
 pub use sp_runtime::{MultiAddress, Perbill, Permill};
 use xcm_config::{KusamaLocation, XcmConfig, XcmOriginToTransactDispatchOrigin};
 
@@ -62,24 +61,8 @@ use xcm_executor::XcmExecutor;
 
 pub use pallet_sugondat_blobs;
 
-/// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
-pub type Signature = MultiSignature;
-
-/// Some way of identifying an account on the chain. We intentionally make it equivalent
-/// to the public key of our transaction signing scheme.
-pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
-
-/// Balance of an account.
-pub type Balance = u128;
-
-/// Index of a transaction in the chain.
-pub type Nonce = u32;
-
 /// A hash of some data used by the chain.
 pub type Hash = sp_core::H256;
-
-/// An index to a block.
-pub type BlockNumber = u32;
 
 /// The address format for describing accounts.
 pub type Address = MultiAddress<AccountId, ()>;
@@ -120,28 +103,6 @@ pub type Executive = frame_executive::Executive<
     Runtime,
     AllPalletsWithSystem,
 >;
-
-/// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
-/// the specifics of the runtime. They can then be made to be agnostic over specific formats
-/// of data like extrinsics, allowing for them to continue syncing the network through upgrades
-/// to even the core data structures.
-pub mod opaque {
-    use super::*;
-    use sp_runtime::{
-        generic,
-        traits::{BlakeTwo256, Hash as HashT},
-    };
-
-    pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
-    /// Opaque block header type.
-    pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
-    /// Opaque block type.
-    pub type Block = generic::Block<Header, UncheckedExtrinsic>;
-    /// Opaque block identifier type.
-    pub type BlockId = generic::BlockId<Block>;
-    /// Opaque block hash type.
-    pub type Hash = <BlakeTwo256 as HashT>::Output;
-}
 
 impl_opaque_keys! {
     pub struct SessionKeys {

@@ -1,3 +1,4 @@
+use codec::{Decode, Encode};
 use jsonrpsee::Methods;
 use sugondat_shim_common_rollkit::{Blob, JsonRPCError, RollkitRPCServer};
 use tracing::{debug, info};
@@ -25,6 +26,15 @@ impl RollkitDock {
     }
 }
 
+#[derive(codec::Encode, codec::Decode)]
+pub struct Batch(Vec<Vec<u8>>);
+
+impl From<Vec<Blob>> for Batch {
+    fn from(value: Vec<Blob>) -> Self {
+        Self(value.into_iter().map(|blob| blob.data).collect())
+    }
+}
+
 #[async_trait::async_trait]
 impl RollkitRPCServer for RollkitDock {
     async fn retrieve(&self, namespace: String, height: u64) -> Result<Vec<Blob>, JsonRPCError> {
@@ -36,9 +46,12 @@ impl RollkitRPCServer for RollkitDock {
         let block_hash = self.client.wait_finalized_height(height).await.unwrap();
         let block = self.client.get_block_at(block_hash).await.unwrap();
         let mut blobs = vec![];
-        for blob in block.blobs {
-            if blob.namespace == namespace {
-                blobs.push(Blob { data: blob.data });
+        // From the sugondat perspective in the block are contained blobs
+        // but each sugondat-blob is a rollkit-batch that could contain multiple rollkit-blobs
+        for batch in block.blobs {
+            if batch.namespace == namespace {
+                let batch_data: Batch = Decode::decode(&mut &batch.data[..]).unwrap();
+                blobs.extend(batch_data.0.into_iter().map(|blob| Blob { data: blob }));
             }
         }
         Ok(blobs)
@@ -52,14 +65,14 @@ impl RollkitRPCServer for RollkitDock {
             .as_ref()
             .cloned()
             .ok_or_else(err::no_signing_key)?;
-        for blob in blobs {
-            self.client
-                .submit_blob(blob.data, namespace, submit_key.clone())
-                .await
-                .map_err(|_| err::submission_error())?;
-        }
-        // TODO:
-        Ok(0)
+        let batch: Batch = blobs.into();
+        let block_hash = self
+            .client
+            .submit_blob(batch.encode(), namespace, submit_key.clone())
+            .await
+            .map_err(|_| err::submission_error())?;
+        let block = self.client.get_block_at(block_hash).await.unwrap();
+        Ok(block.number)
     }
 }
 

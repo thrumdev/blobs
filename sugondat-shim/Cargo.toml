@@ -23,6 +23,7 @@ subxt = { version = "0.32.1" }
 subxt-signer = {version = "0.32.1", features = ["subxt"] }
 sha2 = "0.10.8"
 hex = "0.4.3"
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 
 [dev-dependencies]
 temp-dir = "0.1.11"

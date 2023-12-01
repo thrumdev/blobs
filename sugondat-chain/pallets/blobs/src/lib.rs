@@ -14,6 +14,17 @@ mod tests;
 mod benchmarking;
 pub mod weights;
 
+use codec::{Decode, Encode};
+use scale_info::TypeInfo;
+use sp_runtime::{
+    traits::{DispatchInfoOf, SignedExtension},
+    transaction_validity::{
+        InvalidTransaction, TransactionValidity, TransactionValidityError, ValidTransaction,
+    },
+};
+
+use frame_support::traits::{Get, IsSubType};
+
 #[frame_support::pallet]
 pub mod pallet {
     pub use crate::weights::WeightInfo;
@@ -153,7 +164,10 @@ pub mod pallet {
         //
         // To the submit_blob weight is added a flat cost relative to the on_finalize execution
         // the amount is equal to the entire weight of on_finalized divided by 1/4 of the MaxBlobs
-        // this covers perfectly the on_finalize cost if on avarage 1/4 of the possible blobs are submitted in one block
+        // this covers perfectly the on_finalize cost if on average 1/4 of the possible blobs are submitted in one block
+        //
+        // Note: this PANICS if the size of the blob, the total size of all blobs, or the total number of blobs submitted
+        // exceed their respective configured limits. These panics are intended to be protected against by the [`crate::PrevalidateBlobs`] extension.
         #[pallet::weight(
             T::WeightInfo::submit_blob(T::MaxBlobs::get() / 2, blob.len() as u32)
             .saturating_add(T::WeightInfo::on_finalize(0) / (T::MaxBlobs::get() / 4) as u64)
@@ -165,20 +179,25 @@ pub mod pallet {
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
 
+            let blob_len = blob.len() as u32;
+            if blob_len > T::MaxBlobSize::get() {
+                panic!("Blob size limit exceeded");
+            }
+
             let Some(extrinsic_index) = <frame_system::Pallet<T>>::extrinsic_index() else {
                 return Err(Error::<T>::NoExtrinsicIndex.into());
             };
 
             let total_blobs = TotalBlobs::<T>::get();
             if total_blobs + 1 > T::MaxBlobs::get() {
-                return Err(Error::<T>::MaxBlobsReached.into());
+                panic!("Maximum blob limit exceeded");
             }
             TotalBlobs::<T>::put(total_blobs + 1);
 
             let blob_len = blob.len() as u32;
             let total_blobs_size = TotalBlobsSize::<T>::get();
             if total_blobs_size + blob_len > T::MaxTotalBlobSize::get() {
-                return Err(Error::<T>::MaxTotalBlobsSizeReached.into());
+                panic!("Maximum total blob size exceeded");
             }
             TotalBlobsSize::<T>::put(total_blobs_size + blob_len);
 
@@ -206,5 +225,98 @@ pub mod pallet {
     fn sha2_hash(data: &[u8]) -> [u8; 32] {
         use sha2::Digest;
         sha2::Sha256::digest(data).into()
+    }
+}
+
+/// Prevalidates blob limits
+#[derive(Encode, Decode, Clone, Eq, PartialEq, TypeInfo)]
+#[scale_info(skip_type_params(T))]
+pub struct PrevalidateBlobs<T>(sp_std::marker::PhantomData<T>);
+
+impl<T> PrevalidateBlobs<T> {
+    /// Create new `SignedExtension` to prevalidate blob sizes.
+    pub fn new() -> Self {
+        Self(sp_std::marker::PhantomData)
+    }
+}
+
+impl<T> sp_std::fmt::Debug for PrevalidateBlobs<T> {
+    #[cfg(feature = "std")]
+    fn fmt(&self, f: &mut sp_std::fmt::Formatter) -> sp_std::fmt::Result {
+        write!(f, "PrevalidateBlobs")
+    }
+
+    #[cfg(not(feature = "std"))]
+    fn fmt(&self, _: &mut sp_std::fmt::Formatter) -> sp_std::fmt::Result {
+        Ok(())
+    }
+}
+
+impl<T: Config + Send + Sync> SignedExtension for PrevalidateBlobs<T>
+where
+    <T as frame_system::Config>::RuntimeCall: IsSubType<Call<T>>,
+{
+    type AccountId = T::AccountId;
+    type Call = <T as frame_system::Config>::RuntimeCall;
+    type AdditionalSigned = ();
+    type Pre = ();
+    const IDENTIFIER: &'static str = "PrevalidateBlobs";
+
+    fn additional_signed(&self) -> Result<Self::AdditionalSigned, TransactionValidityError> {
+        Ok(())
+    }
+
+    fn pre_dispatch(
+        self,
+        who: &Self::AccountId,
+        call: &Self::Call,
+        info: &DispatchInfoOf<Self::Call>,
+        len: usize,
+    ) -> Result<Self::Pre, TransactionValidityError> {
+        // This is what's called prior to dispatching within an actual block.
+
+        // Check individual blob size limits
+        self.validate(who, call, info, len)?;
+
+        // Here, we return `ExhaustsResources` if the total amount or size of blobs
+        // within a block is disrespected.
+        //
+        // This will cause honest nodes authoring blocks to skip the transaction without
+        // expunging it from their transaction pool.
+        if let Some(local_call) = call.is_sub_type() {
+            if let Call::submit_blob { blob, .. } = local_call {
+                if TotalBlobs::<T>::get() + 1 > T::MaxBlobs::get() {
+                    return Err(InvalidTransaction::ExhaustsResources.into());
+                }
+
+                if TotalBlobsSize::<T>::get() + blob.len() as u32 > T::MaxTotalBlobSize::get() {
+                    return Err(InvalidTransaction::ExhaustsResources.into());
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    fn validate(
+        &self,
+        _who: &Self::AccountId,
+        call: &Self::Call,
+        _info: &DispatchInfoOf<Self::Call>,
+        _len: usize,
+    ) -> TransactionValidity {
+        // This is what's called when evaluating transactions within the pool.
+
+        if let Some(local_call) = call.is_sub_type() {
+            if let Call::submit_blob { blob, .. } = local_call {
+                if blob.len() as u32 > T::MaxBlobSize::get() {
+                    // This causes the transaction to be expunged from the transaction pool.
+                    // It will not be valid unless the configured limit is increased by governance,
+                    // which is a rare event.
+                    return Err(InvalidTransaction::Custom(0).into());
+                }
+            }
+        }
+        Ok(ValidTransaction::default())
     }
 }

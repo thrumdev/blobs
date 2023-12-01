@@ -31,6 +31,9 @@ sp-io = { git = "https://github.com/paritytech/polkadot-sdk", default-features =
 # Substrate
 sp-core = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, branch = "release-polkadot-v1.2.0" }
 
+# Local
+sugondat-primitives = { path = "../../primitives", default-features = false }
+
 [features]
 default = ["std"]
 runtime-benchmarks = [
@@ -48,5 +51,6 @@ std = [
 	"frame-system/std",
 	"sp-std/std",
 	"sugondat-nmt/native",
+    "sugondat-primitives/std",
 ]
 try-runtime = [ "frame-support/try-runtime" ]

@@ -44,3 +44,10 @@ pub mod opaque {
     /// Opaque block hash type.
     pub type Hash = <BlakeTwo256 as HashT>::Output;
 }
+
+/// Invalid transaction custom errors for Sugondat Runtimes
+#[repr(u8)]
+pub enum InvalidTransactionCustomError {
+    /// The blob exceeds the configured per-blob size limit.
+    BlobExceedsSizeLimit = 100,
+}

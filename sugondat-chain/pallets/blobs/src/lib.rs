@@ -22,6 +22,7 @@ use sp_runtime::{
         InvalidTransaction, TransactionValidity, TransactionValidityError, ValidTransaction,
     },
 };
+use sugondat_primitives::InvalidTransactionCustomError;
 
 use frame_support::traits::{Get, IsSubType};
 
@@ -313,7 +314,10 @@ where
                     // This causes the transaction to be expunged from the transaction pool.
                     // It will not be valid unless the configured limit is increased by governance,
                     // which is a rare event.
-                    return Err(InvalidTransaction::Custom(0).into());
+                    return Err(InvalidTransaction::Custom(
+                        InvalidTransactionCustomError::BlobExceedsSizeLimit,
+                    )
+                    .into());
                 }
             }
         }

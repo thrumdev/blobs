@@ -3,9 +3,8 @@ name = "sugondat-runtime"
 version = "0.1.0"
 authors = ["Anonymous"]
 description = "A new Cumulus FRAME-based Substrate Runtime, ready for hacking together a parachain."
-license = "Unlicense"
-homepage = "https://substrate.io"
-repository = "https://github.com/paritytech/polkadot-sdk/"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/thrumdev/sugondat"
 edition = "2021"
 
 [package.metadata.docs.rs]

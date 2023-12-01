@@ -89,6 +89,7 @@ pub type SignedExtra = (
     frame_system::CheckNonce<Runtime>,
     frame_system::CheckWeight<Runtime>,
     pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
+    pallet_sugondat_blobs::PrevalidateBlobs,
 );
 
 /// Unchecked extrinsic type as expected by this runtime.
@@ -158,7 +159,7 @@ parameter_types! {
         })
         .avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
         .build_or_panic();
-    pub const SS58Prefix: u16 = ss58_registry::Ss58AddressFormatRegistry::KusamaAccount as u16;
+    pub const SS58Prefix: u16 = 2; // Kusama
 }
 
 // Configure FRAME pallets to include in runtime.

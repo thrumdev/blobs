@@ -7,8 +7,8 @@ use subxt_signer::sr25519::Keypair;
 use crate::sugondat_rpc;
 
 mod rollkit;
-mod sovereign;
 mod rpc_error;
+mod sovereign;
 
 /// A configuration for initializing all docks.
 pub struct Config {

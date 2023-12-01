@@ -3,8 +3,7 @@ name = "pallet-sugondat-blobs"
 authors = ["Anonymous"]
 description = "FRAME pallet for submitting blobs"
 version = "0.1.0"
-license = "Unlicense"
-homepage = "https://substrate.io"
+license = "MIT OR Apache-2.0"
 edition = "2021"
 
 [package.metadata.docs.rs]

@@ -136,6 +136,7 @@ pub mod kusama {
 #[cfg(test)]
 mod tests {
     // compile-test: ensure that the balance type used by Kusama matches the one used here.
+    #[test]
     fn balance_type_matches() {
         assert_eq!(
             std::any::TypeId::of::<crate::Balance>(),

@@ -12,6 +12,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0", features = ["derive"], default-features = false }
 scale-info = { version = "2.2.0", default-features = false, features = ["derive"] }
+sha2 = { version = "0.10.6", default-features = false }
 
 # Substrate
 frame-benchmarking = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, optional = true, branch = "release-polkadot-v1.2.0" }
@@ -21,8 +22,10 @@ sp-std = { git = "https://github.com/paritytech/polkadot-sdk", default-features 
 sp-runtime = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, branch = "release-polkadot-v1.2.0" }
 sp-io = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, branch = "release-polkadot-v1.2.0", optional = true}
 
+# Local
+sugondat-primitives = { path = "../../primitives", default-features = false }
+
 sugondat-nmt = { path = "../../../sugondat-nmt", default-features = false }
-sha2 = { version = "0.10.6", default-features = false }
 
 [dev-dependencies]
 serde = { version = "1.0.132" }
@@ -30,9 +33,6 @@ sp-io = { git = "https://github.com/paritytech/polkadot-sdk", default-features =
 
 # Substrate
 sp-core = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, branch = "release-polkadot-v1.2.0" }
-
-# Local
-sugondat-primitives = { path = "../../primitives", default-features = false }
 
 [features]
 default = ["std"]

@@ -7317,6 +7317,7 @@ dependencies = [
  "sp-runtime",
  "sp-std 8.0.0 (git+https://github.com/paritytech/polkadot-sdk.git?branch=release-polkadot-v1.2.0)",
  "sugondat-nmt",
+ "sugondat-primitives",
 ]
 
 [[package]]
@@ -13367,7 +13368,6 @@ dependencies = [
  "sp-std 8.0.0 (git+https://github.com/paritytech/polkadot-sdk.git?branch=release-polkadot-v1.2.0)",
  "sp-transaction-pool",
  "sp-version",
- "ss58-registry",
  "staging-xcm",
  "staging-xcm-builder",
  "staging-xcm-executor",

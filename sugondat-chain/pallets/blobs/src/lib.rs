@@ -315,7 +315,7 @@ where
                     // It will not be valid unless the configured limit is increased by governance,
                     // which is a rare event.
                     return Err(InvalidTransaction::Custom(
-                        InvalidTransactionCustomError::BlobExceedsSizeLimit,
+                        InvalidTransactionCustomError::BlobExceedsSizeLimit as u8,
                     )
                     .into());
                 }

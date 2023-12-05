@@ -22,6 +22,9 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn ChainSpec>, String> {
         "dev" => Box::new(chain_spec::development_config()),
         "sugondat-rococo" => Box::new(chain_spec::local_testnet_config()),
         "sugondat-kusama-staging" => Box::new(chain_spec::kusama_staging_config()),
+        "sugondat-kusama" => Box::new(chain_spec::KusamaRuntimeChainSpec::from_json_bytes(
+            &include_bytes!("chain_spec/res/blobs_kusama.json")[..],
+        )?),
         "" | "local" => Box::new(chain_spec::local_testnet_config()),
         path => Box::new(chain_spec::GenericChainSpec::from_json_file(
             std::path::PathBuf::from(path),

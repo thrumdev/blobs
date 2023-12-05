@@ -83,19 +83,18 @@ pub fn development_config() -> TestRuntimeChainSpec {
     properties.insert("ss58Format".into(), 42.into());
 
     TestRuntimeChainSpec::builder(
-		sugondat_test_runtime::WASM_BINARY
-			.expect("WASM binary was not built, please build it!"),
-		Extensions {
-			relay_chain: "rococo-local".into(),
-			// You MUST set this to the correct network!
-			para_id: 1000,
-		},
-	)
-	.with_name("Development")
-	.with_id("dev")
+        sugondat_test_runtime::WASM_BINARY.expect("WASM binary was not built, please build it!"),
+        Extensions {
+            relay_chain: "rococo-local".into(),
+            // You MUST set this to the correct network!
+            para_id: 1000,
+        },
+    )
+    .with_name("Development")
+    .with_id("dev")
     .with_properties(properties)
-	.with_chain_type(ChainType::Development)
-	.with_genesis_config_patch(test_runtime_genesis_patch(
+    .with_chain_type(ChainType::Development)
+    .with_genesis_config_patch(test_runtime_genesis_patch(
         // initial collators.
         vec![
             (
@@ -124,7 +123,7 @@ pub fn development_config() -> TestRuntimeChainSpec {
         get_account_id_from_seed::<sr25519::Public>("Alice"),
         1000.into(),
     ))
-	.build()
+    .build()
 }
 
 const KUSAMA_PARA_ID: u32 = 3338;
@@ -138,20 +137,19 @@ pub fn kusama_staging_config() -> KusamaRuntimeChainSpec {
     properties.insert("ss58Format".into(), 2.into());
 
     KusamaRuntimeChainSpec::builder(
-		sugondat_kusama_runtime::WASM_BINARY
-			.expect("WASM binary was not built, please build it!"),
-		Extensions {
-			relay_chain: "kusama".into(),
-			// You MUST set this to the correct network!
-			para_id: KUSAMA_PARA_ID,
-		},
-	)
-	.with_name("Kusama Blobs Staging")
-	.with_id("blobs_kusama_staging")
+        sugondat_kusama_runtime::WASM_BINARY.expect("WASM binary was not built, please build it!"),
+        Extensions {
+            relay_chain: "kusama".into(),
+            // You MUST set this to the correct network!
+            para_id: KUSAMA_PARA_ID,
+        },
+    )
+    .with_name("Kusama Blobs Staging")
+    .with_id("blobs_kusama_staging")
     .with_protocol_id("sugondat-kusama")
     .with_properties(properties)
-	.with_chain_type(ChainType::Local)
-	.with_genesis_config_patch(kusama_runtime_genesis_patch(
+    .with_chain_type(ChainType::Local)
+    .with_genesis_config_patch(kusama_runtime_genesis_patch(
         // initial collators
         vec![
             (
@@ -167,7 +165,7 @@ pub fn kusama_staging_config() -> KusamaRuntimeChainSpec {
         get_account_id_from_seed::<sr25519::Public>("Alice"),
         KUSAMA_PARA_ID.into(),
     ))
-	.build()
+    .build()
 }
 
 pub fn local_testnet_config() -> TestRuntimeChainSpec {
@@ -177,21 +175,20 @@ pub fn local_testnet_config() -> TestRuntimeChainSpec {
     properties.insert("tokenDecimals".into(), 12.into());
     properties.insert("ss58Format".into(), 42.into());
 
-	TestRuntimeChainSpec::builder(
-		sugondat_test_runtime::WASM_BINARY
-			.expect("WASM binary was not built, please build it!"),
-		Extensions {
-			relay_chain: "rococo-local".into(),
-			// You MUST set this to the correct network!
-			para_id: 1000,
-		},
-	)
-	.with_name("Local Testnet")
-	.with_id("local_testnet")
+    TestRuntimeChainSpec::builder(
+        sugondat_test_runtime::WASM_BINARY.expect("WASM binary was not built, please build it!"),
+        Extensions {
+            relay_chain: "rococo-local".into(),
+            // You MUST set this to the correct network!
+            para_id: 1000,
+        },
+    )
+    .with_name("Local Testnet")
+    .with_id("local_testnet")
     .with_protocol_id("sugondat-local")
     .with_properties(properties)
-	.with_chain_type(ChainType::Local)
-	.with_genesis_config_patch(test_runtime_genesis_patch(
+    .with_chain_type(ChainType::Local)
+    .with_genesis_config_patch(test_runtime_genesis_patch(
         // initial collators.
         vec![
             (
@@ -220,7 +217,7 @@ pub fn local_testnet_config() -> TestRuntimeChainSpec {
         get_account_id_from_seed::<sr25519::Public>("Alice"),
         1000.into(),
     ))
-	.build()
+    .build()
 }
 
 fn test_runtime_genesis_patch(
@@ -231,31 +228,31 @@ fn test_runtime_genesis_patch(
 ) -> serde_json::Value {
     serde_json::json! ({
         "balances": {
-			"balances": endowed_accounts.iter().cloned().map(|k| (k, 1u64 << 60)).collect::<Vec<_>>(),
-		},
-		"parachainInfo": {
-			"parachainId": id,
-		},
-		"collatorSelection": {
-			"invulnerables": invulnerables.iter().cloned().map(|(acc, _)| acc).collect::<Vec<_>>(),
-			"candidacyBond": TEST_EXISTENTIAL_DEPOSIT * 16,
-		},
-		"session": {
-			"keys": invulnerables
-				.into_iter()
-				.map(|(acc, aura)| {
-					(
-						acc.clone(),                 // account id
-						acc,                         // validator id
-						test_runtime_session_keys(aura), // session keys
-					)
-				})
-			.collect::<Vec<_>>(),
-		},
-		"polkadotXcm": {
-			"safeXcmVersion": Some(SAFE_XCM_VERSION),
-		},
-		"sudo": { "key": Some(root) }
+            "balances": endowed_accounts.iter().cloned().map(|k| (k, 1u64 << 60)).collect::<Vec<_>>(),
+        },
+        "parachainInfo": {
+            "parachainId": id,
+        },
+        "collatorSelection": {
+            "invulnerables": invulnerables.iter().cloned().map(|(acc, _)| acc).collect::<Vec<_>>(),
+            "candidacyBond": TEST_EXISTENTIAL_DEPOSIT * 16,
+        },
+        "session": {
+            "keys": invulnerables
+                .into_iter()
+                .map(|(acc, aura)| {
+                    (
+                        acc.clone(),                 // account id
+                        acc,                         // validator id
+                        test_runtime_session_keys(aura), // session keys
+                    )
+                })
+            .collect::<Vec<_>>(),
+        },
+        "polkadotXcm": {
+            "safeXcmVersion": Some(SAFE_XCM_VERSION),
+        },
+        "sudo": { "key": Some(root) }
     })
 }
 
@@ -267,30 +264,30 @@ fn kusama_runtime_genesis_patch(
 ) -> serde_json::Value {
     serde_json::json! ({
         "balances": {
-			"balances": endowed_accounts.iter().cloned().map(|k| (k, 1u64 << 60)).collect::<Vec<_>>(),
-		},
-		"parachainInfo": {
-			"parachainId": id,
-		},
-		"collatorSelection": {
-			"invulnerables": invulnerables.iter().cloned().map(|(acc, _)| acc).collect::<Vec<_>>(),
-			"candidacyBond": TEST_EXISTENTIAL_DEPOSIT * 16,
-		},
-		"session": {
-			"keys": invulnerables
-				.into_iter()
-				.map(|(acc, aura)| {
-					(
-						acc.clone(),                 // account id
-						acc,                         // validator id
-						kusama_runtime_session_keys(aura), // session keys
-					)
-				})
-			.collect::<Vec<_>>(),
-		},
-		"polkadotXcm": {
-			"safeXcmVersion": Some(SAFE_XCM_VERSION),
-		},
-		"sudo": { "key": Some(root) }
+            "balances": endowed_accounts.iter().cloned().map(|k| (k, 1u64 << 60)).collect::<Vec<_>>(),
+        },
+        "parachainInfo": {
+            "parachainId": id,
+        },
+        "collatorSelection": {
+            "invulnerables": invulnerables.iter().cloned().map(|(acc, _)| acc).collect::<Vec<_>>(),
+            "candidacyBond": TEST_EXISTENTIAL_DEPOSIT * 16,
+        },
+        "session": {
+            "keys": invulnerables
+                .into_iter()
+                .map(|(acc, aura)| {
+                    (
+                        acc.clone(),                 // account id
+                        acc,                         // validator id
+                        kusama_runtime_session_keys(aura), // session keys
+                    )
+                })
+            .collect::<Vec<_>>(),
+        },
+        "polkadotXcm": {
+            "safeXcmVersion": Some(SAFE_XCM_VERSION),
+        },
+        "sudo": { "key": Some(root) }
     })
 }

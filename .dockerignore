@@ -1,0 +1,11 @@
+.git
+bin
+target
+demo/sovereign/target
+zombienet/
+**/*.txt
+**/*.md
+/docker/
+
+# dotfiles in the repo root
+/.*

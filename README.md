@@ -7,6 +7,7 @@
 ├──<a href="./adapters">adapters</a>: Adapters for various rollup development kits (RDK).
 │   ├── <a href="./adapters/rollkit">rollkit</a>: An adapter connecting Rollkit to Sugondat
 │   ├── <a href="./adapters/sovereign">sovereign</a>: An adapter connecting Sovereign to Sugondat.
+├──<a href="./ci">ci</a>: All CI & QA related tools.
 ├──<a href="./demo">demo</a>: Projects showcasing integration of RDKs with Sugondat.
 │   ├── <a href="./demo/rollkit">rollkit</a>: Rollkit's GM rollup.
 │   ├── <a href="./demo/sovereign">sovereign</a>: Sovereign Demo Rollup.

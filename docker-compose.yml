@@ -1,0 +1,4 @@
+services:
+  relay-chain:
+    image: parity/polkadot:v1.4.0
+    

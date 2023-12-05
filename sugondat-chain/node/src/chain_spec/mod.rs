@@ -82,53 +82,49 @@ pub fn development_config() -> TestRuntimeChainSpec {
     properties.insert("tokenDecimals".into(), 12.into());
     properties.insert("ss58Format".into(), 42.into());
 
-    TestRuntimeChainSpec::from_genesis(
-        // Name
-        "Development",
-        // ID
-        "dev",
-        ChainType::Development,
-        move || {
-            testnet_genesis(
-                // initial collators.
-                vec![
-                    (
-                        get_account_id_from_seed::<sr25519::Public>("Alice"),
-                        get_collator_keys_from_seed("Alice"),
-                    ),
-                    (
-                        get_account_id_from_seed::<sr25519::Public>("Bob"),
-                        get_collator_keys_from_seed("Bob"),
-                    ),
-                ],
-                vec![
-                    get_account_id_from_seed::<sr25519::Public>("Alice"),
-                    get_account_id_from_seed::<sr25519::Public>("Bob"),
-                    get_account_id_from_seed::<sr25519::Public>("Charlie"),
-                    get_account_id_from_seed::<sr25519::Public>("Dave"),
-                    get_account_id_from_seed::<sr25519::Public>("Eve"),
-                    get_account_id_from_seed::<sr25519::Public>("Ferdie"),
-                    get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
-                ],
+    TestRuntimeChainSpec::builder(
+		sugondat_test_runtime::WASM_BINARY
+			.expect("WASM binary was not built, please build it!"),
+		Extensions {
+			relay_chain: "rococo-local".into(),
+			// You MUST set this to the correct network!
+			para_id: 1000,
+		},
+	)
+	.with_name("Development")
+	.with_id("dev")
+    .with_properties(properties)
+	.with_chain_type(ChainType::Development)
+	.with_genesis_config_patch(test_runtime_genesis_patch(
+        // initial collators.
+        vec![
+            (
                 get_account_id_from_seed::<sr25519::Public>("Alice"),
-                1000.into(),
-            )
-        },
-        Vec::new(),
-        None,
-        None,
-        None,
-        None,
-        Extensions {
-            relay_chain: "rococo-local".into(), // You MUST set this to the correct network!
-            para_id: 1000,
-        },
-    )
+                get_collator_keys_from_seed("Alice"),
+            ),
+            (
+                get_account_id_from_seed::<sr25519::Public>("Bob"),
+                get_collator_keys_from_seed("Bob"),
+            ),
+        ],
+        vec![
+            get_account_id_from_seed::<sr25519::Public>("Alice"),
+            get_account_id_from_seed::<sr25519::Public>("Bob"),
+            get_account_id_from_seed::<sr25519::Public>("Charlie"),
+            get_account_id_from_seed::<sr25519::Public>("Dave"),
+            get_account_id_from_seed::<sr25519::Public>("Eve"),
+            get_account_id_from_seed::<sr25519::Public>("Ferdie"),
+            get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+            get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+            get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
+            get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
+            get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
+            get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
+        ],
+        get_account_id_from_seed::<sr25519::Public>("Alice"),
+        1000.into(),
+    ))
+	.build()
 }
 
 const KUSAMA_PARA_ID: u32 = 3338;
@@ -141,46 +137,37 @@ pub fn kusama_staging_config() -> KusamaRuntimeChainSpec {
     properties.insert("tokenDecimals".into(), 12.into());
     properties.insert("ss58Format".into(), 2.into());
 
-    KusamaRuntimeChainSpec::from_genesis(
-        // Name
-        "Kusama Blobs Staging",
-        // Id
-        "blobs_kusama_staging",
-        ChainType::Local,
-        move || {
-            kusama_runtime_genesis(
-                // initial collators
-                vec![
-                    (
-                        get_account_id_from_seed::<sr25519::Public>("Alice"),
-                        get_collator_keys_from_seed("Alice"),
-                    ),
-                    (
-                        get_account_id_from_seed::<sr25519::Public>("Bob"),
-                        get_collator_keys_from_seed("Bob"),
-                    ),
-                ],
-                vec![], // no endowed accounts - must teleport.
+    KusamaRuntimeChainSpec::builder(
+		sugondat_kusama_runtime::WASM_BINARY
+			.expect("WASM binary was not built, please build it!"),
+		Extensions {
+			relay_chain: "kusama".into(),
+			// You MUST set this to the correct network!
+			para_id: KUSAMA_PARA_ID,
+		},
+	)
+	.with_name("Kusama Blobs Staging")
+	.with_id("blobs_kusama_staging")
+    .with_protocol_id("sugondat-kusama")
+    .with_properties(properties)
+	.with_chain_type(ChainType::Local)
+	.with_genesis_config_patch(kusama_runtime_genesis_patch(
+        // initial collators
+        vec![
+            (
                 get_account_id_from_seed::<sr25519::Public>("Alice"),
-                KUSAMA_PARA_ID.into(),
-            )
-        },
-        // Bootnodes
-        Vec::new(),
-        // Telemetry
-        None,
-        // Protocol ID
-        Some("sugondat-kusama"),
-        // Fork ID
-        None,
-        // Properties
-        Some(properties),
-        // Extensions
-        Extensions {
-            relay_chain: "kusama".into(), // You MUST set this to the correct network!
-            para_id: KUSAMA_PARA_ID,
-        },
-    )
+                get_collator_keys_from_seed("Alice"),
+            ),
+            (
+                get_account_id_from_seed::<sr25519::Public>("Bob"),
+                get_collator_keys_from_seed("Bob"),
+            ),
+        ],
+        vec![], // no endowed accounts - must teleport.
+        get_account_id_from_seed::<sr25519::Public>("Alice"),
+        KUSAMA_PARA_ID.into(),
+    ))
+	.build()
 }
 
 pub fn local_testnet_config() -> TestRuntimeChainSpec {
@@ -190,167 +177,120 @@ pub fn local_testnet_config() -> TestRuntimeChainSpec {
     properties.insert("tokenDecimals".into(), 12.into());
     properties.insert("ss58Format".into(), 42.into());
 
-    TestRuntimeChainSpec::from_genesis(
-        // Name
-        "Local Testnet",
-        // ID
-        "local_testnet",
-        ChainType::Local,
-        move || {
-            testnet_genesis(
-                // initial collators.
-                vec![
-                    (
-                        get_account_id_from_seed::<sr25519::Public>("Alice"),
-                        get_collator_keys_from_seed("Alice"),
-                    ),
-                    (
-                        get_account_id_from_seed::<sr25519::Public>("Bob"),
-                        get_collator_keys_from_seed("Bob"),
-                    ),
-                ],
-                vec![
-                    get_account_id_from_seed::<sr25519::Public>("Alice"),
-                    get_account_id_from_seed::<sr25519::Public>("Bob"),
-                    get_account_id_from_seed::<sr25519::Public>("Charlie"),
-                    get_account_id_from_seed::<sr25519::Public>("Dave"),
-                    get_account_id_from_seed::<sr25519::Public>("Eve"),
-                    get_account_id_from_seed::<sr25519::Public>("Ferdie"),
-                    get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
-                ],
+	TestRuntimeChainSpec::builder(
+		sugondat_test_runtime::WASM_BINARY
+			.expect("WASM binary was not built, please build it!"),
+		Extensions {
+			relay_chain: "rococo-local".into(),
+			// You MUST set this to the correct network!
+			para_id: 1000,
+		},
+	)
+	.with_name("Local Testnet")
+	.with_id("local_testnet")
+    .with_protocol_id("sugondat-local")
+    .with_properties(properties)
+	.with_chain_type(ChainType::Local)
+	.with_genesis_config_patch(test_runtime_genesis_patch(
+        // initial collators.
+        vec![
+            (
                 get_account_id_from_seed::<sr25519::Public>("Alice"),
-                1000.into(),
-            )
-        },
-        // Bootnodes
-        Vec::new(),
-        // Telemetry
-        None,
-        // Protocol ID
-        Some("sugondat-local"),
-        // Fork ID
-        None,
-        // Properties
-        Some(properties),
-        // Extensions
-        Extensions {
-            relay_chain: "rococo-local".into(), // You MUST set this to the correct network!
-            para_id: 1000,
-        },
-    )
+                get_collator_keys_from_seed("Alice"),
+            ),
+            (
+                get_account_id_from_seed::<sr25519::Public>("Bob"),
+                get_collator_keys_from_seed("Bob"),
+            ),
+        ],
+        vec![
+            get_account_id_from_seed::<sr25519::Public>("Alice"),
+            get_account_id_from_seed::<sr25519::Public>("Bob"),
+            get_account_id_from_seed::<sr25519::Public>("Charlie"),
+            get_account_id_from_seed::<sr25519::Public>("Dave"),
+            get_account_id_from_seed::<sr25519::Public>("Eve"),
+            get_account_id_from_seed::<sr25519::Public>("Ferdie"),
+            get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+            get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+            get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
+            get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
+            get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
+            get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
+        ],
+        get_account_id_from_seed::<sr25519::Public>("Alice"),
+        1000.into(),
+    ))
+	.build()
 }
 
-fn kusama_runtime_genesis(
+fn test_runtime_genesis_patch(
     invulnerables: Vec<(AccountId, AuraId)>,
     endowed_accounts: Vec<AccountId>,
     root: AccountId,
     id: ParaId,
-) -> sugondat_kusama_runtime::RuntimeGenesisConfig {
-    sugondat_kusama_runtime::RuntimeGenesisConfig {
-        system: sugondat_kusama_runtime::SystemConfig {
-            code: sugondat_kusama_runtime::WASM_BINARY
-                .expect("WASM binary was not build, please build it!")
-                .to_vec(),
-            ..Default::default()
-        },
-        balances: sugondat_kusama_runtime::BalancesConfig {
-            balances: endowed_accounts
-                .iter()
-                .cloned()
-                .map(|k| (k, 1 << 60))
-                .collect(),
-        },
-        parachain_info: sugondat_kusama_runtime::ParachainInfoConfig {
-            parachain_id: id,
-            ..Default::default()
-        },
-        collator_selection: sugondat_kusama_runtime::CollatorSelectionConfig {
-            invulnerables: invulnerables.iter().cloned().map(|(acc, _)| acc).collect(),
-            candidacy_bond: TEST_EXISTENTIAL_DEPOSIT * 16,
-            ..Default::default()
-        },
-        session: sugondat_kusama_runtime::SessionConfig {
-            keys: invulnerables
-                .into_iter()
-                .map(|(acc, aura)| {
-                    (
-                        acc.clone(),                       // account id
-                        acc,                               // validator id
-                        kusama_runtime_session_keys(aura), // session keys
-                    )
-                })
-                .collect(),
-        },
-        // no need to pass anything to aura, in fact it will panic if we do. Session will take care
-        // of this.
-        aura: Default::default(),
-        aura_ext: Default::default(),
-        parachain_system: Default::default(),
-        polkadot_xcm: sugondat_kusama_runtime::PolkadotXcmConfig {
-            safe_xcm_version: Some(SAFE_XCM_VERSION),
-            ..Default::default()
-        },
-        transaction_payment: Default::default(),
-        sudo: sugondat_kusama_runtime::SudoConfig { key: Some(root) },
-    }
+) -> serde_json::Value {
+    serde_json::json! ({
+        "balances": {
+			"balances": endowed_accounts.iter().cloned().map(|k| (k, 1u64 << 60)).collect::<Vec<_>>(),
+		},
+		"parachainInfo": {
+			"parachainId": id,
+		},
+		"collatorSelection": {
+			"invulnerables": invulnerables.iter().cloned().map(|(acc, _)| acc).collect::<Vec<_>>(),
+			"candidacyBond": TEST_EXISTENTIAL_DEPOSIT * 16,
+		},
+		"session": {
+			"keys": invulnerables
+				.into_iter()
+				.map(|(acc, aura)| {
+					(
+						acc.clone(),                 // account id
+						acc,                         // validator id
+						test_runtime_session_keys(aura), // session keys
+					)
+				})
+			.collect::<Vec<_>>(),
+		},
+		"polkadotXcm": {
+			"safeXcmVersion": Some(SAFE_XCM_VERSION),
+		},
+		"sudo": { "key": Some(root) }
+    })
 }
 
-fn testnet_genesis(
+fn kusama_runtime_genesis_patch(
     invulnerables: Vec<(AccountId, AuraId)>,
     endowed_accounts: Vec<AccountId>,
     root: AccountId,
     id: ParaId,
-) -> sugondat_test_runtime::RuntimeGenesisConfig {
-    sugondat_test_runtime::RuntimeGenesisConfig {
-        system: sugondat_test_runtime::SystemConfig {
-            code: sugondat_test_runtime::WASM_BINARY
-                .expect("WASM binary was not build, please build it!")
-                .to_vec(),
-            ..Default::default()
-        },
-        balances: sugondat_test_runtime::BalancesConfig {
-            balances: endowed_accounts
-                .iter()
-                .cloned()
-                .map(|k| (k, 1 << 60))
-                .collect(),
-        },
-        parachain_info: sugondat_test_runtime::ParachainInfoConfig {
-            parachain_id: id,
-            ..Default::default()
-        },
-        collator_selection: sugondat_test_runtime::CollatorSelectionConfig {
-            invulnerables: invulnerables.iter().cloned().map(|(acc, _)| acc).collect(),
-            candidacy_bond: TEST_EXISTENTIAL_DEPOSIT * 16,
-            ..Default::default()
-        },
-        session: sugondat_test_runtime::SessionConfig {
-            keys: invulnerables
-                .into_iter()
-                .map(|(acc, aura)| {
-                    (
-                        acc.clone(),                     // account id
-                        acc,                             // validator id
-                        test_runtime_session_keys(aura), // session keys
-                    )
-                })
-                .collect(),
-        },
-        // no need to pass anything to aura, in fact it will panic if we do. Session will take care
-        // of this.
-        aura: Default::default(),
-        aura_ext: Default::default(),
-        parachain_system: Default::default(),
-        polkadot_xcm: sugondat_test_runtime::PolkadotXcmConfig {
-            safe_xcm_version: Some(SAFE_XCM_VERSION),
-            ..Default::default()
-        },
-        transaction_payment: Default::default(),
-        sudo: sugondat_test_runtime::SudoConfig { key: Some(root) },
-    }
+) -> serde_json::Value {
+    serde_json::json! ({
+        "balances": {
+			"balances": endowed_accounts.iter().cloned().map(|k| (k, 1u64 << 60)).collect::<Vec<_>>(),
+		},
+		"parachainInfo": {
+			"parachainId": id,
+		},
+		"collatorSelection": {
+			"invulnerables": invulnerables.iter().cloned().map(|(acc, _)| acc).collect::<Vec<_>>(),
+			"candidacyBond": TEST_EXISTENTIAL_DEPOSIT * 16,
+		},
+		"session": {
+			"keys": invulnerables
+				.into_iter()
+				.map(|(acc, aura)| {
+					(
+						acc.clone(),                 // account id
+						acc,                         // validator id
+						kusama_runtime_session_keys(aura), // session keys
+					)
+				})
+			.collect::<Vec<_>>(),
+		},
+		"polkadotXcm": {
+			"safeXcmVersion": Some(SAFE_XCM_VERSION),
+		},
+		"sudo": { "key": Some(root) }
+    })
 }

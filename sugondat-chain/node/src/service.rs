@@ -260,15 +260,15 @@ async fn start_node_impl(
         // Here you can check whether the hardware meets your chains' requirements. Putting a link
         // in there and swapping out the requirements for your own are probably a good idea. The
         // requirements for a para-chain are dictated by its relay-chain.
-		match SUBSTRATE_REFERENCE_HARDWARE.check_hardware(&hwbench) {
-			Err(err) if validator => {
-				log::warn!(
+        match SUBSTRATE_REFERENCE_HARDWARE.check_hardware(&hwbench) {
+            Err(err) if validator => {
+                log::warn!(
 				"⚠️  The hardware does not meet the minimal requirements {} for role 'Authority'.",
 				err
 			);
-			},
-			_ => {},
-		}
+            }
+            _ => {}
+        }
 
         if let Some(ref mut telemetry) = telemetry {
             let telemetry_handle = telemetry.handle();
@@ -422,7 +422,7 @@ fn start_consensus(
         collator_service,
         // Very limited proposal time.
         authoring_duration: Duration::from_millis(500),
-		collation_request_receiver: None,
+        collation_request_receiver: None,
     };
 
     let fut =

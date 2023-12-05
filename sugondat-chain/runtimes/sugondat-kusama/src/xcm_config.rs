@@ -213,7 +213,7 @@ impl pallet_xcm::Config for Runtime {
     // ^ Override for AdvertisedXcmVersion default
     type AdvertisedXcmVersion = pallet_xcm::CurrentXcmVersion;
     type Currency = Balances;
-    type CurrencyMatcher = ();
+    type CurrencyMatcher = IsConcrete<KusamaLocation>;
     type TrustedLockers = ();
     type SovereignAccountOf = LocationToAccountId;
     type MaxLockers = ConstU32<8>;

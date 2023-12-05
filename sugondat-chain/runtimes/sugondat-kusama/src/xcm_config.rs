@@ -2,7 +2,6 @@ use super::{
     AccountId, AllPalletsWithSystem, Balances, ParachainInfo, ParachainSystem, PolkadotXcm,
     Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, WeightToFee, XcmpQueue,
 };
-use cumulus_primitives_core::{IsSystem, ParaId};
 use frame_support::{
     match_types, parameter_types,
     traits::{ConstU32, ContainsPair, Everything, Nothing},
@@ -15,11 +14,11 @@ use polkadot_runtime_common::impls::ToAuthor;
 use xcm::latest::prelude::*;
 use xcm_builder::{
     AccountId32Aliases, AllowExplicitUnpaidExecutionFrom, AllowSubscriptionsFrom,
-    AllowTopLevelPaidExecutionFrom, CurrencyAdapter, DenyReserveTransferToRelayChain, DenyThenTry,
-    EnsureXcmOrigin, FixedWeightBounds, IsConcrete, ParentAsSuperuser, ParentIsPreset,
-    RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
-    SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
-    TrailingSetTopicAsId, UsingComponents, WithComputedOrigin, WithUniqueTopic,
+    AllowTopLevelPaidExecutionFrom, CurrencyAdapter, EnsureXcmOrigin, FixedWeightBounds,
+    IsConcrete, ParentAsSuperuser, ParentIsPreset, RelayChainAsNative, SiblingParachainAsNative,
+    SiblingParachainConvertsVia, SignedAccountId32AsNative, SignedToAccountId32,
+    SovereignSignedViaLocation, TakeWeightCredit, TrailingSetTopicAsId, UsingComponents,
+    WithComputedOrigin, WithUniqueTopic,
 };
 use xcm_executor::XcmExecutor;
 
@@ -105,25 +104,20 @@ match_types! {
     };
 }
 
-pub type Barrier = TrailingSetTopicAsId<
-    DenyThenTry<
-        DenyReserveTransferToRelayChain,
+pub type Barrier = TrailingSetTopicAsId<(
+    TakeWeightCredit,
+    WithComputedOrigin<
         (
-            TakeWeightCredit,
-            WithComputedOrigin<
-                (
-                    AllowTopLevelPaidExecutionFrom<Everything>,
-                    // Parents or their pluralities (governnace) get free execution.
-                    AllowExplicitUnpaidExecutionFrom<ParentOrParentsExecutivePlurality>,
-                    // Subscriptions for version tracking are OK.
-                    AllowSubscriptionsFrom<ParentOrSiblings>,
-                ),
-                UniversalLocation,
-                ConstU32<8>,
-            >,
+            AllowTopLevelPaidExecutionFrom<Everything>,
+            // Parents or their pluralities (governnace) get free execution.
+            AllowExplicitUnpaidExecutionFrom<ParentOrParentsExecutivePlurality>,
+            // Subscriptions for version tracking are OK.
+            AllowSubscriptionsFrom<ParentOrSiblings>,
         ),
+        UniversalLocation,
+        ConstU32<8>,
     >,
->;
+)>;
 
 pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {
@@ -132,10 +126,10 @@ impl xcm_executor::Config for XcmConfig {
     // How to withdraw and deposit an asset.
     type AssetTransactor = CurrencyTransactor;
     type OriginConverter = XcmOriginToTransactDispatchOrigin;
-    // Sugondat does not recognize a reserve location for any asset. Users must teleport KSM
-    // where allowed (e.g. with the Relay Chain).
-    type IsReserve = ();
-    type IsTeleporter = TrustedTeleporters;
+    // Sugondat recognizes the relay chain as a reserve asset.
+    type IsReserve = TrustedReserve;
+    // Sugondat is not formally part of the system and therefore should not be used for teleportation.
+    type IsTeleporter = ();
     type UniversalLocation = UniversalLocation;
     type Barrier = Barrier;
     type Weigher = FixedWeightBounds<UnitWeightCost, RuntimeCall, MaxInstructions>;
@@ -170,22 +164,17 @@ pub type XcmRouter = WithUniqueTopic<(
     XcmpQueue,
 )>;
 
-/// Accepts an asset if it is a concrete asset from the system (Relay Chain or system parachain).
-pub struct KusamaAndSystemAsset;
-impl ContainsPair<MultiAsset, MultiLocation> for KusamaAndSystemAsset {
+/// Accepts an asset if it is a concrete asset from the system using the relay chain as a reserve.
+pub struct ParentRelayChainAndAsset;
+impl ContainsPair<MultiAsset, MultiLocation> for ParentRelayChainAndAsset {
     fn contains(asset: &MultiAsset, origin: &MultiLocation) -> bool {
-        log::trace!(target: "xcm::contains", "KusamaAndSystemAsset asset: {:?}, origin: {:?}", asset, origin);
+        log::trace!(target: "xcm::contains", "ParentRelayChain asset: {:?}, origin: {:?}", asset, origin);
         let is_system = match origin {
             // The Relay Chain
             MultiLocation {
                 parents: 1,
                 interior: Here,
             } => true,
-            // System parachain
-            MultiLocation {
-                parents: 1,
-                interior: X1(Parachain(id)),
-            } => ParaId::from(*id).is_system(),
             // Others
             _ => false,
         };
@@ -193,9 +182,11 @@ impl ContainsPair<MultiAsset, MultiLocation> for KusamaAndSystemAsset {
     }
 }
 
-/// Cases where a remote origin is accepted as trusted Teleporter for a given asset:
-/// - Kusama with the parent Relay Chain and system parachains.
-pub type TrustedTeleporters = KusamaAndSystemAsset;
+/// As this is not a system parachain, there are no trusted teleporters.
+pub type TrustedTeleporters = ();
+
+/// The parent relay chain is the accepted reserve for the native asset.
+pub type TrustedReserve = ParentRelayChainAndAsset;
 
 #[cfg(feature = "runtime-benchmarks")]
 parameter_types! {
@@ -212,7 +203,7 @@ impl pallet_xcm::Config for Runtime {
     // Needs to be `Everything` for local testing.
     type XcmExecutor = XcmExecutor<XcmConfig>;
     type XcmTeleportFilter = Everything;
-    type XcmReserveTransferFilter = Nothing;
+    type XcmReserveTransferFilter = Everything;
     type Weigher = FixedWeightBounds<UnitWeightCost, RuntimeCall, MaxInstructions>;
     type UniversalLocation = UniversalLocation;
     type RuntimeOrigin = RuntimeOrigin;

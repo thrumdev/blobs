@@ -10,7 +10,8 @@ members = [
     "sugondat-shim",
     "sugondat-shim/common/rollkit",
     "sugondat-shim/common/sovereign",
-    "sugondat-subxt"
+    "sugondat-subxt",
+    "e2e_tests"
 ]
 
 [profile.release]

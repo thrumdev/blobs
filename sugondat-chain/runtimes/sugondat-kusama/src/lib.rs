@@ -34,9 +34,7 @@ use frame_support::{
     dispatch::DispatchClass,
     genesis_builder_helper::{build_config, create_default_config},
     parameter_types,
-    traits::{
-        ConstBool, ConstU32, ConstU64, ConstU8, EitherOfDiverse, Everything, TransformOrigin,
-    },
+    traits::{ConstBool, ConstU32, ConstU64, ConstU8, EitherOfDiverse, TransformOrigin},
     weights::{ConstantMultiplier, Weight},
     PalletId,
 };
@@ -166,6 +164,20 @@ parameter_types! {
     pub const SS58Prefix: u16 = 2; // Kusama
 }
 
+/// Call filter that allows all kinds of transactions except for balance transfers.
+pub struct NoBalanceTransfers;
+
+impl frame_support::traits::Contains<RuntimeCall> for NoBalanceTransfers {
+    fn contains(x: &RuntimeCall) -> bool {
+        match *x {
+            RuntimeCall::Balances(pallet_balances::Call::transfer_allow_death { .. })
+            | RuntimeCall::Balances(pallet_balances::Call::transfer_keep_alive { .. })
+            | RuntimeCall::Balances(pallet_balances::Call::transfer_all { .. }) => false,
+            _ => true,
+        }
+    }
+}
+
 // Configure FRAME pallets to include in runtime.
 
 impl frame_system::Config for Runtime {
@@ -202,7 +214,7 @@ impl frame_system::Config for Runtime {
     /// The weight of database operations that the runtime can invoke.
     type DbWeight = RocksDbWeight;
     /// The basic call filter to use in dispatchable.
-    type BaseCallFilter = Everything;
+    type BaseCallFilter = NoBalanceTransfers;
     /// Weight information for the extrinsics of this pallet.
     type SystemWeightInfo = ();
     /// Block & extrinsics weights: base values and limits.
@@ -386,7 +398,7 @@ impl pallet_collator_selection::Config for Runtime {
     type Currency = Balances;
     type UpdateOrigin = CollatorSelectionUpdateOrigin;
     type PotId = PotId;
-    type MaxCandidates = ConstU32<100>;
+    type MaxCandidates = ConstU32<0>;
     type MinEligibleCollators = ConstU32<4>;
     type MaxInvulnerables = ConstU32<20>;
     // should be a multiple of session or things will get inconsistent

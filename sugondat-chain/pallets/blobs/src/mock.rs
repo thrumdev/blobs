@@ -52,9 +52,9 @@ impl frame_system::Config for Test {
 
 impl pallet_blobs::Config for Test {
     type RuntimeEvent = RuntimeEvent;
-    type MaxBlobs = ConstU32<{ 100 * 1024 }>;
-    type MaxBlobSize = ConstU32<{ 100 * 1024 }>;
-    type MaxTotalBlobSize = ConstU32<{ 2 * 1024 * 1024 }>;
+    type MaxBlobs = ConstU32<16>;
+    type MaxBlobSize = ConstU32<1024>;
+    type MaxTotalBlobSize = ConstU32<{ 10 * 1024 }>;
     type WeightInfo = ();
 }
 

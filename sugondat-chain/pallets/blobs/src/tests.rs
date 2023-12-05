@@ -70,15 +70,30 @@ fn test_max_blobs_reached() {
                 blob.clone()
             ));
         }
-        assert_noop!(
-            Blobs::submit_blob(RuntimeOrigin::signed(alice()), 0, blob.clone()),
-            Error::<Test>::MaxBlobsReached
-        );
     });
 }
 
 #[test]
-fn test_max_total_blob_size() {
+#[should_panic = "Maximum blob limit exceeded"]
+fn test_max_blobs_exceeded() {
+    let max_blobs: u32 = <Test as pallet_blobs::Config>::MaxBlobs::get();
+
+    new_test_ext().execute_with(|| {
+        let blob = get_blob(1);
+        for i in 0..max_blobs {
+            assert_ok!(Blobs::submit_blob(
+                RuntimeOrigin::signed(alice()),
+                i,
+                blob.clone()
+            ));
+        }
+
+        let _ = Blobs::submit_blob(RuntimeOrigin::signed(alice()), 0, blob.clone());
+    });
+}
+
+#[test]
+fn test_max_total_blob_size_reached() {
     let max_total_blobs_size: u32 = <Test as pallet_blobs::Config>::MaxTotalBlobSize::get();
     let max_blob_size: u32 = <Test as pallet_blobs::Config>::MaxBlobSize::get();
     let blobs_needed = max_total_blobs_size / max_blob_size;
@@ -92,10 +107,26 @@ fn test_max_total_blob_size() {
                 blob.clone()
             ));
         }
-        assert_noop!(
-            Blobs::submit_blob(RuntimeOrigin::signed(alice()), 0, blob.clone()),
-            Error::<Test>::MaxTotalBlobsSizeReached
-        );
+    });
+}
+
+#[test]
+#[should_panic = "Maximum total blob size exceeded"]
+fn test_max_total_blob_size_exceeded() {
+    let max_total_blobs_size: u32 = <Test as pallet_blobs::Config>::MaxTotalBlobSize::get();
+    let max_blob_size: u32 = <Test as pallet_blobs::Config>::MaxBlobSize::get();
+    let blobs_needed = max_total_blobs_size / max_blob_size;
+
+    new_test_ext().execute_with(|| {
+        let blob = get_blob(max_blob_size);
+        for i in 0..blobs_needed {
+            assert_ok!(Blobs::submit_blob(
+                RuntimeOrigin::signed(alice()),
+                i,
+                blob.clone()
+            ));
+        }
+        let _ = Blobs::submit_blob(RuntimeOrigin::signed(alice()), 0, blob.clone());
     });
 }
 

@@ -143,9 +143,9 @@ pub fn kusama_staging_config() -> KusamaRuntimeChainSpec {
 
     KusamaRuntimeChainSpec::from_genesis(
         // Name
-        "Sugondat Kusama Staging",
+        "Kusama Blobs Staging",
         // Id
-        "sugondat_kusama_staging",
+        "blobs_kusama_staging",
         ChainType::Local,
         move || {
             kusama_runtime_genesis(

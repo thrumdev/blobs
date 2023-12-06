@@ -57,19 +57,24 @@ fn test_no_extrinsic_index() {
     });
 }
 
-#[test]
-fn test_max_blobs_reached() {
-    let max_blobs: u32 = <Test as pallet_blobs::Config>::MaxBlobs::get();
-
-    new_test_ext().execute_with(|| {
-        let blob = get_blob(1);
-        for i in 0..max_blobs {
+macro_rules! submit_blobs {
+    ([blob_size] $blob_size: expr, [blobs_number] $n_blobs: expr) => {
+        let blob = get_blob($blob_size);
+        for i in 0..$n_blobs {
             assert_ok!(Blobs::submit_blob(
                 RuntimeOrigin::signed(alice()),
                 i,
                 blob.clone()
             ));
         }
+    };
+}
+
+#[test]
+fn test_max_blobs_reached() {
+    let max_blobs: u32 = <Test as pallet_blobs::Config>::MaxBlobs::get();
+    new_test_ext().execute_with(|| {
+        submit_blobs!([blob_size] 1, [blobs_number] max_blobs);
     });
 }
 
@@ -77,18 +82,8 @@ fn test_max_blobs_reached() {
 #[should_panic = "Maximum blob limit exceeded"]
 fn test_max_blobs_exceeded() {
     let max_blobs: u32 = <Test as pallet_blobs::Config>::MaxBlobs::get();
-
     new_test_ext().execute_with(|| {
-        let blob = get_blob(1);
-        for i in 0..max_blobs {
-            assert_ok!(Blobs::submit_blob(
-                RuntimeOrigin::signed(alice()),
-                i,
-                blob.clone()
-            ));
-        }
-
-        let _ = Blobs::submit_blob(RuntimeOrigin::signed(alice()), 0, blob.clone());
+        submit_blobs!([blob_size] 1, [blobs_number] max_blobs + 1);
     });
 }
 
@@ -99,14 +94,7 @@ fn test_max_total_blob_size_reached() {
     let blobs_needed = max_total_blobs_size / max_blob_size;
 
     new_test_ext().execute_with(|| {
-        let blob = get_blob(max_blob_size);
-        for i in 0..blobs_needed {
-            assert_ok!(Blobs::submit_blob(
-                RuntimeOrigin::signed(alice()),
-                i,
-                blob.clone()
-            ));
-        }
+        submit_blobs!([blob_size] max_blob_size, [blobs_number] blobs_needed);
     });
 }
 
@@ -118,15 +106,7 @@ fn test_max_total_blob_size_exceeded() {
     let blobs_needed = max_total_blobs_size / max_blob_size;
 
     new_test_ext().execute_with(|| {
-        let blob = get_blob(max_blob_size);
-        for i in 0..blobs_needed {
-            assert_ok!(Blobs::submit_blob(
-                RuntimeOrigin::signed(alice()),
-                i,
-                blob.clone()
-            ));
-        }
-        let _ = Blobs::submit_blob(RuntimeOrigin::signed(alice()), 0, blob.clone());
+        submit_blobs!([blob_size] max_blob_size, [blobs_number] blobs_needed + 1);
     });
 }
 

@@ -1,7 +1,15 @@
+# This file is used to configure what files will get into the docker context. Specifically,
+# everything that is listed here will get transferred into the docker build context.
+#
+# Ignoring the right items in here will make not only make transfer times shorter, but also make
+# docker images smaller and trigger less rebuilds.
+
 .git
+ci
 bin
 target
 demo/sovereign/target
+demo/sovereign/demo-rollup/demo_data
 zombienet/
 **/*.txt
 **/*.md

@@ -11,6 +11,7 @@
 ├──<a href="./demo">demo</a>: Projects showcasing integration of RDKs with Sugondat.
 │   ├── <a href="./demo/rollkit">rollkit</a>: Rollkit's GM rollup.
 │   ├── <a href="./demo/sovereign">sovereign</a>: Sovereign Demo Rollup.
+├──<a href="./ci">ci</a>: CI and testing infrastructure.
 ├──<a href="./sugondat-chain">sugondat-chain</a>: Implementation of sugondat parachain.
 ├──<a href="./sugondat-shim">sugondat-shim</a>: Shim between sugondat parachain RPC and RDK adapters.
 ├──<a href="./sugondat-subxt">sugondat-subxt</a>: Bindings to Sugondat RPC.

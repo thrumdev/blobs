@@ -63,8 +63,9 @@ pub mod pallet {
 
     /// The total number of bytes stored in all blobs.
     #[pallet::storage]
-    pub type TotalBlobsSize<T: Config> = StorageValue<_, u32, ValueQuery>;
+    pub type TotalBlobSize<T: Config> = StorageValue<_, u32, ValueQuery>;
 
+    /// The amount of submitted blobs
     #[pallet::storage]
     pub type TotalBlobs<T: Config> = StorageValue<_, u32, ValueQuery>;
 
@@ -105,12 +106,6 @@ pub mod pallet {
     // Errors inform users that something went wrong.
     #[pallet::error]
     pub enum Error<T> {
-        /// Maximum number of blobs reached.
-        MaxBlobsReached,
-        /// Maximum total size of blobs reached.
-        MaxTotalBlobsSizeReached,
-        /// The blob submitted couldn't be stored because it was too large.
-        BlobTooLarge,
         /// The extrinsic index is not available.
         NoExtrinsicIndex,
     }
@@ -130,14 +125,14 @@ pub mod pallet {
     impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
         fn on_initialize(_: BlockNumberFor<T>) -> Weight {
             // BlobList: 1r + 1w
-            // TotalBlobsSize: 1w
+            // TotalBlobSize: 1w
             // TotalBlobs: 1w
             // deposit_log: 1r + 1w
             T::DbWeight::get().reads_writes(2, 4)
         }
 
         fn on_finalize(_n: BlockNumberFor<T>) {
-            TotalBlobsSize::<T>::kill();
+            TotalBlobSize::<T>::kill();
             TotalBlobs::<T>::kill();
             let blobs = BlobList::<T>::take()
                 .iter()
@@ -176,7 +171,7 @@ pub mod pallet {
         pub fn submit_blob(
             origin: OriginFor<T>,
             namespace_id: u32,
-            blob: BoundedVec<u8, T::MaxBlobSize>,
+            blob: Vec<u8>,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
 
@@ -196,11 +191,11 @@ pub mod pallet {
             TotalBlobs::<T>::put(total_blobs + 1);
 
             let blob_len = blob.len() as u32;
-            let total_blobs_size = TotalBlobsSize::<T>::get();
-            if total_blobs_size + blob_len > T::MaxTotalBlobSize::get() {
+            let total_blob_size = TotalBlobSize::<T>::get();
+            if total_blob_size + blob_len > T::MaxTotalBlobSize::get() {
                 panic!("Maximum total blob size exceeded");
             }
-            TotalBlobsSize::<T>::put(total_blobs_size + blob_len);
+            TotalBlobSize::<T>::put(total_blob_size + blob_len);
 
             let blob_hash = sha2_hash(&blob);
 
@@ -290,7 +285,7 @@ where
                     return Err(InvalidTransaction::ExhaustsResources.into());
                 }
 
-                if TotalBlobsSize::<T>::get() + blob.len() as u32 > T::MaxTotalBlobSize::get() {
+                if TotalBlobSize::<T>::get() + blob.len() as u32 > T::MaxTotalBlobSize::get() {
                     return Err(InvalidTransaction::ExhaustsResources.into());
                 }
             }

@@ -5,13 +5,13 @@ use frame_support::traits::Hooks;
 use frame_support::{assert_noop, assert_ok, traits::Get, BoundedVec};
 use sha2::Digest;
 use sp_core::{crypto::Pair, sr25519};
+use sp_runtime::transaction_validity::{
+    InvalidTransaction, TransactionValidityError, ValidTransaction,
+};
 use sugondat_nmt::{Namespace, NmtLeaf};
 
-fn get_blob(size: u32) -> BoundedVec<u8, <Test as pallet_blobs::Config>::MaxBlobSize> {
-    vec![12u8]
-        .repeat(size as usize)
-        .try_into()
-        .expect("provided size biggger then MaxBlobSize")
+fn get_blob(size: u32) -> Vec<u8> {
+    vec![12u8].repeat(size as usize)
 }
 
 fn alice() -> <Test as frame_system::Config>::AccountId {
@@ -35,7 +35,7 @@ fn test_correct_submitted_blob() {
         ));
 
         assert_eq!(TotalBlobs::<Test>::get(), 1);
-        assert_eq!(TotalBlobsSize::<Test>::get(), blob_len);
+        assert_eq!(TotalBlobSize::<Test>::get(), blob_len);
         let blob_list = SubmittedBlobMetadata {
             who: alice(),
             extrinsic_index: 0,
@@ -88,7 +88,7 @@ fn test_max_blobs_exceeded() {
 }
 
 #[test]
-fn test_max_total_blob_size_reached() {
+fn test_max_total_blobs_size_reached() {
     let max_total_blobs_size: u32 = <Test as pallet_blobs::Config>::MaxTotalBlobSize::get();
     let max_blob_size: u32 = <Test as pallet_blobs::Config>::MaxBlobSize::get();
     let blobs_needed = max_total_blobs_size / max_blob_size;
@@ -100,7 +100,7 @@ fn test_max_total_blob_size_reached() {
 
 #[test]
 #[should_panic = "Maximum total blob size exceeded"]
-fn test_max_total_blob_size_exceeded() {
+fn test_max_total_blobs_size_exceeded() {
     let max_total_blobs_size: u32 = <Test as pallet_blobs::Config>::MaxTotalBlobSize::get();
     let max_blob_size: u32 = <Test as pallet_blobs::Config>::MaxBlobSize::get();
     let blobs_needed = max_total_blobs_size / max_blob_size;
@@ -190,7 +190,7 @@ fn test_namespace_order() {
         submit_blob(1 << 8, 2);
         submit_blob(1, 3);
 
-        assert_eq!(TotalBlobsSize::<Test>::get(), blob_len * 4);
+        assert_eq!(TotalBlobSize::<Test>::get(), blob_len * 4);
         assert_eq!(BlobList::<Test>::get().to_vec(), blobs_metadata);
 
         Blobs::on_finalize(System::block_number());
@@ -290,4 +290,90 @@ fn test_on_finalize() {
             assert_eq!(None, logs.next());
         });
     }
+}
+
+macro_rules! submit_blob_call {
+    ([blob_size] $blob_size: expr) => {
+        RuntimeCall::Blobs(
+            Call::submit_blob {
+                namespace_id: 0,
+                blob: get_blob($blob_size),
+            }
+            .into(),
+        )
+    };
+}
+
+#[test]
+fn test_validate_ok() {
+    let prevalidate_blobs = PrevalidateBlobs::<Test>::new();
+
+    let call = submit_blob_call!([blob_size] 1);
+    assert_eq!(
+        Ok(ValidTransaction::default()),
+        prevalidate_blobs.validate(&alice(), &call, &Default::default(), 0)
+    );
+}
+
+#[test]
+fn test_validate_exceeded() {
+    let prevalidate_blobs = PrevalidateBlobs::<Test>::new();
+
+    let max_blob_size: u32 = <Test as pallet_blobs::Config>::MaxBlobSize::get();
+    let call = submit_blob_call!([blob_size] max_blob_size + 1);
+
+    assert_eq!(
+        Err(TransactionValidityError::Invalid(
+            InvalidTransaction::Custom(InvalidTransactionCustomError::BlobExceedsSizeLimit as u8)
+        )),
+        prevalidate_blobs.validate(&alice(), &call, &Default::default(), 0)
+    );
+}
+
+#[test]
+fn test_pre_dispatch_ok() {
+    let prevalidate_blobs = PrevalidateBlobs::<Test>::new();
+
+    new_test_ext().execute_with(|| {
+        let call = submit_blob_call!([blob_size] 1);
+        assert_eq!(
+            Ok(()),
+            prevalidate_blobs.pre_dispatch(&alice(), &call, &Default::default(), 0)
+        );
+    });
+}
+
+#[test]
+fn test_pre_dispatch_max_blobs_exceeded() {
+    let prevalidate_blobs = PrevalidateBlobs::<Test>::new();
+    let max_blobs: u32 = <Test as pallet_blobs::Config>::MaxBlobs::get();
+
+    new_test_ext().execute_with(|| {
+        submit_blobs!([blob_size] 1, [blobs_number] max_blobs);
+
+        let call = submit_blob_call!([blob_size] 1);
+        assert_eq!(
+            Err(InvalidTransaction::ExhaustsResources.into()),
+            prevalidate_blobs.pre_dispatch(&alice(), &call, &Default::default(), 0)
+        );
+    });
+}
+
+#[test]
+fn test_pre_dispatch_max_total_blobs_size_reached() {
+    let prevalidate_blobs = PrevalidateBlobs::<Test>::new();
+
+    let max_total_blobs_size: u32 = <Test as pallet_blobs::Config>::MaxTotalBlobSize::get();
+    let max_blob_size: u32 = <Test as pallet_blobs::Config>::MaxBlobSize::get();
+    let blobs_needed = max_total_blobs_size / max_blob_size;
+
+    new_test_ext().execute_with(|| {
+        submit_blobs!([blob_size] max_blob_size, [blobs_number] blobs_needed);
+
+        let call = submit_blob_call!([blob_size] max_blob_size);
+        assert_eq!(
+            Err(InvalidTransaction::ExhaustsResources.into()),
+            prevalidate_blobs.pre_dispatch(&alice(), &call, &Default::default(), 0)
+        );
+    });
 }

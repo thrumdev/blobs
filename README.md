@@ -1,9 +1,11 @@
-# Sugondat
+# Blobs
+
+Blobchains on Polkadot and Kusama
 
 ## Project Structure
 
 <pre>
-<a href=".">sugondat</a>: The sugondat monorepo.
+<a href=".">blobs</a>: The blobs monorepo.
 ├──<a href="./adapters">adapters</a>: Adapters for various rollup development kits (RDK).
 │   ├── <a href="./adapters/rollkit">rollkit</a>: An adapter connecting Rollkit to Sugondat
 │   ├── <a href="./adapters/sovereign">sovereign</a>: An adapter connecting Sovereign to Sugondat.

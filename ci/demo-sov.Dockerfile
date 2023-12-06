@@ -34,7 +34,7 @@ RUN \
 RUN $CARGO_HOME/bin/rustup target add wasm32-unknown-unknown
 
 RUN $CARGO_HOME/bin/cargo install cargo-risczero
-RUN $CARGO_HOME/bin/cargo risczero build-toolchain
+RUN $CARGO_HOME/bin/cargo risczero install
 
 WORKDIR /sugondat
 COPY . /sugondat

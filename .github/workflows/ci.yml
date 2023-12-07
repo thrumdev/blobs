@@ -8,6 +8,18 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  fmt:
+    name: fmt
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install rustfmt from the rust stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: Rustfmt
+        run: cargo fmt --all -- --check
   build_and_test:
     name: Sugondat - latest
     runs-on: self-hosted

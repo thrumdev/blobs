@@ -77,6 +77,10 @@ pallet-collator-selection = { git = "https://github.com/paritytech/polkadot-sdk.
 parachain-info = { package = "staging-parachain-info", git = "https://github.com/paritytech/polkadot-sdk.git", branch = "release-polkadot-v1.4.0", default-features = false }
 parachains-common = { git = "https://github.com/paritytech/polkadot-sdk.git", branch = "release-polkadot-v1.4.0", default-features = false }
 
+[dev-dependencies]
+sp-io = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, branch = "release-polkadot-v1.4.0"}
+sp-keyring = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, branch = "release-polkadot-v1.4.0"}
+
 [features]
 default = [ "std" ]
 std = [
@@ -127,6 +131,7 @@ std = [
 	"sp-std/std",
 	"sp-transaction-pool/std",
 	"sp-version/std",
+	"sp-io/std",
 	"substrate-wasm-builder",
 	"xcm-builder/std",
 	"xcm-executor/std",

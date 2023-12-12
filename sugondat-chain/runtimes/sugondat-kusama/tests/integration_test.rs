@@ -1,7 +1,7 @@
 use polkadot_core_primitives::AccountId;
 use sp_runtime::{
     generic::SignedPayload,
-    traits::{Checkable, Lookup, Verify},
+    traits::{Applyable, Checkable, Lookup, Verify, StaticLookup, SignedExtension},
     transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidityError},
     BuildStorage, KeyTypeId, MultiAddress, MultiSignature,
 };
@@ -31,20 +31,28 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 #[test]
 fn test_validate_transaction_exceeded_max_blob_size() {
     new_test_ext().execute_with(|| {
+        // Run a single block of the system in order to set the genesis hash.
+        // The storage of `pallet_system` is initialized to hold 0x45... as the genesis
+        // hash, so pushing a block with a different hash would overwrite it.
+        // This ensures that the `CheckEra` and `CheckGenesis` provide the same
+        // `additional_signed` payload data when constructing the transaction (here)
+        // as well as validating it in `Runtime::validate_transaction`, which internally
+        // calls `System::initialize` (prior to 1.5.0).
+        {
+            <frame_system::Pallet<Runtime>>::initialize(
+                &(frame_system::Pallet::<Runtime>::block_number() + 1),
+                &Hash::repeat_byte(1),
+                &Default::default(),
+            );
+            <frame_system::Pallet<Runtime>>::finalize();
+        }
+
         let alice_pair: sr25519::Pair = sr25519::Pair::from_string("//Alice", None)
             .expect("Impossible generate Alice AccountId")
             .into();
 
-        // let alice_pair: sr25519::Pair = sr25519::Pair::from_string(
-        //     "celery harvest shield father arm nice target tell regular junk miss belt",
-        //     None,
-        // )
-        // .expect("Impossible generate Alice AccountId")
-        // .into();
-
         let alice_account_id: <Runtime as frame_system::Config>::AccountId =
             alice_pair.public().into();
-        //let alice_address = Address::Id(Keyring::Alice.to_account_id());
         let alice_address = Address::Id(alice_account_id.clone());
 
         let source = TransactionSource::External;
@@ -62,7 +70,7 @@ fn test_validate_transaction_exceeded_max_blob_size() {
             frame_system::CheckSpecVersion::<Runtime>::new(),
             frame_system::CheckTxVersion::<Runtime>::new(),
             frame_system::CheckGenesis::<Runtime>::new(),
-            frame_system::CheckEra::<Runtime>::from(sp_runtime::generic::Era::Immortal),
+            frame_system::CheckEra::<Runtime>::from(sp_runtime::generic::Era::immortal()),
             frame_system::CheckNonce::<Runtime>::from(0),
             frame_system::CheckWeight::<Runtime>::new(),
             pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(0),
@@ -71,21 +79,12 @@ fn test_validate_transaction_exceeded_max_blob_size() {
 
         let raw_payload = SignedPayload::new(runtime_call.clone(), signed_extra.clone()).unwrap();
         let signature = raw_payload.using_encoded(|payload| {
-            //let sig = Keyring::Alice.sign(payload);
             let sig = alice_pair.sign(payload);
             MultiSignature::Sr25519(sig)
         });
 
-        //let signed = dbg!(lookup.lookup(alice).unwrap()); // Inside UncheckedExtrinsic there is this lookup, maybe here something is wrong
-        //if !raw_payload
-        //    .using_encoded(|payload| signature.verify(payload, &(alice_account_id.into())))
-        //{
-        //    panic!("bad proof");
-        //}
-        //println!("proof OK");
-
         let tx =
-            UncheckedExtrinsic::new_signed(runtime_call, alice_address, signature, signed_extra);
+            UncheckedExtrinsic::new_signed(runtime_call, alice_address.clone(), signature, signed_extra);
 
         assert_eq!(
             Err(TransactionValidityError::Invalid(

@@ -1,98 +1,159 @@
-use polkadot_core_primitives::AccountId;
+use frame_support::traits::tokens::Precision;
+use sp_block_builder::runtime_decl_for_block_builder::BlockBuilderV6;
 use sp_runtime::{
     generic::SignedPayload,
-    traits::{Applyable, Checkable, Lookup, Verify, StaticLookup, SignedExtension},
-    transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidityError},
-    BuildStorage, KeyTypeId, MultiAddress, MultiSignature,
+    transaction_validity::{
+        InvalidTransaction, TransactionSource, TransactionValidity, TransactionValidityError,
+    },
+    BuildStorage, MultiSignature,
 };
-use sp_transaction_pool::runtime_api::TaggedTransactionQueue;
 
 use codec::Encode;
-use sp_core::{
-    crypto::{key_types, Pair},
-    sr25519,
-};
-use sp_keyring::sr25519::Keyring;
+use frame_support::traits::fungible::Balanced;
+use sp_core::{crypto::Pair, sr25519};
 use sp_transaction_pool::runtime_api::runtime_decl_for_tagged_transaction_queue::TaggedTransactionQueueV3;
 use sugondat_kusama_runtime::{
-    Address, Balances, Blobs, Hash, Runtime, RuntimeCall, SignedExtra, UncheckedExtrinsic,
+    Address, Hash, MaxBlobSize, MaxBlobs, MaxTotalBlobSize, Runtime, RuntimeCall, SignedExtra,
+    UncheckedExtrinsic,
 };
-use sugondat_primitives::Signature;
 
 use sugondat_kusama_runtime::*;
 
-pub fn new_test_ext() -> sp_io::TestExternalities {
+fn new_test_ext() -> sp_io::TestExternalities {
     frame_system::GenesisConfig::<Runtime>::default()
         .build_storage()
         .unwrap()
         .into()
 }
 
-#[test]
-fn test_validate_transaction_exceeded_max_blob_size() {
-    new_test_ext().execute_with(|| {
-        // Run a single block of the system in order to set the genesis hash.
-        // The storage of `pallet_system` is initialized to hold 0x45... as the genesis
-        // hash, so pushing a block with a different hash would overwrite it.
-        // This ensures that the `CheckEra` and `CheckGenesis` provide the same
-        // `additional_signed` payload data when constructing the transaction (here)
-        // as well as validating it in `Runtime::validate_transaction`, which internally
-        // calls `System::initialize` (prior to 1.5.0).
-        {
-            <frame_system::Pallet<Runtime>>::initialize(
-                &(frame_system::Pallet::<Runtime>::block_number() + 1),
-                &Hash::repeat_byte(1),
-                &Default::default(),
-            );
-            <frame_system::Pallet<Runtime>>::finalize();
-        }
+fn alice_pair() -> sr25519::Pair {
+    sr25519::Pair::from_string("//Alice", None)
+        .expect("Impossible generate Alice AccountId")
+        .into()
+}
 
-        let alice_pair: sr25519::Pair = sr25519::Pair::from_string("//Alice", None)
-            .expect("Impossible generate Alice AccountId")
-            .into();
-
-        let alice_account_id: <Runtime as frame_system::Config>::AccountId =
-            alice_pair.public().into();
-        let alice_address = Address::Id(alice_account_id.clone());
-
-        let source = TransactionSource::External;
-
-        let max_blob_size = sugondat_kusama_runtime::MaxBlobSize::get() as usize;
-
-        let runtime_call: RuntimeCall = pallet_sugondat_blobs::Call::submit_blob {
-            namespace_id: 0,
-            blob: vec![0; max_blob_size + 1],
-        }
-        .into();
-
-        let signed_extra: SignedExtra = (
-            frame_system::CheckNonZeroSender::<Runtime>::new(),
-            frame_system::CheckSpecVersion::<Runtime>::new(),
-            frame_system::CheckTxVersion::<Runtime>::new(),
-            frame_system::CheckGenesis::<Runtime>::new(),
-            frame_system::CheckEra::<Runtime>::from(sp_runtime::generic::Era::immortal()),
-            frame_system::CheckNonce::<Runtime>::from(0),
-            frame_system::CheckWeight::<Runtime>::new(),
-            pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(0),
-            pallet_sugondat_blobs::PrevalidateBlobs::<Runtime>::new(),
+// Needed to be called inside Externalities
+fn prepare_environment_and_deposit_funds(account: <Runtime as frame_system::Config>::AccountId) {
+    // Run a single block of the system in order to set the genesis hash.
+    // The storage of `pallet_system` is initialized to hold 0x45... as the genesis
+    // hash, so pushing a block with a different hash would overwrite it.
+    // This ensures that the `CheckEra` and `CheckGenesis` provide the same
+    // `additional_signed` payload data when constructing the transaction (here)
+    // as well as validating it in `Runtime::validate_transaction`, which internally
+    // calls `System::initialize` (prior to 1.5.0).
+    {
+        <frame_system::Pallet<Runtime>>::initialize(
+            &(frame_system::Pallet::<Runtime>::block_number() + 1),
+            &Hash::repeat_byte(1),
+            &Default::default(),
         );
+        <frame_system::Pallet<Runtime>>::finalize();
+    }
 
-        let raw_payload = SignedPayload::new(runtime_call.clone(), signed_extra.clone()).unwrap();
-        let signature = raw_payload.using_encoded(|payload| {
-            let sig = alice_pair.sign(payload);
-            MultiSignature::Sr25519(sig)
-        });
+    // Store some funds into the account specified as argument
+    let _ = <pallet_balances::Pallet<Runtime>>::deposit(
+        &account,
+        100_000_000_000,
+        Precision::BestEffort,
+    )
+    .expect("Impossible Store Balance");
+}
 
-        let tx =
-            UncheckedExtrinsic::new_signed(runtime_call, alice_address.clone(), signature, signed_extra);
+// Needed to be called inside Externalities
+//
+// This function will only return a valid UTX if called after
+// `prepare_environment_and_deposit_funds`, as certain signed extension
+// operations require a storage preparation
+fn create_submit_blob_utx(
+    signer: sr25519::Pair,
+    namespace_id: u128,
+    blob: Vec<u8>,
+) -> UncheckedExtrinsic {
+    let signed_extra: SignedExtra = (
+        frame_system::CheckNonZeroSender::<Runtime>::new(),
+        frame_system::CheckSpecVersion::<Runtime>::new(),
+        frame_system::CheckTxVersion::<Runtime>::new(),
+        frame_system::CheckGenesis::<Runtime>::new(),
+        frame_system::CheckEra::<Runtime>::from(sp_runtime::generic::Era::immortal()),
+        frame_system::CheckNonce::<Runtime>::from(0),
+        frame_system::CheckWeight::<Runtime>::new(),
+        pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(0),
+        pallet_sugondat_blobs::PrevalidateBlobs::<Runtime>::new(),
+    );
 
+    let runtime_call: RuntimeCall = pallet_sugondat_blobs::Call::submit_blob {
+        namespace_id: namespace_id.into(),
+        blob,
+    }
+    .into();
+
+    let raw_payload = SignedPayload::new(runtime_call.clone(), signed_extra.clone()).unwrap();
+    let signature = MultiSignature::Sr25519(signer.sign(&raw_payload.encode()));
+
+    UncheckedExtrinsic::new_signed(
+        runtime_call,
+        Address::Id(signer.public().into()),
+        signature,
+        signed_extra,
+    )
+}
+
+fn test_validate_transaction(blob_size: u32, assertion: impl FnOnce(TransactionValidity)) {
+    new_test_ext().execute_with(|| {
+        prepare_environment_and_deposit_funds(alice_pair().public().into());
+
+        let utx = create_submit_blob_utx(alice_pair(), 0, vec![0; blob_size as usize]);
+
+        let res =
+            Runtime::validate_transaction(TransactionSource::External, utx, Hash::repeat_byte(8));
+        assertion(res);
+    });
+}
+
+#[test]
+fn test_validate_transaction_ok() {
+    test_validate_transaction(MaxBlobSize::get(), |res| assert!(res.is_ok()))
+}
+
+#[test]
+fn test_validate_transaction_max_blob_size_exceeded() {
+    test_validate_transaction(MaxBlobSize::get() + 1, |res| {
         assert_eq!(
+            res,
             Err(TransactionValidityError::Invalid(
                 InvalidTransaction::Custom(
-                    sugondat_primitives::InvalidTransactionCustomError::BlobExceedsSizeLimit as u8
+                    sugondat_primitives::InvalidTransactionCustomError::BlobExceedsSizeLimit as u8,
                 )
-            )),
-            Runtime::validate_transaction(source, tx, Hash::repeat_byte(8))
-        );
+            ))
+        )
+    });
+}
+
+fn test_pre_dispatch(modify_storage: impl FnOnce()) {
+    new_test_ext().execute_with(|| {
+        modify_storage();
+
+        prepare_environment_and_deposit_funds(alice_pair().public().into());
+
+        let utx = create_submit_blob_utx(alice_pair(), 0, vec![0; 10]);
+
+        assert_eq!(
+            Runtime::apply_extrinsic(utx),
+            Err(TransactionValidityError::Invalid(
+                InvalidTransaction::ExhaustsResources,
+            ))
+        )
+    });
+}
+
+#[test]
+fn test_pre_dispatch_max_blobs_exceeded() {
+    test_pre_dispatch(|| pallet_sugondat_blobs::TotalBlobs::<Runtime>::put(MaxBlobs::get()));
+}
+
+#[test]
+fn test_pre_dispatch_max_total_blob_size_exceeded() {
+    test_pre_dispatch(|| {
+        pallet_sugondat_blobs::TotalBlobSize::<Runtime>::put(MaxTotalBlobSize::get())
     });
 }

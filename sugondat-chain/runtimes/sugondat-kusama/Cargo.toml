@@ -79,7 +79,7 @@ parachains-common = { git = "https://github.com/paritytech/polkadot-sdk.git", br
 
 [dev-dependencies]
 sp-io = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, branch = "release-polkadot-v1.4.0"}
-sp-keyring = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, branch = "release-polkadot-v1.4.0"}
+sp-tracing = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, branch = "release-polkadot-v1.4.0"}
 
 [features]
 default = [ "std" ]

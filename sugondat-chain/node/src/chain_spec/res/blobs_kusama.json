@@ -2,7 +2,9 @@
   "name": "Kusama Blobs",
   "id": "blobs_kusama",
   "chainType": "Live",
-  "bootNodes": [],
+  "bootNodes": [
+    "/dns/blob-kusama-collator-archive-1.thrum.dev/tcp/30333/p2p/12D3KooWAn4jHXxvSKLtDn5QSCyE1CMbpcLfdUksrzLF8NrMSA4W"
+  ],
   "telemetryEndpoints": null,
   "protocolId": "sugondat-kusama",
   "properties": {

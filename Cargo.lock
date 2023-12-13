@@ -7598,7 +7598,9 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
+ "sp-state-machine",
  "sp-std 8.0.0 (git+https://github.com/paritytech/polkadot-sdk.git?branch=release-polkadot-v1.4.0)",
+ "sp-trie",
  "sugondat-nmt",
  "sugondat-primitives",
 ]

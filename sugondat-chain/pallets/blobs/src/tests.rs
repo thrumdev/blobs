@@ -4,10 +4,14 @@ use codec::Encode;
 use frame_support::traits::Hooks;
 use frame_support::{assert_noop, assert_ok, traits::Get};
 use sha2::Digest;
+use sp_core::storage::well_known_keys;
 use sp_core::{crypto::Pair, sr25519};
 use sp_runtime::transaction_validity::{
     InvalidTransaction, TransactionValidityError, ValidTransaction,
 };
+use sp_state_machine::backend::Backend;
+use sp_state_machine::LayoutV1;
+use sp_trie::Trie;
 use sugondat_nmt::{Namespace, NmtLeaf};
 
 fn get_blob(size: u32) -> Vec<u8> {
@@ -376,4 +380,99 @@ fn test_pre_dispatch_max_total_blobs_size_reached() {
             prevalidate_blobs.pre_dispatch(&alice(), &call, &Default::default(), 0)
         );
     });
+}
+
+#[test]
+fn test_no_commitment_to_storage_after_finalization() {
+    let mut ext = new_test_ext();
+
+    // Execute submit_blob extrinsic and commit changes to storage
+    ext.execute_with(|| {
+        assert_ok!(Blobs::submit_blob(
+            RuntimeOrigin::signed(alice()),
+            0.into(),
+            get_blob(1024)
+        ));
+    });
+    ext.commit_all()
+        .expect("Impossible to have open transactions");
+
+    // Ensure storage items are present in the backend storage
+    let assert_present_key = |key: &[u8]| match ext.as_backend().storage(key) {
+        Ok(Some(_)) => (),
+        _ => panic!("There must be some storage changing"),
+    };
+    assert_present_key(&TotalBlobSize::<Test>::hashed_key());
+    assert_present_key(&TotalBlobs::<Test>::hashed_key());
+    assert_present_key(&BlobList::<Test>::hashed_key());
+
+    // Execute on_finalize and commit changes
+    ext.execute_with(|| {
+        Blobs::on_finalize(System::block_number());
+    });
+    ext.commit_all()
+        .expect("Impossible to have open transactions");
+
+    // Make sure that storage items are no longer present in the backend storage
+    let assert_non_present_key = |key: &[u8]| match ext.as_backend().storage(key) {
+        Ok(None) => (),
+        _ => panic!("There must be no storage changing"),
+    };
+    assert_non_present_key(&TotalBlobSize::<Test>::hashed_key());
+    assert_non_present_key(&TotalBlobs::<Test>::hashed_key());
+    assert_non_present_key(&BlobList::<Test>::hashed_key());
+}
+
+#[test]
+fn test_storage_proof_does_not_contain_ephemeral_keys() {
+    let mut ext = new_test_ext();
+
+    // This macro will initialize and finalize two pallets present in the runtime
+    // and between execute a submit_blob extrinsic
+    macro_rules! execute_submit_blob {
+        () => {
+            System::on_initialize(System::block_number());
+            Blobs::on_initialize(System::block_number());
+
+            assert_ok!(Blobs::submit_blob(
+                RuntimeOrigin::signed(alice()),
+                0.into(),
+                get_blob(1024)
+            ));
+
+            Blobs::on_finalize(System::block_number());
+            System::on_finalize(System::block_number());
+        };
+    }
+
+    ext.execute_with(|| {
+        System::set_block_number(0);
+        execute_submit_blob!();
+        System::set_block_number(1);
+    });
+
+    // The test is to check that nothing written in the previous blocks
+    // is read from the storage, and thus the PoV has no trace
+    // of pallet Blob's storage items
+    let (_res, proof) = ext.execute_and_prove(|| {
+        execute_submit_blob!();
+    });
+
+    // Construct the in memory trie used by validators
+    let memory_bd = proof.into_memory_db();
+    let root = ext.backend.root();
+    let trie =
+        sp_trie::TrieDBBuilder::<LayoutV1<sp_core::Blake2Hasher>>::new(&memory_bd, root).build();
+
+    // Ensure that only the expected keys are present
+    assert!(trie
+        .contains(well_known_keys::EXTRINSIC_INDEX)
+        .expect("trie must contain key"));
+
+    let assert_non_present_key =
+        |key: &[u8]| assert!(!trie.contains(key).expect("Impossible get value from Trie"));
+
+    assert_non_present_key(&TotalBlobSize::<Test>::hashed_key());
+    assert_non_present_key(&TotalBlobs::<Test>::hashed_key());
+    assert_non_present_key(&BlobList::<Test>::hashed_key());
 }

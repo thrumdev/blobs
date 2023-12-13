@@ -7,7 +7,7 @@ use codec::Encode;
 use frame_benchmarking::__private::traits::Hooks;
 #[allow(unused)]
 use frame_benchmarking::v2::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
-use frame_support::{traits::Get, BoundedVec};
+use frame_support::traits::Get;
 use frame_system::RawOrigin;
 use sp_std::vec;
 
@@ -30,12 +30,8 @@ mod benchmarks {
             sp_io::storage::set(b":extrinsic_index", &(ext_index).encode());
             Blobs::<T>::submit_blob(
                 RawOrigin::Signed(caller.clone()).into(),
-                ext_index,
-                ext_index
-                    .to_le_bytes()
-                    .to_vec()
-                    .try_into()
-                    .expect("Impossible convert blob into BoundedVec"),
+                (ext_index as u128).into(),
+                ext_index.to_le_bytes().to_vec(),
             )
             .expect("Preparation Extrinsic failed");
         }
@@ -56,20 +52,16 @@ mod benchmarks {
         sp_io::storage::set(b":extrinsic_index", &(x).encode());
 
         // Create a random blob that needs to be hashed on chain
-        let blob: BoundedVec<u8, T::MaxBlobSize> = vec![23u8]
-            .repeat(y as usize)
-            .try_into()
-            .expect("Impossible convert blob into BoundedVec");
-
+        let blob = vec![23u8; y as usize];
         #[extrinsic_call]
-        _(RawOrigin::Signed(caller), 0, blob);
+        _(RawOrigin::Signed(caller), 0.into(), blob);
 
         // Check that an item is inserted in the BlobList and
         // the new value stored in TotalBlobs are correct
         assert_eq!(BlobList::<T>::get().len(), x as usize + 1);
         assert_eq!(TotalBlobs::<T>::get(), x as u32 + 1);
         // the blob size of all the previus sumbitted blob si 4 bytes (u32.to_le_bytes())
-        assert_eq!(TotalBlobsSize::<T>::get(), (x * 4) + y);
+        assert_eq!(TotalBlobSize::<T>::get(), (x * 4) + y);
     }
 
     #[benchmark]
@@ -84,9 +76,10 @@ mod benchmarks {
             Blobs::<T>::on_finalize(15u32.into());
         }
 
-        assert_eq!(BlobList::<T>::get().len(), x as usize);
-        assert_eq!(TotalBlobs::<T>::get(), x as u32);
-        assert_eq!(TotalBlobsSize::<T>::get(), x * 4);
+        // Every storage Item should be killed
+        assert_eq!(BlobList::<T>::get().len(), 0);
+        assert_eq!(TotalBlobs::<T>::get(), 0);
+        assert_eq!(TotalBlobSize::<T>::get(), 0);
     }
 
     impl_benchmark_test_suite!(Blobs, crate::mock::new_test_ext(), crate::mock::Test);

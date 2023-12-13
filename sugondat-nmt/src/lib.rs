@@ -4,7 +4,7 @@
 
 extern crate alloc;
 
-pub const NS_ID_SIZE: usize = 4;
+pub const NS_ID_SIZE: usize = 16;
 
 mod blob_metadata;
 mod leaf;

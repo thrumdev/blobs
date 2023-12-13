@@ -13,8 +13,8 @@ impl TreeRoot {
         let mut root = [0u8; 32];
         root.copy_from_slice(&raw[0..32]);
 
-        let min_ns = Namespace::from_raw_bytes(raw[32..36].try_into().unwrap());
-        let max_ns = Namespace::from_raw_bytes(raw[36..40].try_into().unwrap());
+        let min_ns = Namespace::from_raw_bytes(raw[32..48].try_into().unwrap());
+        let max_ns = Namespace::from_raw_bytes(raw[48..64].try_into().unwrap());
 
         Self {
             root,
@@ -26,8 +26,8 @@ impl TreeRoot {
     pub fn to_raw_bytes(&self) -> [u8; 68] {
         let mut raw = [0u8; 68];
         raw[0..32].copy_from_slice(&self.root);
-        raw[32..36].copy_from_slice(&self.min_ns.to_raw_bytes());
-        raw[36..40].copy_from_slice(&self.max_ns.to_raw_bytes());
+        raw[32..48].copy_from_slice(&self.min_ns.to_raw_bytes());
+        raw[48..64].copy_from_slice(&self.max_ns.to_raw_bytes());
         raw
     }
 }

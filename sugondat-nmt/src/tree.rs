@@ -21,7 +21,7 @@ impl TreeBuilder {
     pub fn new() -> Self {
         Self {
             tree: NamespaceMerkleTree::new(),
-            last_namespace: Namespace::from_u32_be(0),
+            last_namespace: Namespace::from_u128_be(0),
         }
     }
 

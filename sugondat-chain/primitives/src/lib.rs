@@ -50,4 +50,6 @@ pub mod opaque {
 pub enum InvalidTransactionCustomError {
     /// The blob exceeds the configured per-blob size limit.
     BlobExceedsSizeLimit = 100,
+    /// The namespace ID is invalid.
+    InvalidNamespaceId = 101,
 }

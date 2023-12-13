@@ -2,7 +2,7 @@ use crate as pallet_blobs;
 use crate::{mock::*, *};
 use codec::Encode;
 use frame_support::traits::Hooks;
-use frame_support::{assert_noop, assert_ok, traits::Get, BoundedVec};
+use frame_support::{assert_noop, assert_ok, traits::Get};
 use sha2::Digest;
 use sp_core::{crypto::Pair, sr25519};
 use sp_runtime::transaction_validity::{
@@ -30,7 +30,7 @@ fn test_correct_submitted_blob() {
 
         assert_ok!(Blobs::submit_blob(
             RuntimeOrigin::signed(alice()),
-            namespace_id,
+            namespace_id.into(),
             blob.clone()
         ));
 
@@ -51,7 +51,7 @@ fn test_no_extrinsic_index() {
     new_test_ext().execute_with(|| {
         sp_io::storage::clear(b":extrinsic_index");
         assert_noop!(
-            Blobs::submit_blob(RuntimeOrigin::signed(alice()), 0, get_blob(10)),
+            Blobs::submit_blob(RuntimeOrigin::signed(alice()), 0.into(), get_blob(10)),
             Error::<Test>::NoExtrinsicIndex
         );
     });
@@ -63,7 +63,7 @@ macro_rules! submit_blobs {
         for i in 0..$n_blobs {
             assert_ok!(Blobs::submit_blob(
                 RuntimeOrigin::signed(alice()),
-                i,
+                (i as u128).into(),
                 blob.clone()
             ));
         }
@@ -118,11 +118,11 @@ fn test_blob_appended_to_blob_list() {
         let blob_hash: [u8; 32] = sha2::Sha256::digest(blob.clone()).into();
         let mut blobs_metadata = vec![];
 
-        let mut submit_blob_and_assert = |namespace_id, extrinsic_index: u32| {
+        let mut submit_blob_and_assert = |namespace_id: u128, extrinsic_index: u32| {
             sp_io::storage::set(b":extrinsic_index", &(extrinsic_index).encode());
             assert_ok!(Blobs::submit_blob(
                 RuntimeOrigin::signed(alice()),
-                namespace_id,
+                namespace_id.into(),
                 blob.clone()
             ));
 
@@ -154,7 +154,7 @@ fn test_namespace_order() {
 
         let mut push_leaf = |namespace_id, extrinsic_index| {
             tree.push_leaf(
-                Namespace::from_u32_be(namespace_id),
+                Namespace::from_u128_be(namespace_id),
                 NmtLeaf {
                     extrinsic_index,
                     who: alice().into(),
@@ -164,11 +164,11 @@ fn test_namespace_order() {
             .expect("Impossible push leaf into nmt-tree");
         };
 
-        let mut submit_blob = |namespace_id, extrinsic_index: u32| {
+        let mut submit_blob = |namespace_id: u128, extrinsic_index: u32| {
             sp_io::storage::set(b":extrinsic_index", &(extrinsic_index).encode());
             assert_ok!(Blobs::submit_blob(
                 RuntimeOrigin::signed(alice()),
-                namespace_id,
+                namespace_id.into(),
                 blob.clone()
             ));
 
@@ -223,7 +223,7 @@ fn test_deposited_event() {
 
         assert_ok!(Blobs::submit_blob(
             RuntimeOrigin::signed(alice()),
-            namespace_id,
+            namespace_id.into(),
             blob.clone()
         ));
 
@@ -254,7 +254,7 @@ fn test_on_finalize() {
     for n_blob_to_test in (0..max_blobs).step_by((max_blobs / 10) as usize) {
         for extrinsic_index in added_leaf..n_blob_to_test {
             tree.push_leaf(
-                Namespace::from_u32_be(extrinsic_index),
+                Namespace::from_u128_be(extrinsic_index as u128),
                 NmtLeaf {
                     extrinsic_index,
                     who: alice().into(),
@@ -271,7 +271,7 @@ fn test_on_finalize() {
                 sp_io::storage::set(b":extrinsic_index", &(extrinsic_index).encode());
                 assert_ok!(Blobs::submit_blob(
                     RuntimeOrigin::signed(alice()),
-                    extrinsic_index,
+                    (extrinsic_index as u128).into(),
                     blob.clone()
                 ));
             }
@@ -296,7 +296,7 @@ macro_rules! submit_blob_call {
     ([blob_size] $blob_size: expr) => {
         RuntimeCall::Blobs(
             Call::submit_blob {
-                namespace_id: 0,
+                namespace_id: 0.into(),
                 blob: get_blob($blob_size),
             }
             .into(),

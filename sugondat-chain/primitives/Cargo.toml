@@ -7,10 +7,12 @@ license = "MIT OR Apache-2.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+codec = { package = "parity-scale-codec", version = "3.0.0", features = ["derive"], default-features = false }
+
 sp-runtime = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, branch = "release-polkadot-v1.4.0" }
 sp-core = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, branch = "release-polkadot-v1.4.0" }
 sp-consensus-aura = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, branch = "release-polkadot-v1.4.0" }
 
 [features]
 default = ["std"]
-std = ["sp-runtime/std", "sp-core/std", "sp-consensus-aura/std"]
+std = ["codec/std", "sp-runtime/std", "sp-core/std", "sp-consensus-aura/std"]

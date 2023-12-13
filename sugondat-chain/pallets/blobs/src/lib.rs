@@ -5,6 +5,8 @@
 /// <https://docs.substrate.io/v3/runtime/frame>
 pub use pallet::*;
 
+mod namespace_param;
+
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
@@ -28,6 +30,7 @@ use frame_support::traits::{Get, IsSubType};
 
 #[frame_support::pallet]
 pub mod pallet {
+    use crate::namespace_param::UnvalidatedNamespace;
     pub use crate::weights::WeightInfo;
     use frame_support::{
         dispatch::DispatchResultWithPostInfo,
@@ -74,7 +77,7 @@ pub mod pallet {
     pub struct SubmittedBlobMetadata<AccountId> {
         pub who: AccountId,
         pub extrinsic_index: u32,
-        pub namespace_id: u32,
+        pub namespace_id: u128,
         pub blob_hash: [u8; 32],
     }
 
@@ -95,7 +98,7 @@ pub mod pallet {
             /// The extrinsic index at which the blob was submitted.
             extrinsic_index: u32,
             /// The namespace ID the blob was submitted in.
-            namespace_id: u32,
+            namespace_id: u128,
             /// The length of the blob data.
             blob_len: u32,
             /// The SHA256 hash of the blob.
@@ -137,7 +140,7 @@ pub mod pallet {
             let blobs = BlobList::<T>::take()
                 .iter()
                 .map(|blob| sugondat_nmt::BlobMetadata {
-                    namespace: sugondat_nmt::Namespace::from_u32_be(blob.namespace_id),
+                    namespace: sugondat_nmt::Namespace::from_u128_be(blob.namespace_id),
                     leaf: sugondat_nmt::NmtLeaf {
                         extrinsic_index: blob.extrinsic_index,
                         who: blob.who.encode().try_into().unwrap(),
@@ -170,10 +173,15 @@ pub mod pallet {
         )]
         pub fn submit_blob(
             origin: OriginFor<T>,
-            namespace_id: u32,
+            namespace_id: UnvalidatedNamespace,
             blob: Vec<u8>,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
+
+            let namespace_id = match namespace_id.validate() {
+                Ok(id) => id,
+                Err(_) => panic!("Invalid namespace"),
+            };
 
             let blob_len = blob.len() as u32;
             if blob_len > T::MaxBlobSize::get() {
@@ -304,11 +312,24 @@ where
         // This is what's called when evaluating transactions within the pool.
 
         if let Some(local_call) = call.is_sub_type() {
-            if let Call::submit_blob { blob, .. } = local_call {
+            // Failures here are intended to expunge the transaction from the pool
+            // entirely.
+            if let Call::submit_blob {
+                namespace_id, blob, ..
+            } = local_call
+            {
+                if namespace_id.validate().is_err() {
+                    // This could become valid later when accepting new namespace ID
+                    // formats, but that is rare.
+                    return Err(InvalidTransaction::Custom(
+                        InvalidTransactionCustomError::InvalidNamespaceId as u8,
+                    )
+                    .into());
+                }
+
                 if blob.len() as u32 > T::MaxBlobSize::get() {
-                    // This causes the transaction to be expunged from the transaction pool.
-                    // It will not be valid unless the configured limit is increased by governance,
-                    // which is a rare event.
+                    // This could become valid later, but only if the configured limit is
+                    // increased by governance, which is a rare event.
                     return Err(InvalidTransaction::Custom(
                         InvalidTransactionCustomError::BlobExceedsSizeLimit as u8,
                     )

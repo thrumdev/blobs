@@ -3,15 +3,15 @@ use core::fmt;
 
 /// Namespace identifier type.
 ///
-/// Blobs are submitted into a namespace. Namepsace is a 4 byte vector. Namespaces define ordering
+/// Blobs are submitted into a namespace. Namespace is a 16 byte vector. Namespaces define ordering
 /// lexicographically.
 ///
-/// For convenience, a namespace can be created from an unsigned 32-bit integer. Conventionally,
+/// For convenience, a namespace can be created from an unsigned 128-bit integer. Conventionally,
 /// big-endian representation of the integer is used as that is more intuitive. As one may expect:
 ///
 /// ```
 /// # use sugondat_nmt::Namespace;
-/// assert!(Namespace::from_u32_be(0x0100) > Namespace::from_u32_be(0x00FF));
+/// assert!(Namespace::from_u128_be(0x0100) > Namespace::from_u128_be(0x00FF));
 /// ````
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -32,13 +32,13 @@ impl Namespace {
     ///
     /// This function will take the given integer (which is assumed to be in host byte order), and
     /// take its big-endian representation as the namespace ID.
-    pub fn from_u32_be(namespace_id: u32) -> Self {
+    pub fn from_u128_be(namespace_id: u128) -> Self {
         Self(namespace_id.to_be_bytes())
     }
 
     /// Reinterpret the namespace ID as a big-endian 32-bit integer and return.
-    pub fn to_u32_be(&self) -> u32 {
-        u32::from_be_bytes(self.0)
+    pub fn to_u128_be(&self) -> u128 {
+        u128::from_be_bytes(self.0)
     }
 
     pub(crate) fn with_nmt_namespace_id(nmt_namespace_id: nmt_rs::NamespaceId<NS_ID_SIZE>) -> Self {

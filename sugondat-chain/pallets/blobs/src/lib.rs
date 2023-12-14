@@ -66,10 +66,12 @@ pub mod pallet {
 
     /// The total number of bytes stored in all blobs.
     #[pallet::storage]
+    #[pallet::whitelist_storage]
     pub type TotalBlobSize<T: Config> = StorageValue<_, u32, ValueQuery>;
 
     /// The amount of submitted blobs
     #[pallet::storage]
+    #[pallet::whitelist_storage]
     pub type TotalBlobs<T: Config> = StorageValue<_, u32, ValueQuery>;
 
     #[derive(Encode, Decode, TypeInfo, MaxEncodedLen, Clone)]
@@ -84,6 +86,7 @@ pub mod pallet {
     /// The list of all submitted blobs, the size of the unbounded vector
     /// is tracked by TotalBlobs and bounded by MaxBlobs
     #[pallet::storage]
+    #[pallet::whitelist_storage]
     #[pallet::unbounded]
     pub type BlobList<T: Config> =
         StorageValue<_, Vec<SubmittedBlobMetadata<T::AccountId>>, ValueQuery>;

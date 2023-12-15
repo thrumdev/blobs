@@ -65,25 +65,52 @@ impl RollkitRPCServer for RollkitDock {
 
 /// Parses the namespace from a given string encoded as hex.
 ///
-/// Note that rollkit uses arbitrary length namespaces, but sugondat uses 4-byte namespaces. For
-/// now, we would silently truncate or pad the namespace to 4 bytes.
+/// Note that rollkit uses arbitrary length namespaces, but sugondat uses 16-byte namespaces. For
+/// now, we would silently truncate or pad the namespace to 16 bytes.
 fn parse_namespace(namespace: &str) -> anyhow::Result<sugondat_nmt::Namespace> {
+    use sugondat_nmt::NS_ID_SIZE;
     let namespace_bytes = hex::decode(namespace)?;
     let namespace_bytes = match namespace_bytes.len() {
         0 => anyhow::bail!("namespace must not be empty"),
-        1..=4 => {
+        1..=NS_ID_SIZE => {
             let mut namespace_bytes = namespace_bytes;
-            namespace_bytes.resize(4, 0);
+            namespace_bytes.resize(NS_ID_SIZE, 0);
             namespace_bytes
         }
-        5.. => {
+        _ => {
             let mut namespace_bytes = namespace_bytes;
-            namespace_bytes.truncate(4);
+            namespace_bytes.truncate(NS_ID_SIZE);
             namespace_bytes
         }
-        _ => unreachable!(),
     };
     Ok(sugondat_nmt::Namespace::from_raw_bytes(
         namespace_bytes.try_into().unwrap(),
     ))
+}
+
+#[test]
+fn test_parse_namespace() {
+    use sugondat_nmt::NS_ID_SIZE;
+    assert!(parse_namespace("").is_err());
+    assert!(parse_namespace("").is_err());
+    assert_eq!(
+        parse_namespace("00").unwrap(),
+        sugondat_nmt::Namespace::from_raw_bytes([0; NS_ID_SIZE])
+    );
+    assert_eq!(
+        parse_namespace("00").unwrap(),
+        sugondat_nmt::Namespace::from_raw_bytes([0; NS_ID_SIZE])
+    );
+    assert_eq!(
+        parse_namespace("FF").unwrap(),
+        sugondat_nmt::Namespace::from_raw_bytes({
+            let mut bytes = [0; NS_ID_SIZE];
+            bytes[0] = 0xFF;
+            bytes
+        })
+    );
+    assert_eq!(
+        parse_namespace("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00" /* 17 bytes */).unwrap(),
+        sugondat_nmt::Namespace::from_raw_bytes([0xFF; NS_ID_SIZE])
+    );
 }

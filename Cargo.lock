@@ -13822,6 +13822,7 @@ dependencies = [
  "nmt-rs",
  "serde",
  "sha2 0.10.8",
+ "sugondat-serde-util",
 ]
 
 [[package]]
@@ -13898,6 +13899,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "sugondat-serde-util"
+version = "0.1.0"
+dependencies = [
+ "base64 0.21.5",
+ "hex",
+ "quickcheck",
+ "quickcheck_macros",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "sugondat-shim"
 version = "0.1.0"
 dependencies = [
@@ -13926,10 +13939,10 @@ name = "sugondat-shim-common-rollkit"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "base64 0.21.5",
  "jsonrpsee 0.20.3",
  "serde",
  "sugondat-nmt",
+ "sugondat-serde-util",
 ]
 
 [[package]]
@@ -13940,6 +13953,7 @@ dependencies = [
  "jsonrpsee 0.20.3",
  "serde",
  "sugondat-nmt",
+ "sugondat-serde-util",
 ]
 
 [[package]]

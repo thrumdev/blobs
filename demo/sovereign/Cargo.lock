@@ -7550,6 +7550,16 @@ dependencies = [
  "nmt-rs",
  "serde",
  "sha2 0.10.8",
+ "sugondat-serde-util",
+]
+
+[[package]]
+name = "sugondat-serde-util"
+version = "0.1.0"
+dependencies = [
+ "base64 0.21.5",
+ "hex",
+ "serde",
 ]
 
 [[package]]
@@ -7560,6 +7570,7 @@ dependencies = [
  "jsonrpsee",
  "serde",
  "sugondat-nmt",
+ "sugondat-serde-util",
 ]
 
 [[package]]

@@ -3,6 +3,7 @@ pub use crate::ns::Namespace;
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TreeRoot {
+    #[cfg_attr(feature = "serde", serde(with = "sugondat_serde_util::bytes32_hex"))]
     pub root: [u8; 32],
     pub min_ns: Namespace,
     pub max_ns: Namespace,

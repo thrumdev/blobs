@@ -10,6 +10,7 @@ async-trait = "0.1.74"
 jsonrpsee = { version = "0.20.3", features = ["macros"] }
 serde = { version = "1.0.192", features = ["derive"] }
 sugondat-nmt = { path = "../../../sugondat-nmt", features = ["serde"] }
+sugondat-serde-util = { path = "../../../sugondat-serde-util" }
 
 [features]
 default = ["client", "server"]

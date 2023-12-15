@@ -12,14 +12,15 @@ pub mod xcm_config;
 
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use cumulus_primitives_core::{AggregateMessageOrigin, ParaId};
+use pallet_transaction_payment::{Multiplier, MultiplierUpdate};
 use polkadot_runtime_common::xcm_sender::NoPriceForMessageDelivery;
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
-    traits::{AccountIdLookup, BlakeTwo256, Block as BlockT},
+    traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, Bounded, Convert},
     transaction_validity::{TransactionSource, TransactionValidity},
-    ApplyExtrinsicResult,
+    ApplyExtrinsicResult, Perquintill,
 };
 
 use sp_std::prelude::*;
@@ -34,7 +35,7 @@ use frame_support::{
     dispatch::DispatchClass,
     genesis_builder_helper::{build_config, create_default_config},
     parameter_types,
-    traits::{ConstBool, ConstU32, ConstU64, ConstU8, EitherOfDiverse, TransformOrigin},
+    traits::{ConstBool, ConstU32, ConstU64, ConstU8, EitherOfDiverse, Get, TransformOrigin},
     weights::{ConstantMultiplier, Weight},
     PalletId,
 };
@@ -45,8 +46,12 @@ use frame_system::{
 use pallet_xcm::{EnsureXcm, IsVoiceOfBody};
 use parachains_common::message_queue::{NarrowOriginToSibling, ParaIdToSibling};
 
-use sugondat_primitives::{AccountId, AuraId, Balance, BlockNumber, Nonce, Signature};
+use sugondat_primitives::{
+    AccountId, AuraId, Balance, BlockNumber, Nonce, Signature, MAX_BLOCK_LENGTH,
+};
 
+use pallet_transaction_payment::TargetedFeeAdjustment;
+use sp_runtime::FixedPointNumber;
 pub use sp_runtime::{MultiAddress, Perbill, Permill};
 use xcm_config::{KusamaLocation, XcmOriginToTransactDispatchOrigin};
 
@@ -54,7 +59,7 @@ use xcm_config::{KusamaLocation, XcmOriginToTransactDispatchOrigin};
 pub use sp_runtime::BuildStorage;
 
 // Polkadot imports
-use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
+use polkadot_runtime_common::BlockHashCount;
 
 use weights::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight};
 
@@ -142,7 +147,7 @@ parameter_types! {
     // `DeletionWeightLimit` and `DeletionQueueDepth` depend on those to parameterize
     // the lazy contract deletion.
     pub RuntimeBlockLength: BlockLength =
-        BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
+        BlockLength::max_with_normal_ratio(MAX_BLOCK_LENGTH, NORMAL_DISPATCH_RATIO);
     pub RuntimeBlockWeights: BlockWeights = BlockWeights::builder()
         .base_block(BlockExecutionWeight::get())
         .for_class(DispatchClass::all(), |weights| {
@@ -267,6 +272,158 @@ impl pallet_balances::Config for Runtime {
 parameter_types! {
     /// Relay Chain `TransactionByteFee` / 10
     pub const TransactionByteFee: Balance = MILLICENTS;
+
+    // Common constants used in all runtimes for SlowAdjustingFeeUpdate
+
+    /// The portion of the `NORMAL_DISPATCH_RATIO` that we adjust the fees with. Blocks filled less
+    /// than this will decrease the weight and more will increase.
+    pub storage TargetBlockFullness: Perquintill = Perquintill::from_percent(25);
+
+    /// The adjustment variable of the runtime. Higher values will cause `TargetBlockFullness` to
+    /// change the fees more rapidly.
+    pub AdjustmentVariable: Multiplier = Multiplier::saturating_from_rational(75, 1000_000);
+    /// that combined with `AdjustmentVariable`, we can recover from the minimum.
+    /// See `multiplier_can_grow_from_zero`.
+    pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 10u128);
+    /// The maximum amount of the multiplier.
+    pub MaximumMultiplier: Multiplier = Bounded::max_value();
+
+    // parameters used in BlobsFeeAdjustment
+    pub storage TargetBlockSize: u32 = 820 * 1024; // 0.8MiB
+
+    // A positive number represents the count of consecutive blocks that exceeded
+    // the TargetBlockSize, while a negative number represents the count of
+    // consecutive blocks that were below the TargetBlockSize - NegativeDeltaTargetBlockFullness.
+    pub storage BlockSizeTracker: u32 = 0; // 0.8MiB
+
+    // The number of consecutive blocks after which the TargetBlockSize will increase
+    pub storage IncreaseDeltaBlocks: u32 = 10 * DAYS;
+
+    // The number of bytes that will be added to TargetBlockSize each update
+    pub storage DeltaTargetBlockSize: u32 = 205 * 1024;// 0.2MiB
+
+    //pub storage DecreaseDeltaBlocks: u32 = 10 * DAYS;,
+    //pub storage LowerBoundTargetBlockSize
+
+}
+
+/// Parameterized slow adjusting fee updated based on
+/// <https://research.web3.foundation/Polkadot/overview/token-economics#2-slow-adjusting-mechanism>
+//pub type SlowAdjustingFeeUpdate<R> = TargetedFeeAdjustment<
+//    R,
+//    TargetBlockFullness,
+//    AdjustmentVariable,
+//    MinimumMultiplier,
+//    MaximumMultiplier,
+//>;
+
+// Wrapper around TargetedFeeAdjustment,
+//
+// `TargetedFeeAdjustment` uses the block weight and the cost of the traffic,
+// so it only depends on `ref_time` and `proof_size` (using `<frame_system::Pallet<T>>::block_weight()`)
+//
+// This struct also takes into consideration the total amount of submitted blob size
+// and adjusts TargetBlockFullness based on the amount of data present and expected in a block.
+pub struct BlobsFeeAdjustment<T: frame_system::Config>(core::marker::PhantomData<T>);
+
+impl<T: frame_system::Config> Convert<Multiplier, Multiplier> for BlobsFeeAdjustment<T>
+where
+    T: frame_system::Config,
+{
+    fn convert(previous: Multiplier) -> Multiplier {
+        // The size of the submit_blob extrinsic with an empty vec.
+        //
+        // Since the Scale encoding for the Vec uses varint to represent the size of the vec,
+        // the size of the encoded extrinsic may not be exactly ext_min_len + X if the blob size is X.
+        // It will likely be slightly different.
+        use codec::{Decode, Encode};
+        let ext_min_len = RuntimeCall::from(pallet_sugondat_blobs::Call::submit_blob {
+            namespace_id: 0.into(),
+            blob: vec![],
+        })
+        .size_hint() as u32;
+
+        let total_blob_size: u32 = pallet_sugondat_blobs::TotalBlobSize::<Runtime>::get();
+        let total_blobs: u32 = pallet_sugondat_blobs::TotalBlobs::<Runtime>::get();
+
+        // Current usage of the block
+        let used_block_size = (total_blobs * ext_min_len) + total_blob_size;
+        if used_block_size > TargetBlockSize::get() {
+            // Increase the tracker if needed
+            let tracker = BlockSizeTracker::get();
+
+            // If the used_block_size is larger than the TargetBlockSize
+            // for more than IncreaseDeltaBlocks consecutive, then the TargetBlockSize
+            // will be increased by DeltaTargetBlockSize.
+            if tracker + 1 >= IncreaseDeltaBlocks::get() {
+                let current_target_block_size = TargetBlockSize::get();
+                TargetBlockSize::set(&(current_target_block_size + DeltaTargetBlockSize::get()));
+            }
+
+            BlockSizeTracker::set(&(tracker + 1));
+        } else {
+            // The logic for updating to a new TargetBlockSize currently requires IncreaseDeltaBlocks
+            // to be constantly larger than TargetBlockSize. However, it might be possible
+            // to implement a window where we reset the tracker only if the
+            // block size remains below the TargetBlockSize for a certain number of blocks
+            BlockSizeTracker::set(&0);
+        }
+
+        // Define TargetBlockFullness based on our expectations
+        // of how we want our blocks to be full
+        // TODO: refactor
+        let avarage_blob_size = total_blob_size / total_blobs;
+
+        let expected_extrinsics =
+            match TargetBlockSize::get().checked_div(ext_min_len + avarage_blob_size) {
+                Some(val) => val,
+                _ => todo!(),
+            } as u64;
+
+        // TODO: find a way to share this with `submit_blob` function
+        use pallet_sugondat_blobs::weights::{SubstrateWeight, WeightInfo};
+        let avarage_extrinsic_weight =
+            SubstrateWeight::<T>::submit_blob(MaxBlobs::get() / 2, avarage_blob_size as u32)
+                .saturating_add(
+                    SubstrateWeight::<T>::on_finalize(0) / (MaxBlobs::get() / 4) as u64,
+                );
+        let target_ref_time =
+            expected_extrinsics.saturating_mul(avarage_extrinsic_weight.ref_time());
+
+        let weights = T::BlockWeights::get();
+        let normal_max_weight = weights
+            .get(DispatchClass::Normal)
+            .max_total
+            .unwrap_or(weights.max_block);
+
+        let target_block_fullness =
+            Perquintill::from_rational(target_ref_time, normal_max_weight.ref_time());
+
+        TargetBlockFullness::set(&target_block_fullness);
+
+        TargetedFeeAdjustment::<
+            T,
+            TargetBlockFullness,
+            AdjustmentVariable,
+            MinimumMultiplier,
+            MaximumMultiplier,
+        >::convert(previous)
+    }
+}
+
+impl<T: frame_system::Config> MultiplierUpdate for BlobsFeeAdjustment<T> {
+    fn min() -> Multiplier {
+        MinimumMultiplier::get()
+    }
+    fn max() -> Multiplier {
+        MaximumMultiplier::get()
+    }
+    fn target() -> Perquintill {
+        TargetBlockFullness::get()
+    }
+    fn variability() -> Multiplier {
+        AdjustmentVariable::get()
+    }
 }
 
 impl pallet_transaction_payment::Config for Runtime {
@@ -274,7 +431,8 @@ impl pallet_transaction_payment::Config for Runtime {
     type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, ()>;
     type WeightToFee = WeightToFee;
     type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
-    type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
+    //type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
+    type FeeMultiplierUpdate = BlobsFeeAdjustment<Self>;
     type OperationalFeeMultiplier = ConstU8<5>;
 }
 

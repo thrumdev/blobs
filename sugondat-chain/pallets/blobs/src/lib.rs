@@ -227,6 +227,23 @@ pub mod pallet {
             });
             Ok(().into())
         }
+
+        #[pallet::call_index(1)]
+        #[pallet::weight(0)]
+        pub fn update_parameter(
+            origin: OriginFor<T>,
+            parameter: Vec<u8>,
+            // already encoded value
+            value: Vec<u8>,
+        ) -> DispatchResultWithPostInfo {
+            let who = ensure_root(origin)?;
+            let key = match (parameter.first(), parameter.last()) {
+                (Some(b':'), Some(b':')) => parameter,
+                _ => [vec![b':'], parameter, vec![b':']].concat(),
+            };
+            sp_io::storage::set(&key, &value);
+            Ok(().into())
+        }
     }
 
     fn sha2_hash(data: &[u8]) -> [u8; 32] {

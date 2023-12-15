@@ -5,6 +5,8 @@ use sp_runtime::{
     MultiSignature,
 };
 
+pub const MAX_BLOCK_LENGTH: u32 = 5 * 1024 * 1024;
+
 /// An index to a block.
 pub type BlockNumber = u32;
 

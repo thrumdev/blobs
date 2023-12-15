@@ -24,7 +24,7 @@ impl Conn {
         let subxt = sugondat_subxt::Client::from_rpc_client(raw.clone()).await?;
         check_if_compatible(&subxt)?;
         if !is_codegen_valid_for(&subxt.metadata()) {
-            const WARN_WRONG_VERSION: &str = "connected to a sugondat node with a newer runtime than the one this shim was compiled against. Update the shim lest you run into problems. https://github.com/thrumdev/sugondat";
+            const WARN_WRONG_VERSION: &str = "connected to a sugondat node with a newer runtime than the one this shim was compiled against. Update the shim lest you run into problems. https://github.com/thrumdev/blobs";
             tracing::warn!(WARN_WRONG_VERSION);
         }
         let finalized = FinalizedHeadWatcher::spawn(subxt.clone()).await;

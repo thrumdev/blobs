@@ -151,6 +151,7 @@ pub mod query {
     pub enum Commands {
         /// Submits the given blob into a namespace.
         Submit(submit::Params),
+        Block(block::Params),
     }
 
     pub mod submit {
@@ -177,6 +178,25 @@ pub mod query {
 
             #[clap(flatten)]
             pub key_management: KeyManagementParams,
+        }
+    }
+
+    pub mod block {
+        //! CLI definition for the `query block` subcommand.
+
+        use super::SugondatRpcParams;
+        use clap::Args;
+
+        #[derive(Debug, Args)]
+        pub struct Params {
+            #[clap(flatten)]
+            pub rpc: SugondatRpcParams,
+
+            /// The block number or hash to query.
+            ///
+            /// If the value is prefixed with `0x`, it is interpreted as a block hash. Otherwise, it
+            /// is interpreted as a block number.
+            pub block_spec: String,
         }
     }
 }

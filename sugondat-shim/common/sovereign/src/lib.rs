@@ -7,8 +7,9 @@ pub type JsonRPCError = jsonrpsee::types::ErrorObjectOwned;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Block {
-    // TODO: Hash should be a newtype that serializes to hex.
+    #[serde(with = "sugondat_serde_util::bytes32_hex")]
     pub block_hash: [u8; 32],
+    #[serde(with = "sugondat_serde_util::bytes32_hex")]
     pub prev_hash: [u8; 32],
     pub timestamp: u64,
     pub nmt_root: sugondat_nmt::TreeRoot,
@@ -18,9 +19,9 @@ pub struct Block {
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Blob {
-    // TODO: This should be a newtype that serializes to hex.
+    #[serde(with = "sugondat_serde_util::bytes32_hex")]
     pub sender: [u8; 32],
-    // TODO: This should be a newtype that serializes to hex.
+    #[serde(with = "sugondat_serde_util::bytes_hex")]
     pub data: Vec<u8>,
 }
 

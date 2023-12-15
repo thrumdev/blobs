@@ -14,8 +14,15 @@ use core::fmt;
 /// assert!(Namespace::from_u128_be(0x0100) > Namespace::from_u128_be(0x00FF));
 /// ````
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Namespace([u8; NS_ID_SIZE]);
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(transparent)
+)]
+pub struct Namespace(
+    #[cfg_attr(feature = "serde", serde(with = "sugondat_serde_util::bytes16_hex"))]
+    [u8; NS_ID_SIZE],
+);
 
 impl Namespace {
     /// Creates a namespace from the given raw bytes.

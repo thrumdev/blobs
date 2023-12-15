@@ -56,7 +56,7 @@ impl SubstrateCli for Cli {
     }
 
     fn support_url() -> String {
-        "https://github.com/thrumdev/sugondat".into()
+        "https://github.com/thrumdev/blobs".into()
     }
 
     fn copyright_start_year() -> i32 {
@@ -92,7 +92,7 @@ impl SubstrateCli for RelayChainCli {
     }
 
     fn support_url() -> String {
-        "https://github.com/thrumdev/sugondat".into()
+        "https://github.com/thrumdev/blobs".into()
     }
 
     fn copyright_start_year() -> i32 {

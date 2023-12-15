@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Anonymous"]
 description = "Sugondat Kusama Runtime"
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/thrumdev/sugondat"
+repository = "https://github.com/thrumdev/blobs"
 edition = "2021"
 
 [package.metadata.docs.rs]

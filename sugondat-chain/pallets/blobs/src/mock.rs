@@ -59,7 +59,7 @@ impl pallet_blobs::Config for Test {
 }
 
 // Build genesis storage according to the mock runtime.
-// TODO: https://github.com/thrumdev/sugondat/issues/28
+// TODO: https://github.com/thrumdev/blobs/issues/28
 #[allow(unused)]
 pub fn new_test_ext() -> sp_io::TestExternalities {
     frame_system::GenesisConfig::<Test>::default()

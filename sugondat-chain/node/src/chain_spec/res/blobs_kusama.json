@@ -3,7 +3,8 @@
   "id": "blobs_kusama",
   "chainType": "Live",
   "bootNodes": [
-    "/dns/blob-kusama-collator-archive-1.thrum.dev/tcp/30333/p2p/12D3KooWAn4jHXxvSKLtDn5QSCyE1CMbpcLfdUksrzLF8NrMSA4W"
+    "/dns/blob-kusama-collator-archive-1.thrum.dev/tcp/30333/p2p/12D3KooWAn4jHXxvSKLtDn5QSCyE1CMbpcLfdUksrzLF8NrMSA4W",
+    "/dns/blob-kusama-rpc-bootnode-1.thrum.dev/tcp/30333/ws/p2p/12D3KooWFjktFNpwTc8TMo54H9sGhTTHyp2WdaZ11YJ6mt2NjfkZ"
   ],
   "telemetryEndpoints": null,
   "protocolId": "sugondat-kusama",

@@ -130,5 +130,5 @@ To reset the chain
 ```sh
 rm -r zombienet
 cd demo/rollkit
-gmd unsafe-reset-all
+gmd tendermint unsafe-reset-all
 ```

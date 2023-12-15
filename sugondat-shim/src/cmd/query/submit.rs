@@ -40,22 +40,22 @@ fn read_blob(path: &str) -> anyhow::Result<Vec<u8>> {
 
 /// Reads the namespace from a given namespace specifier.
 ///
-/// The original namespace format is a 4-byte vector. so we support both the original format and
-/// a more human-readable format, which is an unsigned 32-bit integer. To distinguish between the
+/// The original namespace format is a 16-byte vector. so we support both the original format and
+/// a more human-readable format, which is an unsigned 128-bit integer. To distinguish between the
 /// two, the byte vector must be prefixed with `0x`.
 ///
 /// The integer is interpreted as big-endian.
 fn read_namespace(namespace: &str) -> anyhow::Result<sugondat_nmt::Namespace> {
     if let Some(hex) = namespace.strip_prefix("0x") {
         let namespace = hex::decode(hex)?;
-        let namespace: [u8; 4] = namespace.try_into().map_err(|e: Vec<u8>| {
-            anyhow::anyhow!("namespace must be 4 bytes long, but was {}", e.len())
+        let namespace: [u8; 16] = namespace.try_into().map_err(|e: Vec<u8>| {
+            anyhow::anyhow!("namespace must be 16 bytes long, but was {}", e.len())
         })?;
         return Ok(sugondat_nmt::Namespace::from_raw_bytes(namespace));
     }
 
     let namespace_id = namespace
-        .parse::<u32>()
+        .parse::<u128>()
         .with_context(|| format!("cannot parse namespace id '{}'", namespace))?;
-    Ok(sugondat_nmt::Namespace::from_u32_be(namespace_id))
+    Ok(sugondat_nmt::Namespace::from_u128_be(namespace_id))
 }

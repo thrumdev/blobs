@@ -6,7 +6,7 @@ use sov_rollup_interface::{
     da::{BlockHeaderTrait, DaSpec, DaVerifier},
     zk::ValidityCondition,
 };
-use sugondat_nmt::Namespace;
+use sugondat_nmt::{Namespace, NS_ID_SIZE};
 
 /// A validity condition expressing that a chain of DA layer blocks is contiguous and canonical
 #[derive(
@@ -44,7 +44,7 @@ pub struct SugondatVerifier {
 // is needed a way to create the verifier without knowing the trait DaVerifier,
 // so without new method
 impl SugondatVerifier {
-    pub fn from_raw(raw_namespace_id: [u8; 4]) -> Self {
+    pub fn from_raw(raw_namespace_id: [u8; NS_ID_SIZE]) -> Self {
         Self {
             namespace: Namespace::from_raw_bytes(raw_namespace_id),
         }

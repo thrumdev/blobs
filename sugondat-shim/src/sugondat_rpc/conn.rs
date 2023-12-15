@@ -40,8 +40,8 @@ impl Conn {
 /// Tries to find the `Blob` pallet in the runtime metadata. If it's not there, then we are not
 /// connected to a Sugondat node.
 fn check_if_compatible(client: &sugondat_subxt::Client) -> anyhow::Result<()> {
-    assert!(sugondat_subxt::sugondat::PALLETS.contains(&"Blob"));
-    if let Some(pallet) = client.metadata().pallet_by_name("Blob") {
+    assert!(sugondat_subxt::sugondat::PALLETS.contains(&"Blobs"));
+    if let Some(pallet) = client.metadata().pallet_by_name("Blobs") {
         if pallet.call_variant_by_name("submit_blob").is_some() {
             return Ok(());
         }

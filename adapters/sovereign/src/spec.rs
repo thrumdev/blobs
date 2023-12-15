@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 pub struct DaLayerSpec;
 
 pub struct ChainParams {
-    pub namespace_id: [u8; 4],
+    pub namespace_id: [u8; sugondat_nmt::NS_ID_SIZE],
 }
 
 impl sov_rollup_interface::da::DaSpec for DaLayerSpec {

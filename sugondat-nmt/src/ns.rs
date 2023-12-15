@@ -28,7 +28,7 @@ impl Namespace {
         self.0
     }
 
-    /// A convenience function to create a namespace from an unsigned 32-bit integer.
+    /// A convenience function to create a namespace from an unsigned 128-bit integer.
     ///
     /// This function will take the given integer (which is assumed to be in host byte order), and
     /// take its big-endian representation as the namespace ID.
@@ -36,7 +36,7 @@ impl Namespace {
         Self(namespace_id.to_be_bytes())
     }
 
-    /// Reinterpret the namespace ID as a big-endian 32-bit integer and return.
+    /// Reinterpret the namespace ID as a big-endian 128-bit integer and return.
     pub fn to_u128_be(&self) -> u128 {
         u128::from_be_bytes(self.0)
     }
@@ -54,7 +54,7 @@ impl Namespace {
 
 impl fmt::Display for Namespace {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        // Print the namespace as a 4-byte hex string. We don't use `hex` crate here to avoid
+        // Print the namespace as a 16-byte hex string. We don't use `hex` crate here to avoid
         // extra dependencies.
         write!(f, "0x")?;
         for byte in self.to_raw_bytes().iter() {

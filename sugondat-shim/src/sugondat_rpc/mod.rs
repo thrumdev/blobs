@@ -5,7 +5,7 @@ use anyhow::Context;
 use subxt::{rpc_params, utils::H256};
 use sugondat_nmt::Namespace;
 use sugondat_subxt::{
-    sugondat::runtime_types::bounded_collections::bounded_vec::BoundedVec, Header,
+    sugondat::runtime_types::pallet_sugondat_blobs::namespace_param::UnvalidatedNamespace, Header,
 };
 use tokio::sync::watch;
 use tracing::Level;
@@ -163,10 +163,9 @@ impl Client {
         namespace: sugondat_nmt::Namespace,
         key: Keypair,
     ) -> anyhow::Result<[u8; 32]> {
-        let namespace_id = namespace.to_u32_be();
         let extrinsic = sugondat_subxt::sugondat::tx()
-            .blob()
-            .submit_blob(namespace_id, BoundedVec(blob));
+            .blobs()
+            .submit_blob(UnvalidatedNamespace(namespace.to_raw_bytes()), blob);
 
         let conn = self.connector.ensure_connected().await;
         let signed = conn
@@ -204,7 +203,7 @@ fn extract_timestamp(extrinsics: &[sugondat_subxt::ExtrinsicDetails]) -> anyhow:
 
 /// Iterates over the extrinsics in a block and extracts the submit_blob extrinsics.
 fn extract_blobs(extrinsics: Vec<sugondat_subxt::ExtrinsicDetails>) -> Vec<Blob> {
-    use sugondat_subxt::sugondat::blob::calls::types::SubmitBlob;
+    use sugondat_subxt::sugondat::blobs::calls::types::SubmitBlob;
 
     let mut blobs = vec![];
     for (extrinsic_index, e) in extrinsics.iter().enumerate() {
@@ -219,11 +218,19 @@ fn extract_blobs(extrinsics: Vec<sugondat_subxt::ExtrinsicDetails>) -> Vec<Blob>
             // Not a submit blob extrinsic, skip.
             continue;
         };
+        // we are scanning the extrinsics of a block, presumably, received from an RPC from a node.
+        // The block should be from a correct chain. The STF, atm, is defined in such a way, that
+        // it bork the block if the namespace is invalid.
+        //
+        // However, there is no absolute guarantee of it, because the RPC could send anything really
+        // or the shim could be outdated. So we don't panic here.
+        let UnvalidatedNamespace(namespace_id) = namespace_id;
+        let namespace = sugondat_nmt::Namespace::from_raw_bytes(namespace_id);
         blobs.push(Blob {
             extrinsic_index: extrinsic_index as u32,
-            namespace: sugondat_nmt::Namespace::from_u32_be(namespace_id),
+            namespace,
             sender,
-            data: blob.0,
+            data: blob,
         })
     }
     blobs

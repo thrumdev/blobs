@@ -1,4 +1,4 @@
-name: build-test-linux-stable
+name: ci
 
 on:
   push:
@@ -23,30 +23,9 @@ jobs:
   build_and_test:
     name: Sugondat - latest
     runs-on: self-hosted
-    strategy:
-      matrix:
-        toolchain:
-          - stable
     steps:
       - uses: actions/checkout@v3
-      - run: apt-get update
-      - run: apt-get install -y protobuf-compiler
-      - run: apt-get install -y build-essential
-      - run: apt-get install -y libclang-dev
-      - run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y
-      - name: Setup toolchain
-        run: |
-          source "$HOME/.cargo/env"
-          rustup update ${{ matrix.toolchain }}
-          rustup default ${{ matrix.toolchain }}
-          rustup target add wasm32-unknown-unknown
-          rustup install nightly
-          rustup target add wasm32-unknown-unknown --toolchain nightly
       - name: cargo build
-        run: |
-          source "$HOME/.cargo/env"
-          cargo build --verbose --all
+        run: cargo build --verbose --all
       - name: cargo test
-        run: |
-          source "$HOME/.cargo/env"
-          cargo test --verbose --all
+        run: cargo test --verbose --all

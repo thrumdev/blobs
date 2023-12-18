@@ -1,3 +1,13 @@
+[profile.release]
+panic = "unwind"
+incremental = true
+debug = 0 # Set this to 1 or 2 to get more useful backtraces in debugger.
+
+[profile.dev]
+# Disabling debug info speeds up builds a bunch,
+# and we don't rely on it for debugging that much.
+debug = 0
+
 [workspace]
 resolver = "2"
 members = [
@@ -13,6 +23,3 @@ members = [
     "sugondat-shim/common/sovereign",
     "sugondat-subxt"
 ]
-
-[profile.release]
-panic = "unwind"

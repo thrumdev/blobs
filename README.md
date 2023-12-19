@@ -12,6 +12,7 @@ Blobchains on Polkadot and Kusama
 ├──<a href="./demo">demo</a>: Projects showcasing integration of RDKs with Sugondat.
 │   ├── <a href="./demo/rollkit">rollkit</a>: Rollkit's GM rollup.
 │   ├── <a href="./demo/sovereign">sovereign</a>: Sovereign Demo Rollup.
+|--<a href="./docs-site">docs-site</a>: Documentation site source, using Docusaurus.
 ├──<a href="./sugondat-chain">sugondat-chain</a>: Implementation of sugondat parachain.
 ├──<a href="./sugondat-serde-util">sugondat-serde-util</a>: Various utilities for serde.
 ├──<a href="./sugondat-shim">sugondat-shim</a>: Shim between sugondat parachain RPC and RDK adapters.

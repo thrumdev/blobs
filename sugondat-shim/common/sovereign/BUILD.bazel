@@ -1,0 +1,44 @@
+load("@crate_index//:defs.bzl", "aliases", "all_crate_deps")
+load("@rules_rust//rust:defs.bzl", "rust_library")
+
+filegroup(
+    name = "all_srcs",
+    srcs = glob(
+        include = [
+            "src/**",
+            "Cargo.toml",
+        ],
+    ),
+)
+
+rust_library(
+    name = "sugondat-shim-common-sovereign_client",
+    srcs = [":all_srcs"],
+    aliases = aliases(),
+    crate_features = [
+        "client",
+    ],
+    crate_name = "sugondat_shim_common_sovereign",
+    proc_macro_deps = all_crate_deps(proc_macro = True),
+    visibility = ["//visibility:public"],
+    deps = all_crate_deps() + [
+        "//sugondat-nmt:sugondat-nmt_serde",
+        "//sugondat-serde-util",
+    ],
+)
+
+rust_library(
+    name = "sugondat-shim-common-sovereign_server",
+    srcs = [":all_srcs"],
+    aliases = aliases(),
+    crate_features = [
+        "server",
+    ],
+    crate_name = "sugondat_shim_common_sovereign",
+    proc_macro_deps = all_crate_deps(proc_macro = True),
+    visibility = ["//visibility:public"],
+    deps = all_crate_deps() + [
+        "//sugondat-nmt:sugondat-nmt_serde",
+        "//sugondat-serde-util",
+    ],
+)

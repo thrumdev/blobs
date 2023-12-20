@@ -1,0 +1,18 @@
+load("@crate_index//:defs.bzl", "aliases", "all_crate_deps")
+load("@rules_rust//rust:defs.bzl", "rust_binary")
+
+rust_binary(
+    name = "sugondat-shim",
+    srcs = glob([
+        "src/**/*.rs",
+    ]),
+    aliases = aliases(),
+    proc_macro_deps = all_crate_deps(proc_macro = True),
+    deps = all_crate_deps() + [
+        "//sugondat-nmt:sugondat-nmt_serde",
+        "//sugondat-serde-util",
+        "//sugondat-shim/common/sovereign:sugondat-shim-common-sovereign_server",
+        "//sugondat-shim/common/rollkit:sugondat-shim-common-rollkit",
+        "//sugondat-subxt",
+    ],
+)

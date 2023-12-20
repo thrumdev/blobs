@@ -1,0 +1,25 @@
+load("@crate_index//:defs.bzl", "aliases", "all_crate_deps")
+load("@rules_rust//rust:defs.bzl", "rust_library")
+
+filegroup(
+    name = "all_srcs",
+    srcs = glob(
+        include = [
+            "src/**",
+            "Cargo.toml",
+        ],
+    ),
+)
+
+rust_library(
+    name = "sugondat-shim-common-rollkit",
+    srcs = [":all_srcs"],
+    aliases = aliases(),
+    crate_name = "sugondat_shim_common_rollkit",
+    proc_macro_deps = all_crate_deps(proc_macro = True),
+    visibility = ["//visibility:public"],
+    deps = all_crate_deps() + [
+        "//sugondat-nmt:sugondat-nmt_serde",
+        "//sugondat-serde-util",
+    ],
+)

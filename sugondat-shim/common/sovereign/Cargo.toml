@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 async-trait = "0.1.74"
 jsonrpsee = { version = "0.20.3", features = ["macros"] }
+jsonrpsee-server = { version = "0.20.3", optional = true }
 serde = { version = "1.0.192", features = ["derive"] }
 sugondat-nmt = { path = "../../../sugondat-nmt", features = ["serde"] }
 sugondat-serde-util = { path = "../../../sugondat-serde-util" }
@@ -15,4 +16,4 @@ sugondat-serde-util = { path = "../../../sugondat-serde-util" }
 [features]
 default = ["client", "server"]
 client = ["jsonrpsee/ws-client"]
-server = ["jsonrpsee/server"]
+server = ["dep:jsonrpsee-server", "jsonrpsee/server"]

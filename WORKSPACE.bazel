@@ -1,0 +1,107 @@
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+# To find additional information on this release or newer ones visit:
+# https://github.com/bazelbuild/rules_rust/releases
+http_archive(
+    name = "rules_rust",
+    sha256 = "75177226380b771be36d7efc538da842c433f14cd6c36d7660976efb53defe86",
+    urls = ["https://github.com/bazelbuild/rules_rust/releases/download/0.34.1/rules_rust-v0.34.1.tar.gz"],
+)
+
+load("@rules_rust//rust:repositories.bzl", "rules_rust_dependencies", "rust_register_toolchains")
+
+rules_rust_dependencies()
+
+rust_register_toolchains(
+    edition = "2021",
+    versions = ["1.74.1"],
+)
+
+http_archive(
+    name = "rules_proto",
+    sha256 = "66bfdf8782796239d3875d37e7de19b1d94301e8972b3cbd2446b332429b4df1",
+    strip_prefix = "rules_proto-4.0.0",
+    urls = [
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_proto/archive/refs/tags/4.0.0.tar.gz",
+        "https://github.com/bazelbuild/rules_proto/archive/refs/tags/4.0.0.tar.gz",
+    ],
+)
+
+load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
+
+rules_proto_dependencies()
+rules_proto_toolchains()
+
+load("@rules_rust//crate_universe:repositories.bzl", "crate_universe_dependencies")
+
+crate_universe_dependencies()
+
+load("@rules_rust//crate_universe:defs.bzl", "crate", "crates_repository")
+
+crates_repository(
+    name = "crate_index",
+    cargo_lockfile = "//:Cargo.lock",
+    lockfile = "//:cargo-bazel-lock.json",
+    manifests = [
+        "//:Cargo.toml",
+        "//:sugondat-nmt/Cargo.toml",
+        "//:adapters/sovereign/Cargo.toml",
+        "//:sugondat-chain/node/Cargo.toml",
+        "//:sugondat-chain/pallets/blobs/Cargo.toml",
+        "//:sugondat-chain/primitives/Cargo.toml",
+        "//:sugondat-chain/runtimes/sugondat-kusama/Cargo.toml",
+        "//:sugondat-chain/runtimes/test/Cargo.toml",
+        "//:sugondat-serde-util/Cargo.toml",
+        "//:sugondat-shim/Cargo.toml",
+        "//:sugondat-shim/common/rollkit/Cargo.toml",
+        "//:sugondat-shim/common/sovereign/Cargo.toml",
+        "//:sugondat-subxt/Cargo.toml",
+    ],
+    annotations = {
+        # It seemed before PROTOC was set only for the prost-build. Now, it seems that every crate
+        # that has a build.rs file needs to have this set.
+        "sc-network-bitswap": [crate.annotation(
+            build_script_data = [
+                "@com_google_protobuf//:protoc",
+            ],
+            build_script_env = {
+                "PROTOC": "$(execpath @com_google_protobuf//:protoc)",
+            },
+        )],
+        "sc-network-sync": [crate.annotation(
+            build_script_data = [
+                "@com_google_protobuf//:protoc",
+            ],
+            build_script_env = {
+                "PROTOC": "$(execpath @com_google_protobuf//:protoc)",
+            },
+        )],
+        "sc-authority-discovery": [crate.annotation(
+            build_script_data = [
+                "@com_google_protobuf//:protoc",
+            ],
+            build_script_env = {
+                "PROTOC": "$(execpath @com_google_protobuf//:protoc)",
+            },
+        )],
+        "sc-network-light": [crate.annotation(
+            build_script_data = [
+                "@com_google_protobuf//:protoc",
+            ],
+            build_script_env = {
+                "PROTOC": "$(execpath @com_google_protobuf//:protoc)",
+            },
+        )],
+        "librocksdb-sys": [crate.annotation(
+            build_script_env = {
+                # This is needed to improve the build times, because otherwise the NUM_JOBS is set
+                # to 1.
+                "NUM_JOBS": "8",
+            },
+        )],
+    },
+)
+
+load("@crate_index//:defs.bzl", "crate_repositories")
+
+crate_repositories()

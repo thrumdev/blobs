@@ -1,0 +1,30 @@
+load("@crate_index//:defs.bzl", "aliases", "all_crate_deps")
+load("@rules_rust//rust:defs.bzl", "rust_library")
+
+rust_library(
+    name = "sugondat-test-runtime_std",
+    srcs = glob([
+        "src/**/*.rs",
+    ]),
+    aliases = {
+        "@crate_index//:codec": "codec",
+        # TODO: find a better way of remapping
+        "//sugondat-chain/primitives:sugondat-primitives_std": "sugondat_primitives",
+        "//sugondat-chain/pallets/blobs:pallet-sugondat-blobs_std": "pallet_sugondat_blobs",
+        # TODO: those don't seem to be public API, but it works.
+        "@crate_index__staging-xcm-1.0.0//:staging_xcm": "xcm",
+        "@crate_index__staging-xcm-builder-1.0.0//:staging_xcm_builder": "xcm_builder",
+        "@crate_index__staging-xcm-executor-1.0.0//:staging_xcm_executor": "xcm_executor",
+        "@crate_index__staging-parachain-info-0.1.0//:staging_parachain_info": "parachain_info",
+    },
+    crate_features = ["std"],
+    crate_name = "sugondat_test_runtime",
+    proc_macro_deps = all_crate_deps(proc_macro = True),
+    visibility = ["//visibility:public"],
+    deps = all_crate_deps() + [
+        "//sugondat-chain/primitives:sugondat-primitives_std",
+        "//sugondat-chain/pallets/blobs:pallet-sugondat-blobs_std",
+    ],
+)
+
+# TODO: make hermetic

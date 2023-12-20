@@ -1,0 +1,33 @@
+load("@crate_index//:defs.bzl", "aliases", "all_crate_deps")
+load("@rules_rust//rust:defs.bzl", "rust_library")
+
+rust_library(
+    name = "sugondat-nmt_nostd",
+    crate_name = "sugondat_nmt",
+    srcs = glob([
+        "src/**/*.rs",
+    ]),
+    deps = all_crate_deps(),
+    aliases = aliases(),
+    proc_macro_deps = all_crate_deps(proc_macro = True),
+    visibility = ["//visibility:public"],
+)
+
+rust_library(
+    name = "sugondat-nmt_serde",
+    crate_name = "sugondat_nmt",
+    srcs = glob([
+        "src/**/*.rs",
+    ]),
+    compile_data = ["Cargo.toml"],
+    deps = all_crate_deps() + [
+        "@crate_index//:serde",
+        "//sugondat-serde-util",
+    ],
+    aliases = aliases(),
+    proc_macro_deps = all_crate_deps(proc_macro = True),
+    visibility = ["//visibility:public"],
+    crate_features = ["serde"]
+)
+
+# TODO: tests

@@ -12,8 +12,9 @@ debug = 0
 resolver = "2"
 members = [
     "sugondat-chain/node",
-    "sugondat-chain/pallets/*",
-    "sugondat-chain/runtimes/*",
+    "sugondat-chain/pallets/blobs",
+    "sugondat-chain/runtimes/sugondat-kusama",
+    "sugondat-chain/runtimes/test",
     "sugondat-chain/primitives",
     "adapters/sovereign",
     "sugondat-nmt",

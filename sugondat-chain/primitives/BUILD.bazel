@@ -1,0 +1,31 @@
+load("@crate_index//:defs.bzl", "aliases", "all_crate_deps")
+load("@rules_rust//rust:defs.bzl", "rust_library")
+
+rust_library(
+    name = "sugondat-primitives_nostd",
+    srcs = glob([
+        "src/**/*.rs",
+    ]),
+    aliases = {
+        "@crate_index//:codec": "codec"
+    },
+    crate_name = "sugondat_primitives",
+    proc_macro_deps = all_crate_deps(proc_macro = True),
+    visibility = ["//visibility:public"],
+    deps = all_crate_deps(),
+)
+
+rust_library(
+    name = "sugondat-primitives_std",
+    srcs = glob([
+        "src/**/*.rs",
+    ]),
+    aliases = {
+        "@crate_index//:codec": "codec"
+    },
+    crate_features = ["std"],
+    crate_name = "sugondat_primitives",
+    proc_macro_deps = all_crate_deps(proc_macro = True),
+    visibility = ["//visibility:public"],
+    deps = all_crate_deps(),
+)

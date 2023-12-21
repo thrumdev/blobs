@@ -25,6 +25,7 @@ pub mod consensus {
     // Time is measured by number of blocks.
     pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
     pub const HOURS: BlockNumber = MINUTES * 60;
+    pub const DAYS: BlockNumber = HOURS * 24;
 
     /// We assume that ~5% of the block weight is consumed by `on_initialize` handlers. This is
     /// used to limit the maximal weight of a single extrinsic.

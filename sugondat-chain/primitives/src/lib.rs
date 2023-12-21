@@ -5,6 +5,9 @@ use sp_runtime::{
     MultiSignature,
 };
 
+// TODO: probably this could be moved into runtimes/kusama-runtime/src/constants.rs
+pub const MAXIMUM_BLOCK_LENGTH: u32 = 5 * 1024 * 1024;
+
 /// An index to a block.
 pub type BlockNumber = u32;
 

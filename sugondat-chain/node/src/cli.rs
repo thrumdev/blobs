@@ -1,3 +1,4 @@
+use crate::command::export_genesis_metadata;
 use std::path::PathBuf;
 
 /// Sub-commands supported by the collator.
@@ -27,6 +28,10 @@ pub enum Subcommand {
 
     /// Remove the whole chain.
     PurgeChain(cumulus_client_cli::PurgeChainCmd),
+
+    // intentianally left out: the docs will be generated from the subcommand rustdoc.
+    #[allow(missing_docs)]
+    ExportGenesisMetadata(export_genesis_metadata::ExportGenesisMetadataCmd),
 
     /// Export the genesis state of the parachain.
     ExportGenesisState(cumulus_client_cli::ExportGenesisStateCommand),

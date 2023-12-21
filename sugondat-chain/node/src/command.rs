@@ -17,6 +17,8 @@ use crate::{
     service::new_partial,
 };
 
+pub(crate) mod export_genesis_metadata;
+
 fn load_spec(id: &str) -> std::result::Result<Box<dyn ChainSpec>, String> {
     Ok(match id {
         "dev" => Box::new(chain_spec::development_config()),
@@ -168,6 +170,13 @@ pub fn run() -> Result<()> {
 				cmd.run(config, polkadot_config)
 			})
 		},
+        Some(Subcommand::ExportGenesisMetadata(cmd)) => {
+            let runner = cli.create_runner(cmd)?;
+            runner.sync_run(|config| {
+                cmd.run(&config)?;
+                Ok(())
+            })
+        },
 		Some(Subcommand::ExportGenesisState(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			runner.sync_run(|config| {

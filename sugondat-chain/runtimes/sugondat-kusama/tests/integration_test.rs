@@ -1,17 +1,22 @@
-use frame_support::traits::tokens::Precision;
+use frame_support::{
+    dispatch::GetDispatchInfo,
+    traits::{fungible::Balanced, tokens::Precision, Hooks},
+};
+use pallet_transaction_payment::Multiplier;
 use sp_block_builder::runtime_decl_for_block_builder::BlockBuilderV6;
 use sp_runtime::{
     generic::SignedPayload,
+    traits::Saturating,
     transaction_validity::{
         InvalidTransaction, TransactionSource, TransactionValidity, TransactionValidityError,
     },
-    BuildStorage, MultiSignature,
+    BuildStorage, FixedPointNumber, MultiSignature,
 };
 
 use codec::Encode;
-use frame_support::traits::fungible::Balanced;
 use sp_core::{crypto::Pair, sr25519};
 use sp_transaction_pool::runtime_api::runtime_decl_for_tagged_transaction_queue::TaggedTransactionQueueV3;
+use sp_weights::{Weight, WeightToFee};
 use sugondat_kusama_runtime::{
     Address, Hash, MaxBlobSize, MaxBlobs, MaxTotalBlobSize, Runtime, RuntimeCall, SignedExtra,
     UncheckedExtrinsic,
@@ -155,5 +160,75 @@ fn test_pre_dispatch_max_blobs_exceeded() {
 fn test_pre_dispatch_max_total_blob_size_exceeded() {
     test_pre_dispatch(|| {
         pallet_sugondat_blobs::TotalBlobSize::<Runtime>::put(MaxTotalBlobSize::get())
+    });
+}
+
+#[test]
+fn test_length_to_fee() {
+    // Test that inclusion fee is evaluated propertly
+    // following what done in BlobsLengthToFee
+    new_test_ext().execute_with(|| {
+        let len = 123;
+        let multiplier = Multiplier::saturating_from_integer(12);
+        NextLengthMultiplier::set(&multiplier);
+
+        let length_fee = len * TransactionByteFee::get();
+        let expected = multiplier.saturating_mul_int(length_fee);
+
+        assert_eq!(
+            pallet_transaction_payment::Pallet::<Runtime>::length_to_fee(len as u32),
+            expected
+        );
+    });
+}
+
+#[test]
+fn test_inclusion_fee() {
+    // Test that inclusion fee is evaluated propertly
+    // following what done in BlobsLengthToFee
+    new_test_ext().execute_with(|| {
+        let call: RuntimeCall = pallet_sugondat_blobs::Call::submit_blob {
+            namespace_id: 0.into(),
+            blob: vec![0; 1],
+        }
+        .into();
+
+        NextLengthMultiplier::set(&Multiplier::saturating_from_rational(1, 12));
+
+        let inclusion_fee_zero_length = pallet_transaction_payment::Pallet::<Runtime>::compute_fee(
+            0,
+            &call.get_dispatch_info(),
+            0,
+        );
+
+        let inclusion_fee = pallet_transaction_payment::Pallet::<Runtime>::compute_fee(
+            call.size_hint() as u32,
+            &call.get_dispatch_info(),
+            0,
+        );
+
+        let length_fee = inclusion_fee - inclusion_fee_zero_length;
+
+        let expected_lenght_fee = BlobsLengthToFee::<Runtime>::weight_to_fee(&Weight::from_parts(
+            call.size_hint() as u64,
+            0,
+        ));
+
+        assert_eq!(length_fee, expected_lenght_fee);
+    });
+}
+
+#[test]
+fn test_update_length_and_fee_multipliers() {
+    // TODO: check the correctness of the update
+    //
+    // Here I just check that the desired BlobsFeeAdjustment side effect
+    // happens, not yet the correctness
+    new_test_ext().execute_with(|| {
+        let multiplier = Multiplier::saturating_from_rational(1, 12);
+        NextLengthMultiplier::set(&multiplier);
+        TransactionPayment::on_finalize(System::block_number());
+        let new_mutliplier = NextLengthMultiplier::get();
+        assert!(multiplier != multiplier);
     });
 }

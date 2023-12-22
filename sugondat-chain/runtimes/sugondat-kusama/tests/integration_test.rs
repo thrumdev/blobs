@@ -209,12 +209,12 @@ fn test_inclusion_fee() {
 
         let length_fee = inclusion_fee - inclusion_fee_zero_length;
 
-        let expected_lenght_fee = BlobsLengthToFee::<Runtime>::weight_to_fee(&Weight::from_parts(
+        let expected_length_fee = BlobsLengthToFee::<Runtime>::weight_to_fee(&Weight::from_parts(
             call.size_hint() as u64,
             0,
         ));
 
-        assert_eq!(length_fee, expected_lenght_fee);
+        assert_eq!(length_fee, expected_length_fee);
     });
 }
 
@@ -229,6 +229,6 @@ fn test_update_length_and_fee_multipliers() {
         NextLengthMultiplier::set(&multiplier);
         TransactionPayment::on_finalize(System::block_number());
         let new_mutliplier = NextLengthMultiplier::get();
-        assert!(multiplier != multiplier);
+        assert!(multiplier != new_mutliplier);
     });
 }

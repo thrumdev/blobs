@@ -164,25 +164,6 @@ fn test_pre_dispatch_max_total_blob_size_exceeded() {
 }
 
 #[test]
-fn test_length_to_fee() {
-    // Test that inclusion fee is evaluated propertly
-    // following what done in BlobsLengthToFee
-    new_test_ext().execute_with(|| {
-        let len = 123;
-        let multiplier = Multiplier::saturating_from_integer(12);
-        NextLengthMultiplier::set(&multiplier);
-
-        let length_fee = len * TransactionByteFee::get();
-        let expected = multiplier.saturating_mul_int(length_fee);
-
-        assert_eq!(
-            pallet_transaction_payment::Pallet::<Runtime>::length_to_fee(len as u32),
-            expected
-        );
-    });
-}
-
-#[test]
 fn test_inclusion_fee() {
     // Test that inclusion fee is evaluated propertly
     // following what done in BlobsLengthToFee

@@ -191,3 +191,69 @@ impl<T: frame_system::Config> sp_weights::WeightToFee for BlobsLengthToFee<T> {
         multiplier.saturating_mul_int(length_fee)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{MaxBlobSize, Runtime};
+    use sp_runtime::BuildStorage;
+
+    fn new_test_ext() -> sp_io::TestExternalities {
+        frame_system::GenesisConfig::<Runtime>::default()
+            .build_storage()
+            .unwrap()
+            .into()
+    }
+
+    #[test]
+    fn test_length_to_fee() {
+        // Test that inclusion fee is evaluated propertly
+        // following what done in BlobsLengthToFee
+        new_test_ext().execute_with(|| {
+            let len = 123;
+            let multiplier = Multiplier::saturating_from_integer(12);
+            NextLengthMultiplier::set(&multiplier);
+
+            let length_fee = len * TransactionByteFee::get();
+            let expected = multiplier.saturating_mul_int(length_fee);
+
+            assert_eq!(
+                pallet_transaction_payment::Pallet::<Runtime>::length_to_fee(len as u32),
+                expected
+            );
+        });
+    }
+
+    #[test]
+    fn test_blobs_fee_adjustment_convert() {
+        use codec::Encode;
+        use sp_core::twox_128;
+
+        for len in (0..MaxBlobSize::get()).into_iter().step_by(100) {
+            new_test_ext().execute_with(|| {
+                // AllExtrinsicsLen is a private storage value of the system pallet
+                // so the key must be manually constructed
+                sp_io::storage::set(
+                    &[twox_128(b"System"), twox_128(b"AllExtrinsicsLen")].concat(),
+                    &len.encode(),
+                );
+
+                let fee_multiplier = Multiplier::saturating_from_rational(7, 8);
+
+                let new_fee_multiplier = BlobsFeeAdjustment::<Runtime>::convert(fee_multiplier);
+
+                // fee_multiplier should follow the standard behavior
+                let expected_fee_multiplier = TargetedFeeAdjustment::<
+                    Runtime,
+                    TargetBlockFullness,
+                    AdjustmentVariableBlockFullness,
+                    MinimumMultiplierBlockFullness,
+                    MaximumMultiplierBlockFullness,
+                >::convert(fee_multiplier);
+                assert_eq!(new_fee_multiplier, expected_fee_multiplier);
+
+                // TODO: Ensure length multiplier is update properly
+            });
+        }
+    }
+}

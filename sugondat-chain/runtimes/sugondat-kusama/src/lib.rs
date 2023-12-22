@@ -275,8 +275,10 @@ parameter_types! {
     /// Relay Chain `TransactionByteFee` / 10
     pub const TransactionByteFee: Balance = MILLICENTS;
 
+    // parameters used by BlobsFeeAdjustment
+    // to update NextFeeMultiplier and NextLengthMultiplier
+    //
     // Common constants used in all runtimes for SlowAdjustingFeeUpdate
-
     /// The portion of the `NORMAL_DISPATCH_RATIO` that we adjust the fees with. Blocks filled less
     /// than this will decrease the weight and more will increase.
     pub storage TargetBlockFullness: Perquintill = Perquintill::from_percent(25);
@@ -291,44 +293,17 @@ parameter_types! {
     pub MaximumMultiplierBlockFullness: Multiplier = Bounded::max_value();
 
 
-    // parameters used by BlobsFeeAdjustment
-
     pub storage NextLengthMultiplier: Multiplier = Multiplier::saturating_from_integer(1);
-
-    pub storage TargetBlockSize: u32 = 820 * 1024; // 0.8MiB
+    pub storage TargetBlockSize: Perquintill = Perquintill::from_percent(16); // 0.8MiB
     // TODO: update those value accordingly with https://github.com/thrumdev/blobs/issues/16
     pub AdjustmentVariableBlockSize: Multiplier = Multiplier::saturating_from_rational(75, 1000_000);
     pub MinimumMultiplierBlockSize: Multiplier = Multiplier::saturating_from_rational(1, 10u128);
     pub MaximumMultiplierBlockSize: Multiplier = Bounded::max_value();
-
-    // A positive number represents the count of consecutive blocks that exceeded
-    // the TargetBlockSize, while a negative number represents the count of
-    // consecutive blocks that were below the TargetBlockSize - NegativeDeltaTargetBlockFullness.
-    pub storage BlockSizeTracker: u32 = 0; // 0.8MiB
-
-    // The number of consecutive blocks after which the TargetBlockSize will increase
-    pub storage IncreaseDeltaBlocks: u32 = 10 * DAYS;
-
-    // The number of bytes that will be added to TargetBlockSize each update
-    pub storage DeltaTargetBlockSize: u32 = 205 * 1024;// 0.2MiB
-
-    //pub storage DecreaseDeltaBlocks: u32 = 10 * DAYS;,
-    //pub storage LowerBoundTargetBlockSize
 }
-
-/// Parameterized slow adjusting fee updated based on
-/// <https://research.web3.foundation/Polkadot/overview/token-economics#2-slow-adjusting-mechanism>
-//pub type SlowAdjustingFeeUpdate<R> = TargetedFeeAdjustment<
-//    R,
-//    TargetBlockFullness,
-//    AdjustmentVariable,
-//    MinimumMultiplier,
-//    MaximumMultiplier,
-//>;
 
 /// Currently pallet_transaction_payment use the following formula:
 ///
-/// ```
+/// ```ignore
 /// inclusion_fee = base_fee + length_fee + [targeted_fee_adjustment * weight_fee];
 /// ```
 ///
@@ -340,23 +315,23 @@ parameter_types! {
 /// What this struct does is this PLUS a side effect, the goal is to reach a different formula to
 /// calculate fees:
 ///
-/// ```
+/// ```ignore
 /// inclusion_fee = base_fee + [targeted_length_fee_adjustment * length_fee] + [targeted_weight_fee_adjustment * weight_fee];
 /// ```
 ///
 /// As you can see `targeted_fee_adjustment` becomes `targeted_weight_fee_adjustment` but the behavior
 /// remains the same, the side effect is the changing to the value `targeted_length_fee_adjustment`,
 /// this formula is achievable because inside pallet_transaction_payment the function `compute_fee_raw`
-/// that just computes the final fee associated with an extrinsic uses the associated type `LenghtToFee`
+/// that just computes the final fee associated with an extrinsic uses the associated type `LengthToFee`
 /// that converts the length of an extrinsic to a fee.
 ///
 /// By default the implementation is a constant multiplication but we want to achieve a dynamic formula
 /// that can adapt based on the usage of the network, this can't solely be done by this struct but needs
-/// to be bundled with a custom implementation of `LenghtToFee`.
+/// to be bundled with a custom implementation of `LengthToFee`.
 ///
 /// This struct ONLY provide a dynamic update of `targeted_length_fee_adjustment` and `targeted_weight_fee_adjustment`
 /// based on the congestion and usage of the blocks, while the formula si effectively implemented like
-/// explained above only thanks to `LenghtToFee`
+/// explained above only thanks to `LengthToFee`
 pub struct BlobsFeeAdjustment<T: frame_system::Config>(core::marker::PhantomData<T>);
 
 impl<T: frame_system::Config> Convert<Multiplier, Multiplier> for BlobsFeeAdjustment<T>
@@ -364,42 +339,17 @@ where
     T: frame_system::Config,
 {
     /// This function should be a pure function used to update NextFeeMultiplier
-    /// but will also has the side effect of update NextLenghtMultiplier
+    /// but will also has the side effect of update NextLengthMultiplier
     fn convert(previous_fee_multiplier: Multiplier) -> Multiplier {
-        // Update TargetBlockSize if needed
-        let all_extrinsic_len = <frame_system::Pallet<T>>::all_extrinsics_len();
-
-        if all_extrinsic_len > TargetBlockSize::get() {
-            // Increase the tracker if needed
-            let tracker = BlockSizeTracker::get();
-
-            // If the used_block_size is larger than the TargetBlockSize
-            // for more than IncreaseDeltaBlocks consecutive, then the TargetBlockSize
-            // will be increased by DeltaTargetBlockSize.
-            if tracker + 1 >= IncreaseDeltaBlocks::get() {
-                let current_target_block_size = TargetBlockSize::get();
-                TargetBlockSize::set(&(current_target_block_size + DeltaTargetBlockSize::get()));
-                BlockSizeTracker::set(&0);
-            }
-
-            BlockSizeTracker::set(&(tracker + 1));
-        } else {
-            // The logic for updating to a new TargetBlockSize currently requires IncreaseDeltaBlocks
-            // to be constantly larger than TargetBlockSize. However, it might be possible
-            // to implement a window where we reset the tracker only if the
-            // block size remains below the TargetBlockSize for a certain number of blocks
-            BlockSizeTracker::set(&0);
-        }
-
         // Update NextLengthMultiplier
 
         // To update the value will be used the same formula as TargetedFeeAdjustment,
         // described here: https://research.web3.foundation/Polkadot/overview/token-economics#2-slow-adjusting-mechanism
         //
         // so this is mainly a copy paste of that function because it works on normalized mesurments,
-        // so if it is ref_time, proof_size or lenght of the extrinsic the mutliplier will be evaluated properly.
+        // so if it is ref_time, proof_size or length of the extrinsic the mutliplier will be evaluated properly.
         // The main problem is that TargetedFeeAdjustment::convert uses directly a call to the storage to extract
-        // the weight of the current block so there is no way to pass the lenght as input argument,
+        // the weight of the current block so there is no way to pass the length as input argument,
         // here I will copy paste all the needed part to update properly NextLengthMultiplier
 
         // Defensive only. The multiplier in storage should always be at most positive. Nonetheless
@@ -409,14 +359,15 @@ where
         let previous_len_multiplier = NextLengthMultiplier::get();
         let min_multiplier = MinimumMultiplierBlockSize::get();
         let max_multiplier = MaximumMultiplierBlockSize::get();
-        // TODO: why?
         let previous_len_multiplier = previous_len_multiplier.max(min_multiplier);
 
         // Pick the limiting dimension. (from TargetedFeeAdjustment::convert)
         //
         // In this case it is the length of all extrinsic, always
-        let (normal_limiting_dimension, max_limiting_dimension) =
-            (all_extrinsic_len, MAXIMUM_BLOCK_LENGTH);
+        let (normal_limiting_dimension, max_limiting_dimension) = (
+            <frame_system::Pallet<T>>::all_extrinsics_len(),
+            MAXIMUM_BLOCK_LENGTH as u64,
+        );
 
         let target_block_size = TargetBlockSize::get();
         let adjustment_variable = AdjustmentVariableBlockSize::get();
@@ -462,7 +413,7 @@ where
         //
         // Here is the tricky part, this method return the new value associated with
         // NextFeeMultiplier (in the old fashion) because weight dynamic adjustment is battle tested
-        // while previously have updated the `NextLengthMultiplier` used in `LenghtToWeight`
+        // while previously have updated the `NextLengthMultiplier` used in `LengthToWeight`
         TargetedFeeAdjustment::<
             T,
             TargetBlockFullness,
@@ -508,9 +459,7 @@ impl pallet_transaction_payment::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, ()>;
     type WeightToFee = WeightToFee;
-    //type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
     type LengthToFee = BlobsLengthToFee<Self>;
-    //type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
     type FeeMultiplierUpdate = BlobsFeeAdjustment<Self>;
     type OperationalFeeMultiplier = ConstU8<5>;
 }

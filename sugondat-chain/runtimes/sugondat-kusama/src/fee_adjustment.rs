@@ -32,8 +32,10 @@ parameter_types! {
 
     pub storage NextLengthMultiplier: Multiplier = Multiplier::saturating_from_integer(1);
     pub storage TargetBlockSize: Perquintill = Perquintill::from_percent(16); // 0.8MiB
-    // TODO: update those value accordingly with https://github.com/thrumdev/blobs/issues/16
-    pub AdjustmentVariableBlockSize: Multiplier = Multiplier::saturating_from_rational(75, 1_000_000);
+    //  v = p / k * (1 - s*) = 0.3 / (300 * (1 - 0.16))
+    //  at most 30% (=p) fees variation in one hour, 300 blocks (=k)
+    pub AdjustmentVariableBlockSize: Multiplier = Multiplier::saturating_from_rational(1, 840);
+    // TODO: decide the value of MinimumMultiplierBlockSize, https://github.com/thrumdev/blobs/issues/154
     pub MinimumMultiplierBlockSize: Multiplier = Multiplier::saturating_from_rational(1, 10u128);
     pub MaximumMultiplierBlockSize: Multiplier = Bounded::max_value();
 }

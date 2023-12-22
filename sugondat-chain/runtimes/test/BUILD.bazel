@@ -1,11 +1,19 @@
 load("@crate_index//:defs.bzl", "aliases", "all_crate_deps")
 load("@rules_rust//rust:defs.bzl", "rust_library")
 
+filegroup(
+    name = "all_srcs",
+    srcs = glob(
+        include = [
+            "src/**",
+            "Cargo.toml",
+        ],
+    ),
+)
+
 rust_library(
     name = "sugondat-test-runtime_std",
-    srcs = glob([
-        "src/**/*.rs",
-    ]),
+    srcs = [":all_srcs"],
     aliases = {
         "@crate_index//:codec": "codec",
         # TODO: find a better way of remapping

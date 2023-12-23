@@ -11,6 +11,9 @@ pub mod fee_adjustment;
 mod weights;
 pub mod xcm_config;
 
+#[cfg(test)]
+mod fee_adjustment_tests;
+
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use cumulus_primitives_core::{AggregateMessageOrigin, ParaId};
 use polkadot_runtime_common::xcm_sender::NoPriceForMessageDelivery;

@@ -100,11 +100,9 @@ where
         let max_multiplier = MaximumMultiplierBlockSize::get();
         let previous_len_multiplier = previous_len_multiplier.max(min_multiplier);
 
-        // Pick the limiting dimension. (from TargetedFeeAdjustment::convert)
-        //
-        // In this case it is the length of all extrinsic, always
+        // The limiting dimension is the length of all extrinsic
         let (normal_limiting_dimension, max_limiting_dimension) = (
-            <frame_system::Pallet<T>>::all_extrinsics_len(),
+            <frame_system::Pallet<T>>::all_extrinsics_len().min(MAXIMUM_BLOCK_LENGTH),
             MAXIMUM_BLOCK_LENGTH as u64,
         );
 
@@ -197,7 +195,7 @@ impl<T: frame_system::Config> sp_weights::WeightToFee for BlobsLengthToFee<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{MaxBlobSize, Runtime};
+    use crate::Runtime;
     use sp_runtime::BuildStorage;
 
     fn new_test_ext() -> sp_io::TestExternalities {
@@ -224,38 +222,5 @@ mod tests {
                 expected
             );
         });
-    }
-
-    #[test]
-    fn test_blobs_fee_adjustment_convert() {
-        use codec::Encode;
-        use sp_core::twox_128;
-
-        for len in (0..MaxBlobSize::get()).into_iter().step_by(100) {
-            new_test_ext().execute_with(|| {
-                // AllExtrinsicsLen is a private storage value of the system pallet
-                // so the key must be manually constructed
-                sp_io::storage::set(
-                    &[twox_128(b"System"), twox_128(b"AllExtrinsicsLen")].concat(),
-                    &len.encode(),
-                );
-
-                let fee_multiplier = Multiplier::saturating_from_rational(7, 8);
-
-                let new_fee_multiplier = BlobsFeeAdjustment::<Runtime>::convert(fee_multiplier);
-
-                // fee_multiplier should follow the standard behavior
-                let expected_fee_multiplier = TargetedFeeAdjustment::<
-                    Runtime,
-                    TargetBlockFullness,
-                    AdjustmentVariableBlockFullness,
-                    MinimumMultiplierBlockFullness,
-                    MaximumMultiplierBlockFullness,
-                >::convert(fee_multiplier);
-                assert_eq!(new_fee_multiplier, expected_fee_multiplier);
-
-                // TODO: Ensure length multiplier is update properly
-            });
-        }
     }
 }

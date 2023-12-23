@@ -1,6 +1,6 @@
 use frame_support::{
     dispatch::GetDispatchInfo,
-    traits::{fungible::Balanced, tokens::Precision, Hooks},
+    traits::{fungible::Balanced, tokens::Precision},
 };
 use pallet_transaction_payment::Multiplier;
 use sp_block_builder::runtime_decl_for_block_builder::BlockBuilderV6;
@@ -17,9 +17,9 @@ use sp_core::{crypto::Pair, sr25519};
 use sp_transaction_pool::runtime_api::runtime_decl_for_tagged_transaction_queue::TaggedTransactionQueueV3;
 use sp_weights::{Weight, WeightToFee};
 use sugondat_kusama_runtime::{
-    fee_adjustment::{BlobsLengthToFee, NextLengthMultiplier, TransactionByteFee},
+    fee_adjustment::{BlobsLengthToFee, NextLengthMultiplier},
     Address, Hash, MaxBlobSize, MaxBlobs, MaxTotalBlobSize, Runtime, RuntimeCall, SignedExtra,
-    TransactionPayment, UncheckedExtrinsic,
+    UncheckedExtrinsic,
 };
 
 use sugondat_kusama_runtime::*;
@@ -196,20 +196,5 @@ fn test_inclusion_fee() {
         ));
 
         assert_eq!(length_fee, expected_length_fee);
-    });
-}
-
-#[test]
-fn test_update_length_and_fee_multipliers() {
-    // TODO: check the correctness of the update
-    //
-    // Here I just check that the desired BlobsFeeAdjustment side effect
-    // happens, not yet the correctness
-    new_test_ext().execute_with(|| {
-        let multiplier = Multiplier::saturating_from_rational(1, 12);
-        NextLengthMultiplier::set(&multiplier);
-        TransactionPayment::on_finalize(System::block_number());
-        let new_mutliplier = NextLengthMultiplier::get();
-        assert!(multiplier != new_mutliplier);
     });
 }

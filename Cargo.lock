@@ -13833,6 +13833,8 @@ dependencies = [
 name = "sugondat-node"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "async-trait",
  "clap",
  "color-print",
  "cumulus-client-cli",
@@ -13841,6 +13843,7 @@ dependencies = [
  "cumulus-client-consensus-common",
  "cumulus-client-consensus-proposer",
  "cumulus-client-service",
+ "cumulus-pallet-parachain-system",
  "cumulus-primitives-core",
  "cumulus-primitives-parachain-inherent",
  "cumulus-relay-chain-interface",
@@ -13874,8 +13877,10 @@ dependencies = [
  "sp-api",
  "sp-block-builder",
  "sp-blockchain",
+ "sp-consensus",
  "sp-consensus-aura",
  "sp-core",
+ "sp-inherents",
  "sp-io",
  "sp-keystore",
  "sp-runtime",

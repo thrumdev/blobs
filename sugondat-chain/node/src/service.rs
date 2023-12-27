@@ -52,7 +52,7 @@ type HostFunctions = (
     frame_benchmarking::benchmarking::HostFunctions,
 );
 
-type ParachainClient = TFullClient<Block, RuntimeApi, WasmExecutor<HostFunctions>>;
+pub(crate) type ParachainClient = TFullClient<Block, RuntimeApi, WasmExecutor<HostFunctions>>;
 
 type ParachainBackend = TFullBackend<Block>;
 

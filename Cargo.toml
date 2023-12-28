@@ -11,15 +11,15 @@ debug = 0
 [workspace]
 resolver = "2"
 members = [
-    "sugondat-chain/node",
-    "sugondat-chain/pallets/*",
-    "sugondat-chain/runtimes/*",
-    "sugondat-chain/primitives",
+    "sugondat/chain/node",
+    "sugondat/chain/pallets/*",
+    "sugondat/chain/runtimes/*",
+    "sugondat/chain/primitives",
     "adapters/sovereign",
-    "sugondat-nmt",
-    "sugondat-serde-util",
-    "sugondat-shim",
-    "sugondat-shim/common/rollkit",
-    "sugondat-shim/common/sovereign",
-    "sugondat-subxt"
+    "sugondat/nmt",
+    "sugondat/serde-util",
+    "sugondat/shim",
+    "sugondat/shim/common/rollkit",
+    "sugondat/shim/common/sovereign",
+    "sugondat/subxt-autogen"
 ]

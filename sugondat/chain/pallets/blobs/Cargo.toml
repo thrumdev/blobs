@@ -25,7 +25,7 @@ sp-io = { git = "https://github.com/paritytech/polkadot-sdk", default-features =
 # Local
 sugondat-primitives = { path = "../../primitives", default-features = false }
 
-sugondat-nmt = { path = "../../../sugondat-nmt", default-features = false }
+sugondat-nmt = { path = "../../../nmt", default-features = false }
 
 [dev-dependencies]
 serde = { version = "1.0.132" }

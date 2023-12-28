@@ -10,7 +10,7 @@ license = "MIT OR Apache-2.0"
 sha2 = { version = "0.10.6", default-features = false }
 nmt-rs = { git = "https://github.com/Sovereign-Labs/nmt-rs.git", rev = "627f9622a987db4a0b22dc04107442f4010096fb", default-features = false }
 serde = { version = "1.0.130", default-features = false, optional = true }
-sugondat-serde-util = { path = "../sugondat-serde-util", optional = true }
+sugondat-serde-util = { path = "../serde-util", optional = true }
 
 [features]
 default = ["native"]

@@ -3161,6 +3161,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "545b22097d44f8a9581187cdf93de7a71e4722bf51200cfaba810865b49a495d"
 
 [[package]]
+name = "dynamic-fee-adjustment"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-transaction-payment",
+ "sp-arithmetic",
+ "sp-runtime",
+ "sp-weights",
+]
+
+[[package]]
 name = "ecdsa"
 version = "0.14.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -13767,6 +13779,7 @@ dependencies = [
  "cumulus-primitives-core",
  "cumulus-primitives-timestamp",
  "cumulus-primitives-utility",
+ "dynamic-fee-adjustment",
  "frame-benchmarking",
  "frame-executive",
  "frame-support",

@@ -23,6 +23,7 @@ smallvec = "1.10.0"
 # Local
 pallet-sugondat-blobs = { path = "../../pallets/blobs", default-features = false }
 sugondat-primitives = { path = "../../primitives", default-features = false }
+dynamic-fee-adjustment = { path = "../../dynamic-fee-adjustment", default-features = false }
 
 # Substrate
 frame-benchmarking = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, optional = true, branch = "release-polkadot-v1.4.0" }
@@ -138,6 +139,7 @@ std = [
 	"xcm-builder/std",
 	"xcm-executor/std",
 	"xcm/std",
+	"dynamic-fee-adjustment/std"
 ]
 
 runtime-benchmarks = [

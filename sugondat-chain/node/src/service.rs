@@ -30,6 +30,8 @@ use sc_transaction_pool_api::OffchainTransactionPoolFactory;
 use sp_keystore::KeystorePtr;
 use substrate_prometheus_endpoint::Registry;
 
+use crate::proposer::BlockLimitingProposer;
+
 // This is fine, even for the Kusama and Polkadot parachains.
 //
 // Runtime API invocations are one of the dumbest things in Substrate:
@@ -389,15 +391,19 @@ fn start_consensus(
 
     let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
 
-    let proposer_factory = sc_basic_authorship::ProposerFactory::with_proof_recording(
-        task_manager.spawn_handle(),
-        client.clone(),
-        transaction_pool,
-        prometheus_registry,
-        telemetry.clone(),
-    );
+    let proposer = {
+        let proposer_factory = sc_basic_authorship::ProposerFactory::with_proof_recording(
+            task_manager.spawn_handle(),
+            client.clone(),
+            transaction_pool.clone(),
+            prometheus_registry,
+            telemetry.clone(),
+        );
 
-    let proposer = Proposer::new(proposer_factory);
+        let proposer = Proposer::new(proposer_factory);
+
+        BlockLimitingProposer::new(proposer, para_id, transaction_pool)
+    };
 
     let collator_service = CollatorService::new(
         client.clone(),

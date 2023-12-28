@@ -35,6 +35,21 @@ pub struct BlockLimitingProposer<P> {
     transaction_pool: Arc<sc_transaction_pool::FullPool<Block, ParachainClient>>,
 }
 
+impl<P> BlockLimitingProposer<P> {
+    /// Create a new block-limiting proposer.
+    pub fn new(
+        inner: P,
+        para_id: ParaId,
+        transaction_pool: Arc<sc_transaction_pool::FullPool<Block, ParachainClient>>,
+    ) -> Self {
+        BlockLimitingProposer {
+            inner,
+            para_id,
+            transaction_pool,
+        }
+    }
+}
+
 #[async_trait::async_trait]
 impl<P: ProposerInterface<Block> + Send> ProposerInterface<Block> for BlockLimitingProposer<P> {
     async fn propose(

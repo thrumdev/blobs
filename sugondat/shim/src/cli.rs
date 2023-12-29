@@ -133,11 +133,6 @@ pub mod serve {
 pub mod query {
     //! CLI definition for the `query` subcommand.
 
-    // TODO: I envision several subcommands here. For example:
-    // - query block <block_hash/number> — returns the information about a block and header.
-    // - query blob <id> - returns the blob for a given key. The key here is the same sense as
-    //   described here https://github.com/thrumdev/blobs/issues/9#issuecomment-1814005570.
-
     use super::{KeyManagementParams, SugondatRpcParams, ENV_SUGONDAT_NAMESPACE};
     use clap::{Args, Subcommand};
 
@@ -153,6 +148,97 @@ pub mod query {
         Submit(submit::Params),
         /// Queries information about a block and header.
         Block(block::Params),
+        /// Queries information about a specific blob.
+        Blob(blob::Params),
+    }
+
+    /// A reference to a block to query.
+    #[derive(Debug, Clone)]
+    pub enum BlockRef {
+        /// The current best finalized block known by the node.
+        Best,
+        /// The number of the block to query.
+        Number(u64),
+        /// The hex-encoded hash of the block to query, prefixed with "0x".
+        Hash([u8; 32]),
+    }
+
+    impl std::fmt::Display for BlockRef {
+        fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+            match *self {
+                BlockRef::Best => write!(f, "best"),
+                BlockRef::Number(n) => write!(f, "{}", n),
+                BlockRef::Hash(h) => write!(f, "0x{}", hex::encode(&h[..])),
+            }
+        }
+    }
+
+    impl std::str::FromStr for BlockRef {
+        type Err = String;
+
+        fn from_str(input: &str) -> Result<Self, Self::Err> {
+            if input == "best" {
+                return Ok(BlockRef::Best);
+            }
+
+            if let Some(hash) = decode_hash(input)? {
+                return Ok(BlockRef::Hash(hash));
+            }
+
+            if let Ok(n) = input.parse::<u64>() {
+                Ok(BlockRef::Number(n))
+            } else {
+                Err(format!("parse error. see `--help`"))
+            }
+        }
+    }
+
+    fn decode_hash(input: &str) -> Result<Option<[u8; 32]>, String> {
+        if let Some(s) = input.strip_prefix("0x") {
+            let bytes =
+                hex::decode(s).map_err(|_| "Invalid parameter: not hex encoded".to_owned())?;
+
+            let mut hash = [0u8; 32];
+            if bytes.len() != 32 {
+                return Err("Invalid parameter: hash not 32 bytes".to_owned());
+            }
+
+            hash.copy_from_slice(&bytes[..]);
+            Ok(Some(hash))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub mod blob {
+        use clap::Args;
+
+        use super::{BlockRef, SugondatRpcParams};
+
+        #[derive(Debug, Args)]
+        pub struct Params {
+            #[clap(flatten)]
+            pub rpc: SugondatRpcParams,
+
+            /// The block containing the blob to query.
+            ///
+            /// Possible values: ["best", number, hash]
+            ///
+            /// "best" is the highest finalized block.
+            ///
+            /// Hashes must be 32 bytes, hex-encoded, and prefixed with "0x".
+            #[arg(value_name = "BLOCK_REF")]
+            pub block: BlockRef,
+
+            /// The index of the extrinsic (transaction) containing the blob.
+            #[arg(value_name = "INDEX")]
+            pub index: u32,
+
+            /// Output the blob data as binary to stdout rather than hex, and omits
+            /// any other details intended for human consumption.
+            #[arg(long)]
+            pub raw: bool,
+        }
     }
 
     pub mod block {
@@ -160,57 +246,7 @@ pub mod query {
 
         use clap::Args;
 
-        use super::SugondatRpcParams;
-
-        /// A reference to a block to query.
-        #[derive(Debug, Clone)]
-        pub enum BlockRef {
-            /// The current best finalized block known by the node.
-            Best,
-            /// The number of the block to query.
-            Number(u64),
-            /// The hex-encoded hash of the block to query, prefixed with "0x".
-            Hash([u8; 32]),
-        }
-
-        impl std::fmt::Display for BlockRef {
-            fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-                match *self {
-                    BlockRef::Best => write!(f, "best"),
-                    BlockRef::Number(n) => write!(f, "{}", n),
-                    BlockRef::Hash(h) => write!(f, "0x{}", hex::encode(&h[..])),
-                }
-            }
-        }
-
-        impl std::str::FromStr for BlockRef {
-            type Err = String;
-
-            fn from_str(input: &str) -> Result<Self, Self::Err> {
-                if input == "best" {
-                    return Ok(BlockRef::Best);
-                }
-
-                if let Some(s) = input.strip_prefix("0x") {
-                    let bytes = hex::decode(s)
-                        .map_err(|_| "Invalid parameter: not hex encoded".to_owned())?;
-
-                    let mut hash = [0u8; 32];
-                    if bytes.len() != 32 {
-                        return Err("Invalid parameter: hash not 32 bytes".to_owned());
-                    }
-
-                    hash.copy_from_slice(&bytes[..]);
-                    return Ok(BlockRef::Hash(hash));
-                }
-
-                if let Ok(n) = input.parse::<u64>() {
-                    Ok(BlockRef::Number(n))
-                } else {
-                    Err(format!("parse error. see `--help`"))
-                }
-            }
-        }
+        use super::{BlockRef, SugondatRpcParams};
 
         #[derive(Debug, Args)]
         pub struct Params {

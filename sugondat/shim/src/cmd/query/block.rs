@@ -1,5 +1,5 @@
 use super::connect_rpc;
-use crate::cli::query::block::{BlockRef, Params};
+use crate::cli::query::{block::Params, BlockRef};
 
 pub async fn run(params: Params) -> anyhow::Result<()> {
     let Params { rpc, block } = params;

@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::key::Keypair;
 use anyhow::Context;
-use subxt::{rpc_params, utils::H256};
+use subxt::{config::Header as _, rpc_params, utils::H256};
 use sugondat_nmt::Namespace;
 use sugondat_subxt::{
     sugondat::runtime_types::pallet_sugondat_blobs::namespace_param::UnvalidatedNamespace, Header,
@@ -103,15 +103,19 @@ impl Client {
     }
 
     /// Returns the header and the body of the block with the given hash, automatically retrying
-    /// until it succeeds.
+    /// until it succeeds. `None` indicates the best block.
     async fn get_header_and_extrinsics(
         &self,
-        block_hash: [u8; 32],
+        block_hash: Option<[u8; 32]>,
     ) -> anyhow::Result<(Header, Vec<sugondat_subxt::ExtrinsicDetails>)> {
-        let block_hash = H256::from(block_hash);
+        let block_hash = block_hash.map(H256::from);
         loop {
             let conn = self.connector.ensure_connected().await;
-            let err = match conn.subxt.blocks().at(block_hash).await {
+            let res = match block_hash {
+                Some(h) => conn.subxt.blocks().at(h).await,
+                None => conn.subxt.blocks().at_latest().await,
+            };
+            let err = match res {
                 Ok(it) => {
                     let header = it.header();
                     let body = match it.extrinsics().await {
@@ -135,8 +139,10 @@ impl Client {
 
     /// Returns the data of the block identified by the given block hash. If the block is not found
     /// returns an error.
+    ///
+    /// `None` indicates that the best block should be used.
     #[tracing::instrument(level = Level::DEBUG, skip(self))]
-    pub async fn get_block_at(&self, block_hash: [u8; 32]) -> anyhow::Result<Block> {
+    pub async fn get_block_at(&self, block_hash: Option<[u8; 32]>) -> anyhow::Result<Block> {
         let (header, extrinsics) = self.get_header_and_extrinsics(block_hash).await?;
         let tree_root = tree_root(&header).ok_or_else(err::no_tree_root)?;
         let timestamp = extract_timestamp(&extrinsics)?;
@@ -144,6 +150,7 @@ impl Client {
         tracing::debug!(?blobs, "found {} blobs in block", blobs.len());
         Ok(Block {
             number: header.number as u64,
+            hash: header.hash().0,
             parent_hash: header.parent_hash.0,
             tree_root,
             timestamp,
@@ -328,6 +335,7 @@ mod err {
 /// Represents a sugondat block.
 pub struct Block {
     pub number: u64,
+    pub hash: [u8; 32],
     pub parent_hash: [u8; 32],
     pub tree_root: sugondat_nmt::TreeRoot,
     pub timestamp: u64,

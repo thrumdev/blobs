@@ -3,11 +3,13 @@ use crate::{
     sugondat_rpc,
 };
 
+mod block;
 mod submit;
 
 pub async fn run(params: Params) -> anyhow::Result<()> {
     match params.command {
         Commands::Submit(params) => submit::run(params).await?,
+        Commands::Block(params) => block::run(params).await?,
     }
     Ok(())
 }

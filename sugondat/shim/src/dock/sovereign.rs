@@ -34,7 +34,7 @@ impl SovereignRPCServer for SovereignDock {
     ) -> Result<Block, ErrorObjectOwned> {
         info!("get_block({})", height);
         let block_hash = self.client.wait_finalized_height(height).await;
-        let block = self.client.get_block_at(block_hash).await.unwrap();
+        let block = self.client.get_block_at(Some(block_hash)).await.unwrap();
         let proof = make_namespace_proof(&block, namespace);
         let blobs = block
             .blobs

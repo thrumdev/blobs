@@ -34,7 +34,7 @@ impl RollkitRPCServer for RollkitDock {
         );
         let namespace = parse_namespace(&namespace).map_err(|_| err::bad_namespace())?;
         let block_hash = self.client.wait_finalized_height(height).await;
-        let block = self.client.get_block_at(block_hash).await.unwrap();
+        let block = self.client.get_block_at(Some(block_hash)).await.unwrap();
         let mut blobs = vec![];
         for blob in block.blobs {
             if blob.namespace == namespace {

@@ -1,32 +1,33 @@
-use crate::{
-    constants::{
-        consensus::DAYS,
-        kusama::currency::{CENTS, MILLICENTS},
-    },
-    fee_adjustment::{
-        AdjustmentVariableBlockFullness, AdjustmentVariableBlockSize, BlobsFeeAdjustment,
-        MinimumMultiplierBlockFullness, MinimumMultiplierBlockSize, NextLengthMultiplier,
-        TargetBlockFullness, TargetBlockSize,
-    },
-    Runtime, RuntimeBlockWeights as BlockWeights, System, TransactionPayment,
-};
-use codec::Encode;
+use frame_support::traits::Hooks;
 use frame_support::{
     dispatch::DispatchClass,
     weights::{Weight, WeightToFee},
 };
+use pallet_sugondat_length_fee_adjustment::{NextLengthMultiplier, TargetBlockSize};
 use pallet_transaction_payment::Multiplier;
 use sp_runtime::{
     assert_eq_error_rate,
     traits::{Convert, One, Zero},
     BuildStorage, FixedPointNumber,
 };
+use sugondat_kusama_runtime::{
+    constants::{
+        consensus::DAYS,
+        kusama::currency::{CENTS, MILLICENTS},
+    },
+    AdjustmentVariableBlockFullness, AdjustmentVariableBlockSize, LengthFeeAdjustment,
+    MinimumMultiplierBlockFullness, MinimumMultiplierBlockSize, Runtime,
+    RuntimeBlockWeights as BlockWeights, System, TargetBlockFullness, TransactionPayment,
+};
 use sugondat_primitives::MAXIMUM_BLOCK_LENGTH;
 
-// The following tests check:
-// + BlobsFeeAdjustment should maintain its normal behavior
-// regarding input and output values
-// + The side effect of BlobsFeeAdjustment should follow the same behavior
+// The following tests check if the parameters used to define
+// targeted_length_fee_adjustment and targeted_weight_fee_adjustment
+// in the formula
+//
+// inclusion_fee = base_fee + [targeted_length_fee_adjustment * length_fee] + [targeted_weight_fee_adjustment * weight_fee];
+//
+// are updated correctly, do not overflow and can recover from zero
 #[derive(Clone, Copy)]
 enum MultiplierType {
     Length,
@@ -58,7 +59,7 @@ impl MultiplierType {
             .into();
 
         t.execute_with(|| match self {
-            MultiplierType::Length => TargetBlockSize::get() * self.max(),
+            MultiplierType::Length => TargetBlockSize::<Runtime>::get() * self.max(),
             MultiplierType::Fee => TargetBlockFullness::get() * self.max(),
         })
     }
@@ -66,13 +67,14 @@ impl MultiplierType {
     // update based on runtime impl.
     fn runtime_multiplier_update(&self, fm: Multiplier) -> Multiplier {
         match self {
-            MultiplierType::Fee => BlobsFeeAdjustment::<Runtime>::convert(fm),
+            MultiplierType::Fee => LengthFeeAdjustment::convert(fm),
             MultiplierType::Length => {
                 // the previous multiplier is fetched from the storage
-                NextLengthMultiplier::set(&fm);
-                let res = BlobsFeeAdjustment::<Runtime>::convert(Multiplier::from_inner(0));
-                assert_eq!(res, MultiplierType::Fee.min_multiplier());
-                NextLengthMultiplier::get()
+                NextLengthMultiplier::<Runtime>::put(fm);
+                LengthFeeAdjustment::on_finalize(0);
+                //let res = BlobsFeeAdjustment::<Runtime>::convert(Multiplier::from_inner(0));
+                //assert_eq!(res, MultiplierType::Fee.min_multiplier());
+                NextLengthMultiplier::<Runtime>::get()
             }
         }
     }
@@ -136,7 +138,7 @@ impl MultiplierType {
 
     fn target_percentage(&self) -> Multiplier {
         match self {
-            MultiplierType::Length => TargetBlockSize::get().into(),
+            MultiplierType::Length => TargetBlockSize::<Runtime>::get().into(),
             MultiplierType::Fee => TargetBlockFullness::get().into(),
         }
     }
@@ -348,7 +350,7 @@ fn congested_chain_fee_simulation() {
             let adjusted_fee = fm.saturating_mul_acc_int(fee);
             println!(
                 "iteration {}, new fm = {:?}. Fee at this point is: {} units / {} millicents, \
-                    {} cents", /*, {} dollars",*/
+                    {} cents",
                 iterations,
                 fm,
                 adjusted_fee,
@@ -371,7 +373,7 @@ fn congested_chain_length_simulation() {
     MultiplierType::Length.run_with(block_length, || {
         // initial value configured on module
         let mut fm = Multiplier::one();
-        assert_eq!(fm, NextLengthMultiplier::get());
+        assert_eq!(fm, NextLengthMultiplier::<Runtime>::get());
 
         let mut iterations: u64 = 0;
         loop {

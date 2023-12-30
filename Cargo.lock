@@ -3161,18 +3161,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "545b22097d44f8a9581187cdf93de7a71e4722bf51200cfaba810865b49a495d"
 
 [[package]]
-name = "dynamic-fee-adjustment"
-version = "0.1.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "pallet-transaction-payment",
- "sp-arithmetic",
- "sp-runtime",
- "sp-weights",
-]
-
-[[package]]
 name = "ecdsa"
 version = "0.14.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7615,6 +7603,23 @@ dependencies = [
  "sp-trie",
  "sugondat-nmt",
  "sugondat-primitives",
+]
+
+[[package]]
+name = "pallet-sugondat-length-fee-adjustment"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "pallet-transaction-payment",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-weights",
 ]
 
 [[package]]
@@ -13779,7 +13784,6 @@ dependencies = [
  "cumulus-primitives-core",
  "cumulus-primitives-timestamp",
  "cumulus-primitives-utility",
- "dynamic-fee-adjustment",
  "frame-benchmarking",
  "frame-executive",
  "frame-support",
@@ -13797,6 +13801,7 @@ dependencies = [
  "pallet-session",
  "pallet-sudo",
  "pallet-sugondat-blobs",
+ "pallet-sugondat-length-fee-adjustment",
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",

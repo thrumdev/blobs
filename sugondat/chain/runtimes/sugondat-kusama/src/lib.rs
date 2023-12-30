@@ -6,7 +6,7 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-mod constants;
+pub mod constants;
 mod weights;
 pub mod xcm_config;
 
@@ -49,7 +49,6 @@ use sugondat_primitives::{
     AccountId, AuraId, Balance, BlockNumber, Nonce, Signature, MAXIMUM_BLOCK_LENGTH,
 };
 
-use dynamic_fee_adjustment::{DynamicFeeAdjustment, DynamicLengthToFee};
 use pallet_transaction_payment::Multiplier;
 pub use sp_runtime::{MultiAddress, Perbill, Permill};
 use xcm_config::{KusamaLocation, XcmOriginToTransactDispatchOrigin};
@@ -289,10 +288,7 @@ parameter_types! {
     /// The maximum amount of the multiplier.
     pub MaximumMultiplierBlockFullness: Multiplier = Bounded::max_value();
 
-    // TODO: is this OK?
     pub MaximumBlockLength: u32 = MAXIMUM_BLOCK_LENGTH;
-    pub storage TargetBlockSize: Perquintill = Perquintill::from_percent(16); // 0.8MiB
-
     //  v = p / k * (1 - s*) = 0.3 / (300 * (1 - 0.16))
     //  at most 30% (=p) fees variation in one hour, 300 blocks (=k)
     pub AdjustmentVariableBlockSize: Multiplier = Multiplier::saturating_from_rational(1, 840);
@@ -301,25 +297,24 @@ parameter_types! {
     pub MaximumMultiplierBlockSize: Multiplier = Bounded::max_value();
 }
 
-type BlobsFeeAdjustment<T> = DynamicFeeAdjustment<
-    T,
-    TargetBlockFullness,
-    AdjustmentVariableBlockFullness,
-    MinimumMultiplierBlockFullness,
-    MaximumMultiplierBlockFullness,
-    MaximumBlockLength,
-    TargetBlockSize,
-    AdjustmentVariableBlockSize,
-    MinimumMultiplierBlockSize,
-    MaximumMultiplierBlockSize,
->;
+impl pallet_sugondat_length_fee_adjustment::Config for Runtime {
+    type MaximumBlockLength = MaximumBlockLength;
+    type TransactionByteFee = TransactionByteFee;
+    type AdjustmentVariableBlockSize = AdjustmentVariableBlockSize;
+    type MaximumMultiplierBlockSize = MaximumMultiplierBlockSize;
+    type MinimumMultiplierBlockSize = MinimumMultiplierBlockSize;
+    type TargetBlockFullness = TargetBlockFullness;
+    type AdjustmentVariableBlockFullness = AdjustmentVariableBlockFullness;
+    type MinimumMultiplierBlockFullness = MinimumMultiplierBlockFullness;
+    type MaximumMultiplierBlockFullness = MaximumMultiplierBlockFullness;
+}
 
 impl pallet_transaction_payment::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, ()>;
     type WeightToFee = WeightToFee;
-    type LengthToFee = DynamicLengthToFee<Self, Balance, TransactionByteFee>;
-    type FeeMultiplierUpdate = BlobsFeeAdjustment<Self>;
+    type LengthToFee = LengthFeeAdjustment;
+    type FeeMultiplierUpdate = LengthFeeAdjustment;
     type OperationalFeeMultiplier = ConstU8<5>;
 }
 
@@ -499,6 +494,7 @@ construct_runtime!(
         MessageQueue: pallet_message_queue = 33,
 
         Blobs: pallet_sugondat_blobs = 40,
+        LengthFeeAdjustment: pallet_sugondat_length_fee_adjustment = 41,
     }
 );
 

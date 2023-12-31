@@ -10,7 +10,7 @@ import {themes as prismThemes} from 'prism-react-renderer';
 const config = {
   title: 'Blobs - Documentation',
   tagline: 'Blobchains on Polkadot and Kusama',
-  favicon: 'img/favicon.ico',
+  favicon: 'img/blobs-favicon-line.webp',
 
   // Set the production url of your site here
   url: 'https://your-docusaurus-site.example.com',
@@ -62,8 +62,8 @@ const config = {
       navbar: {
         title: 'Blobs',
         logo: {
-          alt: 'My Site Logo',
-          src: 'img/logo.svg',
+          alt: 'Thrum Logo',
+          src: './img/blobs-simple.png',
         },
         items: [
           {

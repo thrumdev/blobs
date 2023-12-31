@@ -33,7 +33,7 @@ pub async fn run(params: Params) -> anyhow::Result<()> {
         block.blobs.iter().map(|b| b.data.len()).sum::<usize>(),
     );
     for (i, blob) in block.blobs.into_iter().enumerate() {
-        println!(" Blob #{}", i + 1);
+        println!(" Blob #{}", i);
         println!("    Extrinsic Index: {}", blob.extrinsic_index);
         println!("    Namespace: {}", &blob.namespace);
         println!("    Size: {}", blob.data.len());

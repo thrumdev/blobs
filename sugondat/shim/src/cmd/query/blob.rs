@@ -39,7 +39,7 @@ pub async fn run(params: Params) -> anyhow::Result<()> {
     } else {
         println!(
             " Blob #{}, Namespace {}, {} bytes",
-            i + 1,
+            i,
             &blob.namespace,
             blob.data.len()
         );

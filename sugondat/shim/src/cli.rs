@@ -147,6 +147,8 @@ pub mod query {
         /// Submits the given blob into a namespace.
         Submit(submit::Params),
         /// Queries information about a block and header.
+        ///
+        /// Returns an error if the given block is not available.
         Block(block::Params),
         /// Queries information about a specific blob.
         Blob(blob::Params),

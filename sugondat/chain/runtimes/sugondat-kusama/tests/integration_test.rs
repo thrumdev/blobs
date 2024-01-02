@@ -15,9 +15,7 @@ use sp_runtime::{
 use codec::Encode;
 use sp_core::{crypto::Pair, sr25519};
 use sp_transaction_pool::runtime_api::runtime_decl_for_tagged_transaction_queue::TaggedTransactionQueueV3;
-use sp_weights::{Weight, WeightToFee};
 use sugondat_kusama_runtime::{
-    fee_adjustment::{BlobsLengthToFee, NextLengthMultiplier},
     Address, Hash, MaxBlobSize, MaxBlobs, MaxTotalBlobSize, Runtime, RuntimeCall, SignedExtra,
     UncheckedExtrinsic,
 };
@@ -160,41 +158,5 @@ fn test_pre_dispatch_max_blobs_exceeded() {
 fn test_pre_dispatch_max_total_blob_size_exceeded() {
     test_pre_dispatch(|| {
         pallet_sugondat_blobs::TotalBlobSize::<Runtime>::put(MaxTotalBlobSize::get())
-    });
-}
-
-#[test]
-fn test_inclusion_fee() {
-    // Test that inclusion fee is evaluated propertly
-    // following what done in BlobsLengthToFee
-    new_test_ext().execute_with(|| {
-        let call: RuntimeCall = pallet_sugondat_blobs::Call::submit_blob {
-            namespace_id: 0.into(),
-            blob: vec![0; 1],
-        }
-        .into();
-
-        NextLengthMultiplier::set(&Multiplier::saturating_from_rational(1, 12));
-
-        let inclusion_fee_zero_length = pallet_transaction_payment::Pallet::<Runtime>::compute_fee(
-            0,
-            &call.get_dispatch_info(),
-            0,
-        );
-
-        let inclusion_fee = pallet_transaction_payment::Pallet::<Runtime>::compute_fee(
-            call.size_hint() as u32,
-            &call.get_dispatch_info(),
-            0,
-        );
-
-        let length_fee = inclusion_fee - inclusion_fee_zero_length;
-
-        let expected_length_fee = BlobsLengthToFee::<Runtime>::weight_to_fee(&Weight::from_parts(
-            call.size_hint() as u64,
-            0,
-        ));
-
-        assert_eq!(length_fee, expected_length_fee);
     });
 }

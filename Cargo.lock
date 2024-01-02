@@ -7606,6 +7606,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-sugondat-length-fee-adjustment"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "pallet-transaction-payment",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-weights",
+]
+
+[[package]]
 name = "pallet-timestamp"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/polkadot-sdk.git?branch=release-polkadot-v1.4.0#fcfdb98ab5c5fce91cce339c8d3e4f5f5844bbe1"
@@ -13784,6 +13801,7 @@ dependencies = [
  "pallet-session",
  "pallet-sudo",
  "pallet-sugondat-blobs",
+ "pallet-sugondat-length-fee-adjustment",
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",

@@ -6,13 +6,9 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-mod constants;
-pub mod fee_adjustment;
+pub mod constants;
 mod weights;
 pub mod xcm_config;
-
-#[cfg(test)]
-mod fee_adjustment_tests;
 
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use cumulus_primitives_core::{AggregateMessageOrigin, ParaId};
@@ -21,9 +17,9 @@ use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
-    traits::{AccountIdLookup, BlakeTwo256, Block as BlockT},
+    traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, Bounded},
     transaction_validity::{TransactionSource, TransactionValidity},
-    ApplyExtrinsicResult,
+    ApplyExtrinsicResult, FixedPointNumber, Perquintill,
 };
 
 use sp_std::prelude::*;
@@ -53,6 +49,7 @@ use sugondat_primitives::{
     AccountId, AuraId, Balance, BlockNumber, Nonce, Signature, MAXIMUM_BLOCK_LENGTH,
 };
 
+use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
 pub use sp_runtime::{MultiAddress, Perbill, Permill};
 use xcm_config::{KusamaLocation, XcmOriginToTransactDispatchOrigin};
 
@@ -270,12 +267,53 @@ impl pallet_balances::Config for Runtime {
     type MaxFreezes = ConstU32<0>;
 }
 
+parameter_types! {
+    /// Relay Chain `TransactionByteFee` / 10
+    pub const TransactionByteFee: Balance = MILLICENTS;
+
+    /// The portion of the `NORMAL_DISPATCH_RATIO` that we adjust the fees with. Blocks filled less
+    /// than this will decrease the weight and more will increase.
+    pub TargetBlockFullness: Perquintill = Perquintill::from_percent(25);
+    /// The adjustment variable of the runtime. Higher values will cause `TargetBlockFullness` to
+    /// change the fees more rapidly.
+    pub AdjustmentVariableBlockFullness: Multiplier = Multiplier::saturating_from_rational(75, 1_000_000);
+    /// that combined with `AdjustmentVariable`, we can recover from the minimum.
+    /// See `multiplier_can_grow_from_zero`.
+    pub MinimumMultiplierBlockFullness: Multiplier = Multiplier::saturating_from_rational(1, 10u128);
+    /// The maximum amount of the multiplier.
+    pub MaximumMultiplierBlockFullness: Multiplier = Bounded::max_value();
+
+    pub MaximumBlockLength: u32 = MAXIMUM_BLOCK_LENGTH;
+    //  v = p / k * (1 - s*) = 0.3 / (300 * (1 - 0.16))
+    //  at most 30% (=p) fees variation in one hour, 300 blocks (=k)
+    pub AdjustmentVariableBlockSize: Multiplier = Multiplier::saturating_from_rational(1, 840);
+    // TODO: decide the value of MinimumMultiplierBlockSize, https://github.com/thrumdev/blobs/issues/154
+    pub MinimumMultiplierBlockSize: Multiplier = Multiplier::saturating_from_rational(1, 10u128);
+    pub MaximumMultiplierBlockSize: Multiplier = Bounded::max_value();
+}
+
+impl pallet_sugondat_length_fee_adjustment::Config for Runtime {
+    type MaximumBlockLength = MaximumBlockLength;
+    type TransactionByteFee = TransactionByteFee;
+    type AdjustmentVariableBlockSize = AdjustmentVariableBlockSize;
+    type MaximumMultiplierBlockSize = MaximumMultiplierBlockSize;
+    type MinimumMultiplierBlockSize = MinimumMultiplierBlockSize;
+}
+
+pub type SlowAdjustingFeeUpdate<R> = TargetedFeeAdjustment<
+    R,
+    TargetBlockFullness,
+    AdjustmentVariableBlockFullness,
+    MinimumMultiplierBlockFullness,
+    MaximumMultiplierBlockFullness,
+>;
+
 impl pallet_transaction_payment::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, ()>;
     type WeightToFee = WeightToFee;
-    type LengthToFee = fee_adjustment::BlobsLengthToFee<Self>;
-    type FeeMultiplierUpdate = fee_adjustment::BlobsFeeAdjustment<Self>;
+    type LengthToFee = LengthFeeAdjustment;
+    type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Runtime>;
     type OperationalFeeMultiplier = ConstU8<5>;
 }
 
@@ -455,6 +493,7 @@ construct_runtime!(
         MessageQueue: pallet_message_queue = 33,
 
         Blobs: pallet_sugondat_blobs = 40,
+        LengthFeeAdjustment: pallet_sugondat_length_fee_adjustment = 41,
     }
 );
 

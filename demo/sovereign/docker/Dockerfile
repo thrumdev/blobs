@@ -42,9 +42,9 @@ COPY . /sugondat
 
 ENV CONSTANTS_MANIFEST=/sugondat/demo/sovereign/constants.json
 RUN \
-    --mount=type=cache,target=/cargo/git \
-    --mount=type=cache,target=/cargo/registry \
-    --mount=type=cache,target=/cargo_target \
+    --mount=type=cache,id=demo-sovereign,target=/cargo/git \
+    --mount=type=cache,id=demo-sovereign,target=/cargo/registry \
+    --mount=type=cache,id=demo-sovereign,target=/cargo_target \
     cd demo/sovereign \
         && $CARGO_HOME/bin/cargo build --release --locked \
         && cp $CARGO_TARGET_DIR/release/sov-demo-rollup /usr/bin/sov-demo-rollup \
@@ -59,7 +59,8 @@ RUN \
         pkg-config
 
 ENV TINI_VERSION v0.19.0
-ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+ARG TARGETARCH
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini-${TARGETARCH} /tini
 RUN chmod +x /tini
 
 COPY --from=builder /usr/bin/sov-demo-rollup /usr/bin/sov-demo-rollup

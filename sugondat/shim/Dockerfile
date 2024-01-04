@@ -37,16 +37,17 @@ COPY . /sugondat
 
 FROM builder AS builder-release
 
-RUN --mount=type=cache,target=/cargo/git \
-    --mount=type=cache,target=/cargo/registry \
-    --mount=type=cache,target=/cargo_target \
+RUN --mount=type=cache,id=sugondat-shim,target=/cargo/git \
+    --mount=type=cache,id=sugondat-shim,target=/cargo/registry \
+    --mount=type=cache,id=sugondat-shim,target=/cargo_target \
     $CARGO_HOME/bin/cargo build --locked --release -p sugondat-shim && \
         cp /cargo_target/release/sugondat-shim /usr/bin/sugondat-shim
 
 FROM ubuntu:20.04
 
 ENV TINI_VERSION v0.19.0
-ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+ARG TARGETARCH
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini-${TARGETARCH} /tini
 RUN chmod +x /tini
 
 RUN \

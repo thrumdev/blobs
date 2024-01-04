@@ -1,0 +1,60 @@
+# A couple of notes on this file.
+#
+# docker-compose takes over the control of the context meaning you don't pass it as an argument to
+# build. Instead, the context is specified relative to the location of this file. In turn, the
+# location of the dockerfile is relative to the context.
+
+name: sugondat
+
+services:
+  zombienet:
+    build:
+      context: ..
+      dockerfile: ./sugondat/chain/Dockerfile
+      target: zombienet
+    ports:
+      - "9988:9988"
+    # Mount /zombienet as tmpfs so as to avoid zombienet prompting if it should ignore existing
+    # directory.
+    tmpfs: /zombienet
+  shim:
+    build:
+      context: ..
+      dockerfile: ./sugondat/shim/Dockerfile
+    ports:
+      - "10995:10995"
+    # depends_on:
+    #   zombienet:
+    #     condition: service_healthy
+    environment:
+      - RUST_LOG=sugondat=trace
+    command: ["serve", "-p", "10995", "--node-url=ws://zombienet:9988", "--submit-dev-alice"]
+    # Health check.
+    #
+    # Note that if JSON-RPC returns an error, the health check will succeed. It's fine for now.
+    healthcheck:
+      test: [
+        "CMD-SHELL",
+        "curl -s -XPOST -H 'Content-Type: application/json' -d '{\"jsonrpc\":\"2.0\",\"id\":0,\"method\":\"sovereign_getBlock\", \"params\":[1, \"0x00000000000000000000000000000000\"]}' http://localhost:10995/"]
+  gm:
+    build:
+      context: ..
+      dockerfile: ./demo/rollkit/docker/Dockerfile
+    depends_on:
+      shim:
+        condition: service_healthy
+    # This unites the Linux network namespace with the one of the `shim` service. That means that
+    # shim will be available via localhost.
+    network_mode: "service:shim"
+  sov:
+    build:
+      context: ..
+      dockerfile: ./demo/sovereign/docker/Dockerfile
+    depends_on:
+      shim:
+        condition: service_healthy
+    # Don't persist the rollup data directory.
+    tmpfs: /demo_data
+    # This unites the Linux network namespace with the one of the `shim` service. That means that
+    # shim will be available via localhost.
+    network_mode: "service:shim"

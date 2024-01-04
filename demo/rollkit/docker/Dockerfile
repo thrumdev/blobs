@@ -27,7 +27,12 @@ RUN --mount=type=cache,target=/go/pkg \
 
 FROM golang:1.21 AS prod
 
+ENV TINI_VERSION v0.19.0
+ARG TARGETARCH
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini-${TARGETARCH} /tini
+RUN chmod +x /tini
+
 COPY --from=builder /go/bin/gmd /usr/local/bin/gmd
 COPY ./demo/rollkit/init-local.sh /root/init-local.sh
 WORKDIR /root
-ENTRYPOINT /usr/local/bin/gmd
+ENTRYPOINT ["/tini", "/root/init-local.sh"]

@@ -2,6 +2,11 @@
 
 pub use pallet::*;
 
+#[cfg(test)]
+mod mock;
+#[cfg(test)]
+mod tests;
+
 /// Currently, the `pallet_transaction_payment` uses the following formula:
 ///
 /// ```ignore

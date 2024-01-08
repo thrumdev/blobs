@@ -18,7 +18,7 @@ Blobchains on Polkadot and Kusama
 │   ├──<a href="./sugondat/nmt">sugondat-nmt</a>: Namespaced Merkle Trie definitions.
 │   ├──<a href="./sugondat/serde-util">sugondat-serde-util</a>: Various utilities for serde.
 │   ├──<a href="./sugondat/shim">sugondat-shim</a>: Shim between sugondat parachain RPC and RDK adapters.
-│   ├──<a href="./sugondat/subxt">sugondat-subxt</a>: Bindings to Sugondat RPC.
+│   ├──<a href="./sugondat/subxt-autogen">sugondat-subxt</a>: Bindings to Sugondat RPC.
 </pre>
 
 ## Running Demos

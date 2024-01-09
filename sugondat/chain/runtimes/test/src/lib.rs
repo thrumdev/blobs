@@ -17,11 +17,10 @@ use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
-    traits::{AccountIdLookup, BlakeTwo256, Block as BlockT},
+    traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, Bounded},
     transaction_validity::{TransactionSource, TransactionValidity},
-    ApplyExtrinsicResult,
+    ApplyExtrinsicResult, FixedPointNumber, Perquintill,
 };
-
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
@@ -36,7 +35,7 @@ use frame_support::{
         ConstBool, ConstU32, ConstU64, ConstU8, EitherOfDiverse, Everything, TransformOrigin,
     },
     weights::{
-        constants::WEIGHT_REF_TIME_PER_SECOND, ConstantMultiplier, Weight, WeightToFeeCoefficient,
+        constants::WEIGHT_REF_TIME_PER_SECOND, Weight, WeightToFeeCoefficient,
         WeightToFeeCoefficients, WeightToFeePolynomial,
     },
     PalletId,
@@ -53,11 +52,13 @@ use sugondat_primitives::{AccountId, AuraId, Balance, BlockNumber, Nonce, Signat
 pub use sp_runtime::{MultiAddress, Perbill, Permill};
 use xcm_config::{RelayLocation, XcmOriginToTransactDispatchOrigin};
 
+use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
+
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 
 // Polkadot imports
-use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
+use polkadot_runtime_common::BlockHashCount;
 
 use weights::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight};
 
@@ -65,6 +66,7 @@ use weights::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight};
 use xcm::latest::prelude::BodyId;
 
 pub use pallet_sugondat_blobs;
+pub use pallet_sugondat_length_fee_adjustment;
 
 /// A hash of some data used by the chain.
 pub type Hash = sp_core::H256;
@@ -176,6 +178,8 @@ pub const DAYS: BlockNumber = HOURS * 24;
 pub const UNIT: Balance = 1_000_000_000_000;
 pub const MILLIUNIT: Balance = 1_000_000_000;
 pub const MICROUNIT: Balance = 1_000_000;
+pub const CENTS: Balance = UNIT / (30 * 100);
+pub const MILLICENTS: Balance = CENTS / 1_000;
 
 /// The existential deposit. Set to 1/10 of the Connected Relay Chain.
 pub const EXISTENTIAL_DEPOSIT: Balance = MILLIUNIT;
@@ -193,6 +197,9 @@ const MAXIMUM_BLOCK_WEIGHT: Weight = Weight::from_parts(
     WEIGHT_REF_TIME_PER_SECOND.saturating_div(2),
     cumulus_primitives_core::relay_chain::MAX_POV_SIZE as u64,
 );
+
+// Maximum Length of the Block in bytes
+pub const MAXIMUM_BLOCK_LENGTH: u32 = 5 * 1024 * 1024;
 
 /// Maximum number of blocks simultaneously accepted by the Runtime, not yet included
 /// into the relay chain.
@@ -220,7 +227,7 @@ parameter_types! {
     // `DeletionWeightLimit` and `DeletionQueueDepth` depend on those to parameterize
     // the lazy contract deletion.
     pub RuntimeBlockLength: BlockLength =
-        BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
+        BlockLength::max_with_normal_ratio(MAXIMUM_BLOCK_LENGTH, NORMAL_DISPATCH_RATIO);
     pub RuntimeBlockWeights: BlockWeights = BlockWeights::builder()
         .base_block(BlockExecutionWeight::get())
         .for_class(DispatchClass::all(), |weights| {
@@ -331,13 +338,49 @@ impl pallet_balances::Config for Runtime {
 parameter_types! {
     /// Relay Chain `TransactionByteFee` / 10
     pub const TransactionByteFee: Balance = 10 * MICROUNIT;
+
+    /// The portion of the `NORMAL_DISPATCH_RATIO` that we adjust the fees with. Blocks filled less
+    /// than this will decrease the weight and more will increase.
+    pub TargetBlockFullness: Perquintill = Perquintill::from_percent(25);
+    /// The adjustment variable of the runtime. Higher values will cause `TargetBlockFullness` to
+    /// change the fees more rapidly.
+    pub AdjustmentVariableBlockFullness: Multiplier = Multiplier::saturating_from_rational(75, 1_000_000);
+    /// that combined with `AdjustmentVariable`, we can recover from the minimum.
+    /// See `multiplier_can_grow_from_zero`.
+    pub MinimumMultiplierBlockFullness: Multiplier = Multiplier::saturating_from_rational(1, 10u128);
+    /// The maximum amount of the multiplier.
+    pub MaximumMultiplierBlockFullness: Multiplier = Bounded::max_value();
+
+    pub MaximumBlockLength: u32 = MAXIMUM_BLOCK_LENGTH;
+    //  v = p / k * (1 - s*) = 0.3 / (300 * (1 - 0.16))
+    //  at most 30% (=p) fees variation in one hour, 300 blocks (=k)
+    pub AdjustmentVariableBlockSize: Multiplier = Multiplier::saturating_from_rational(1, 840);
+    // TODO: decide the value of MinimumMultiplierBlockSize, https://github.com/thrumdev/blobs/issues/154
+    pub MinimumMultiplierBlockSize: Multiplier = Multiplier::saturating_from_rational(1, 1000u128);
+    pub MaximumMultiplierBlockSize: Multiplier = Bounded::max_value();
 }
+
+impl pallet_sugondat_length_fee_adjustment::Config for Runtime {
+    type MaximumBlockLength = MaximumBlockLength;
+    type TransactionByteFee = TransactionByteFee;
+    type AdjustmentVariableBlockSize = AdjustmentVariableBlockSize;
+    type MaximumMultiplierBlockSize = MaximumMultiplierBlockSize;
+    type MinimumMultiplierBlockSize = MinimumMultiplierBlockSize;
+}
+
+pub type SlowAdjustingFeeUpdate<R> = TargetedFeeAdjustment<
+    R,
+    TargetBlockFullness,
+    AdjustmentVariableBlockFullness,
+    MinimumMultiplierBlockFullness,
+    MaximumMultiplierBlockFullness,
+>;
 
 impl pallet_transaction_payment::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, ()>;
     type WeightToFee = WeightToFee;
-    type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
+    type LengthToFee = LengthFeeAdjustment;
     type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
     type OperationalFeeMultiplier = ConstU8<5>;
 }
@@ -518,6 +561,7 @@ construct_runtime!(
         MessageQueue: pallet_message_queue = 33,
 
         Blobs: pallet_sugondat_blobs = 40,
+        LengthFeeAdjustment: pallet_sugondat_length_fee_adjustment = 41,
     }
 );
 

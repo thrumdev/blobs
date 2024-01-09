@@ -138,14 +138,6 @@ impl MultiplierType {
         }
     }
 
-    // k = 1 / (v * s*)
-    fn k_bound(&self) -> u64 {
-        (Multiplier::saturating_from_integer(1)
-            / (self.target_percentage() * self.adjustment_variable()))
-        .to_float()
-        .ceil() as u64
-    }
-
     fn run_with<F>(&self, w: Weight, assertions: F)
     where
         F: Fn() -> (),
@@ -244,6 +236,10 @@ fn multiplier_cannot_go_below_limit() {
 
 #[test]
 fn time_to_reach_zero() {
+    // TODO: 1440 needs to be used instead of 7200
+    // when updating to asynchronous backing
+    // https://github.com/thrumdev/blobs/issues/166
+    //
     // blocks per 24h in cumulus-node: 7200 (k)
     // s* = 0.1875 (TargetBlockFullness) or 0.16 (TargetBlockSize)
     // The bound from the research in an empty chain is:
@@ -264,11 +260,63 @@ fn time_to_reach_zero() {
             // start from 1, the default.
             let mut fm = Multiplier::one();
             let mut iterations: u64 = 0;
-            let limit = mul_type.k_bound();
+            let limit = (Multiplier::saturating_from_integer(1)
+                / (mul_type.target_percentage() * mul_type.adjustment_variable()))
+            .to_float()
+            .ceil() as u64;
+
             loop {
                 let next = mul_type.runtime_multiplier_update(fm);
                 fm = next;
                 if fm <= mul_type.min_multiplier() {
+                    break;
+                }
+                iterations += 1;
+            }
+            assert!(iterations > limit);
+        })
+    };
+
+    test(MultiplierType::Fee);
+    test(MultiplierType::Length);
+}
+
+#[test]
+fn time_to_reach_one() {
+    // TODO: 1440 needs to ne used insted of 7200
+    // when updating to asynchronous backing
+    // https://github.com/thrumdev/blobs/issues/166
+    //
+    // blocks per 24h in cumulus-node: 7200 (k)
+    // s* = 0.1875 (TargetBlockFullness) or 0.16 (TargetBlockSize)
+    // The bound from the research in an full chain is:
+    // v <~ (p / k(1 - s*))
+    // p > v * k * (1 - s*)
+    // to get p == 1 we'd need (going from zero to target)
+    // 1 > v * k * (1 - s*)
+    // k < 1 / (v * (1 - s*))
+
+    // if s* = 0.1875
+    //  then k > 17_778 ~ 2.47 days
+    // else s* = 0.16
+    //  then k > 1000 ~ 3.3 hours
+
+    let test = |mul_type: MultiplierType| {
+        mul_type.run_with(mul_type.max(), || {
+            // start from min_multiplier, the default.
+            let mut fm = mul_type.min_multiplier();
+            let mut iterations: u64 = 0;
+
+            let limit = (Multiplier::saturating_from_integer(1)
+                / ((Multiplier::saturating_from_integer(1) - mul_type.target_percentage())
+                    * mul_type.adjustment_variable()))
+            .to_float()
+            .ceil() as u64;
+
+            loop {
+                let next = mul_type.runtime_multiplier_update(fm);
+                fm = next;
+                if fm >= Multiplier::one() {
                     break;
                 }
                 iterations += 1;
@@ -292,6 +340,10 @@ fn min_change_per_day() {
                 let next = mul_type.runtime_multiplier_update(fm);
                 fm = next;
             }
+            // TODO: 1440 needs to ne used insted of 7200
+            // when updating to asynchronous backing
+            // https://github.com/thrumdev/blobs/issues/166
+            //
             // 7200 blocks per day with one 12 seconds blocks
             // v * k * (1 - s)
             let expected = mul_type.adjustment_variable()

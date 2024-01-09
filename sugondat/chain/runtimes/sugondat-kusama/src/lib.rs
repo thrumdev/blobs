@@ -65,6 +65,7 @@ use weights::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight};
 use xcm::latest::prelude::BodyId;
 
 pub use pallet_sugondat_blobs;
+pub use pallet_sugondat_length_fee_adjustment;
 
 /// A hash of some data used by the chain.
 pub type Hash = sp_core::H256;
@@ -287,8 +288,10 @@ parameter_types! {
     //  v = p / k * (1 - s*) = 0.3 / (300 * (1 - 0.16))
     //  at most 30% (=p) fees variation in one hour, 300 blocks (=k)
     pub AdjustmentVariableBlockSize: Multiplier = Multiplier::saturating_from_rational(1, 840);
-    // TODO: decide the value of MinimumMultiplierBlockSize, https://github.com/thrumdev/blobs/issues/154
-    pub MinimumMultiplierBlockSize: Multiplier = Multiplier::saturating_from_rational(1, 10u128);
+    // Using an adjustment variable block size of 1/840
+    // and a minimum multiplier block size of 1/200,
+    // it would require 5298 full blocks to grow back to one.
+    pub MinimumMultiplierBlockSize: Multiplier = Multiplier::saturating_from_rational(1, 200u128);
     pub MaximumMultiplierBlockSize: Multiplier = Bounded::max_value();
 }
 

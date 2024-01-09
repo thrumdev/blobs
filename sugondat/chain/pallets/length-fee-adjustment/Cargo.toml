@@ -20,6 +20,8 @@ pallet-balances = { git = "https://github.com/paritytech/polkadot-sdk", default-
 sp-runtime = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, branch = "release-polkadot-v1.4.0" }
 sp-weights = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, branch = "release-polkadot-v1.4.0"}
 sp-arithmetic = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, branch = "release-polkadot-v1.4.0"}
+cumulus-pallet-parachain-system = { git = "https://github.com/paritytech/polkadot-sdk.git", branch = "release-polkadot-v1.4.0", default-features = false, features = ["parameterized-consensus-hook",] }
+polkadot-primitives = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, branch = "release-polkadot-v1.4.0" }
 
 [dev-dependencies]
 sp-io = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, branch = "release-polkadot-v1.4.0"}
@@ -37,4 +39,6 @@ std = [
     "sp-arithmetic/std",
     "pallet-transaction-payment/std",
     "pallet-balances/std",
+    "cumulus-pallet-parachain-system/std",
+    "polkadot-primitives/std",
 ]

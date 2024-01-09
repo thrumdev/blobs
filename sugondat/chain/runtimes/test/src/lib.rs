@@ -360,6 +360,14 @@ parameter_types! {
     // it would require 5298 full blocks to grow back to one.
     pub MinimumMultiplierBlockSize: Multiplier = Multiplier::saturating_from_rational(1, 200u128);
     pub MaximumMultiplierBlockSize: Multiplier = Bounded::max_value();
+
+    // TODO: Change SkippedBlocksNumberTerms to 5
+    // and keep the expected maximum skipped blocks at half a day,
+    // which is 7200 blocks when updating to asynchronous backing
+    // https://github.com/thrumdev/blobs/issues/166
+    // The accepted error is less than 10^(-2) for an expected
+    // maximum of 3600 skipped blocks (half a day)
+    pub SkippedBlocksNumberTerms: u32 = 3;
 }
 
 impl pallet_sugondat_length_fee_adjustment::Config for Runtime {
@@ -368,6 +376,7 @@ impl pallet_sugondat_length_fee_adjustment::Config for Runtime {
     type AdjustmentVariableBlockSize = AdjustmentVariableBlockSize;
     type MaximumMultiplierBlockSize = MaximumMultiplierBlockSize;
     type MinimumMultiplierBlockSize = MinimumMultiplierBlockSize;
+    type SkippedBlocksNumberTerms = SkippedBlocksNumberTerms;
 }
 
 pub type SlowAdjustingFeeUpdate<R> = TargetedFeeAdjustment<
@@ -402,7 +411,7 @@ parameter_types! {
 impl cumulus_pallet_parachain_system::Config for Runtime {
     type WeightInfo = ();
     type RuntimeEvent = RuntimeEvent;
-    type OnSystemEvent = ();
+    type OnSystemEvent = LengthFeeAdjustment;
     type SelfParaId = parachain_info::Pallet<Runtime>;
     type OutboundXcmpMessageSource = XcmpQueue;
     type DmpQueue = frame_support::traits::EnqueueWithOrigin<MessageQueue, RelayOrigin>;

@@ -7609,11 +7609,13 @@ dependencies = [
 name = "pallet-sugondat-length-fee-adjustment"
 version = "0.1.0"
 dependencies = [
+ "cumulus-pallet-parachain-system",
  "frame-support",
  "frame-system",
  "pallet-balances",
  "pallet-transaction-payment",
  "parity-scale-codec",
+ "polkadot-primitives",
  "scale-info",
  "sp-arithmetic",
  "sp-core",

@@ -75,8 +75,14 @@ parameter_types! {
     pub TransactionByteFee: Balance = 333333u64;
     pub MaximumBlockLength: u32 = 5 * 1024 * 1024;
     pub AdjustmentVariableBlockSize: Multiplier = Multiplier::saturating_from_rational(1, 840);
-    pub MinimumMultiplierBlockSize: Multiplier = Multiplier::saturating_from_rational(1, 10u128);
+    pub MinimumMultiplierBlockSize: Multiplier = Multiplier::saturating_from_rational(1, 200u128);
     pub MaximumMultiplierBlockSize: Multiplier = Multiplier::saturating_from_integer(10);
+
+    // TODO: NumberTerms neets to be changed 5
+    // when updating to asynchronous backing
+    // https://github.com/thrumdev/blobs/issues/166
+    // Accepted error is less than 10^(-2)
+    pub SkippedBlocksNumberTerms: u32 = 3;
 
     pub static WeightToFee: u64 = 1;
     pub static OperationalFeeMultiplier: u8 = 5;
@@ -106,4 +112,5 @@ impl pallet_sugondat_length_fee_adjustment::Config for Test {
     type AdjustmentVariableBlockSize = AdjustmentVariableBlockSize;
     type MinimumMultiplierBlockSize = MinimumMultiplierBlockSize;
     type MaximumMultiplierBlockSize = MaximumMultiplierBlockSize;
+    type SkippedBlocksNumberTerms = SkippedBlocksNumberTerms;
 }

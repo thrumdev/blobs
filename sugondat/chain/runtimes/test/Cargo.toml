@@ -23,6 +23,7 @@ smallvec = "1.10.0"
 
 # Local
 pallet-sugondat-blobs = { path = "../../pallets/blobs", default-features = false }
+pallet-sugondat-length-fee-adjustment = { path = "../../pallets/length-fee-adjustment", default-features = false }
 sugondat-primitives = { path = "../../primitives", default-features = false }
 
 # Substrate
@@ -76,6 +77,9 @@ pallet-collator-selection = { git = "https://github.com/paritytech/polkadot-sdk.
 parachain-info = { package = "staging-parachain-info", git = "https://github.com/paritytech/polkadot-sdk.git", branch = "release-polkadot-v1.4.0", default-features = false }
 parachains-common = { git = "https://github.com/paritytech/polkadot-sdk.git", branch = "release-polkadot-v1.4.0", default-features = false }
 
+[dev-dependencies]
+sp-io = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.4.0"}
+
 [features]
 default = [ "std" ]
 std = [
@@ -101,6 +105,7 @@ std = [
 	"pallet-collator-selection/std",
 	"pallet-message-queue/std",
 	"pallet-sugondat-blobs/std",
+	"pallet-sugondat-length-fee-adjustment/std",
 	"pallet-session/std",
 	"pallet-sudo/std",
 	"pallet-timestamp/std",

@@ -67,7 +67,7 @@ cd demo/sovereign/demo-rollup
 
 You should see at the end that a batch of two transactions was correctly pushed in the DA, fetched back and then executed in the rollup to create and mint 4000 new tokens
 
-If you want to re-run zombienet and the demo rollup remember token
+If you want to rerun the demo, you need to reset zombienet and the demo-rollup
 
 ``` sh
 rm -r zombienet

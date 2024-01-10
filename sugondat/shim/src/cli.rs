@@ -87,6 +87,9 @@ pub struct SugondatRpcParams {
     /// The address of the sugondat-node to connect to.
     #[clap(long, default_value = "ws://localhost:9988", env = ENV_SUGONDAT_NODE_URL)]
     pub node_url: String,
+
+    #[clap(long, default_value = "false", default_missing_value = "true")]
+    pub no_retry: bool,
 }
 
 impl DockParams {

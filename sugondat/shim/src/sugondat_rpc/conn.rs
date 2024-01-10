@@ -9,6 +9,64 @@ use subxt::backend::rpc::RpcClient;
 use sugondat_subxt::sugondat::is_codegen_valid_for;
 use tokio::sync::{oneshot, Mutex};
 
+#[derive(Clone)]
+pub enum ConnectionType {
+    Persistent(Arc<Connector>),
+    // TODO: thid Arc is useless, could be removed but
+    // a method like `connect_raw` should be added to Conn
+    Single(Arc<Conn>),
+}
+
+impl ConnectionType {
+    pub async fn new(rpc_url: String, no_retry: bool) -> anyhow::Result<Self> {
+        tracing::info!("connecting to sugondat node: {}", rpc_url);
+
+        if no_retry {
+            // TODO: here conn_id id required but with no_retry flag no
+            // more than one connection will be attempted
+            let conn = Conn::connect(0, &rpc_url).await.map_err(|e| {
+                tracing::error!("failed to connect to sugondat node: {}\n", e);
+                e
+            })?;
+            return Ok(ConnectionType::Single(conn));
+        }
+
+        let rpc_url = Arc::new(rpc_url);
+        let connector = Arc::new(Connector::new(rpc_url));
+        connector.ensure_connected().await;
+
+        Ok(ConnectionType::Persistent(connector))
+    }
+
+    // Execute the given closure, if the connection type
+    // is Persistent then the connectio will be reset and
+    // the closure re executed
+    //
+    // tracing should be handled by the caller of this function
+    pub async fn exec<T, Fut: futures::future::Future<Output = anyhow::Result<T>>>(
+        &self,
+        action: impl Fn(Arc<Conn>) -> Fut,
+    ) -> T {
+        match self {
+            ConnectionType::Persistent(connector) => loop {
+                let conn = connector.ensure_connected().await;
+                match action(conn).await {
+                    Ok(res) => break res,
+                    Err(_e) => {
+                        // Reset the connection and retry
+                        connector.reset().await;
+                    }
+                };
+            },
+            ConnectionType::Single(conn) => action(conn.clone()).await.unwrap_or_else(|e| {
+                tracing::error!("connection to sugondat node interrupted: {}\n", e);
+                // TODO: is correct to panic here ?
+                panic!()
+            }),
+        }
+    }
+}
+
 // Contains the RPC client structures that are assumed to be connected.
 pub struct Conn {
     /// Connection id. For diagnostics purposes only.

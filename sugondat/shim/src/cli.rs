@@ -87,6 +87,11 @@ pub struct SugondatRpcParams {
     /// The address of the sugondat-node to connect to.
     #[clap(long, default_value = "ws://localhost:9988", env = ENV_SUGONDAT_NODE_URL)]
     pub node_url: String,
+
+    /// By default the first connection to the node is retried until it is properly connected.
+    /// This flag avoids this behavior by attempting to connect only once
+    #[clap(long, default_value = "false", default_missing_value = "true")]
+    pub no_retry: bool,
 }
 
 impl DockParams {

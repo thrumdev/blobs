@@ -5,6 +5,7 @@ use crate::{
 };
 use async_trait::async_trait;
 use sov_rollup_interface::da::DaSpec;
+use std::time::Duration;
 use sugondat_shim_common_sovereign::SovereignRPCClient;
 
 mod client;
@@ -15,11 +16,17 @@ fn default_rpc_addr() -> String {
     "ws://localhost:10995/".into()
 }
 
+fn default_rpc_timeout_seconds() -> u64 {
+    60
+}
+
 /// Runtime configuration for the DA service
 #[derive(Default, Debug, Clone, PartialEq, serde::Deserialize, serde::Serialize)]
 pub struct DaServiceConfig {
     #[serde(default = "default_rpc_addr")]
     pub sugondat_rpc: String,
+    #[serde(default = "default_rpc_timeout_seconds")]
+    pub rpc_timeout_seconds: u64,
 }
 
 /// Implementation of the DA provider that uses sugondat.
@@ -32,7 +39,8 @@ pub struct DaProvider {
 impl DaProvider {
     /// Creates new instance of the service.
     pub fn new(config: DaServiceConfig, chain_params: ChainParams) -> Self {
-        let client = Client::new(config.sugondat_rpc);
+        let request_timeout = Duration::from_secs(config.rpc_timeout_seconds);
+        let client = Client::new(config.sugondat_rpc, request_timeout);
         Self {
             namespace: sugondat_nmt::Namespace::from_raw_bytes(chain_params.namespace_id),
             client,

@@ -16,7 +16,7 @@ Pass --submit-dev-alice or --submit-private-key=<..> to fix."
         );
     }
     let server = Server::builder().build(listen_on).await?;
-    let client = connect_client(&params.rpc.node_url).await?;
+    let client = connect_client(&params.rpc.node_url, params.rpc.no_retry).await?;
     let methods = dock::init(dock::Config {
         // TODO: whenever there are more docks, the logic of checking if any at least one is enabled
         //       and other similar stuff should be in CLI.
@@ -30,7 +30,7 @@ Pass --submit-dev-alice or --submit-private-key=<..> to fix."
     Ok(())
 }
 
-async fn connect_client(url: &str) -> anyhow::Result<Client> {
-    let client = Client::new(url.to_string()).await?;
+async fn connect_client(url: &str, no_retry: bool) -> anyhow::Result<Client> {
+    let client = Client::new(url.to_string(), no_retry).await?;
     Ok(client)
 }

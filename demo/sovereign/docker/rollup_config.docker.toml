@@ -1,6 +1,6 @@
 [da]
 sugondat_rpc = "ws://localhost:10995/"
-
+rpc_timeout_seconds = 180
 
 [storage]
 # The path to the rollup's data directory. Paths that do not begin with `/` are interpreted as relative paths.

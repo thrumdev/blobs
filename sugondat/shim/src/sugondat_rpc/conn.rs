@@ -9,6 +9,68 @@ use subxt::backend::rpc::RpcClient;
 use sugondat_subxt::sugondat::is_codegen_valid_for;
 use tokio::sync::{oneshot, Mutex};
 
+// Keeping the connection and connector inside an Arc is useful because
+// the same connection will be used for all the docks, and thus
+// it's shared among all of them
+#[derive(Clone)]
+pub enum ConnectionType {
+    Persistent(Arc<Connector>),
+    Single(Arc<Conn>),
+}
+
+impl ConnectionType {
+    pub async fn new(rpc_url: String, no_retry: bool) -> anyhow::Result<Self> {
+        tracing::info!("connecting to sugondat node: {}", rpc_url);
+
+        if no_retry {
+            // TODO: conn_id is required here, but with the no_retry flag,
+            // only one connection attempt will be made
+            let conn = Conn::connect(0, &rpc_url).await.map_err(|e| {
+                tracing::error!("failed to connect to sugondat node: {}\n", e);
+                e
+            })?;
+            return Ok(ConnectionType::Single(conn));
+        }
+
+        let rpc_url = Arc::new(rpc_url);
+        let connector = Arc::new(Connector::new(rpc_url));
+        connector.ensure_connected().await;
+
+        Ok(ConnectionType::Persistent(connector))
+    }
+
+    // Execute the given closure, if the connection type
+    // is Persistent then the connection will be reset and
+    // the closure re executed
+    pub async fn run<T, Fut: futures::future::Future<Output = anyhow::Result<T>>>(
+        &self,
+        action: impl Fn(Arc<Conn>) -> Fut,
+    ) -> T {
+        match self {
+            ConnectionType::Persistent(connector) => loop {
+                let conn = connector.ensure_connected().await;
+                match action(conn).await {
+                    Ok(res) => break res,
+                    Err(e) => {
+                        tracing::error!("{}\n", e);
+                        // Reset the connection and retry
+                        connector.reset().await;
+                    }
+                };
+            },
+            ConnectionType::Single(conn) => {
+                action(conn.clone()).await.unwrap_or_else(|e| {
+                    tracing::error!("{}\n", e);
+                    // TODO: Is it ok to panic here?
+                    // I don't see a more elegant solution without
+                    // changing a lot of function signatures to support errors
+                    panic!("connection to sugondat node interruptedh\n")
+                })
+            }
+        }
+    }
+}
+
 // Contains the RPC client structures that are assumed to be connected.
 pub struct Conn {
     /// Connection id. For diagnostics purposes only.

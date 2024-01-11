@@ -5,6 +5,7 @@
 //!    non-inherent extrinsics and avoid authoring empty blocks.
 //! 2. There is an incoming downward message from the relay chain.
 //! 3. There is a go-ahead signal for a parachain code upgrade.
+//! 4. The block is the first block of the parachain. Useful for testing.
 //!
 //! If any of these conditions are met, then the block is authored.
 
@@ -83,8 +84,13 @@ impl<P: ProposerInterface<Block> + Send> ProposerInterface<Block> for BlockLimit
                 Ok(None) => false,
             }
         };
+        let first_block = {
+            // allow creating the first block without the above conditions. This is useful for
+            // testing for detection of healthiness.
+            parent_header.number == 0
+        };
 
-        if has_downward_message || has_go_ahead || has_transactions {
+        if has_downward_message || has_go_ahead || has_transactions || first_block {
             self.inner
                 .propose(
                     parent_header,

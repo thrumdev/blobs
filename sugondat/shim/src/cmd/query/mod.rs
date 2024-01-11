@@ -19,5 +19,5 @@ pub async fn run(params: Params) -> anyhow::Result<()> {
 async fn connect_rpc(
     conn_params: crate::cli::SugondatRpcParams,
 ) -> anyhow::Result<sugondat_rpc::Client> {
-    sugondat_rpc::Client::new(conn_params.node_url).await
+    sugondat_rpc::Client::new(conn_params.node_url, conn_params.no_retry).await
 }

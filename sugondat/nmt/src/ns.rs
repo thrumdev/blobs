@@ -1,3 +1,5 @@
+use alloc::string::ToString;
+
 use crate::NS_ID_SIZE;
 use core::fmt;
 
@@ -13,7 +15,7 @@ use core::fmt;
 /// # use sugondat_nmt::Namespace;
 /// assert!(Namespace::from_u128_be(0x0100) > Namespace::from_u128_be(0x00FF));
 /// ````
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
@@ -68,5 +70,11 @@ impl fmt::Display for Namespace {
             write!(f, "{:02x}", byte)?;
         }
         Ok(())
+    }
+}
+
+impl fmt::Debug for Namespace {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_tuple("Namespace").field(&self.to_string()).finish()
     }
 }

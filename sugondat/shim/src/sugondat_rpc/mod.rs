@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{fmt, sync::Arc};
 
 use crate::key::Keypair;
 use anyhow::Context;
@@ -343,7 +343,6 @@ pub struct Block {
 }
 
 /// Represents a blob in a sugondat block.
-#[derive(Debug)]
 pub struct Blob {
     pub extrinsic_index: u32,
     pub namespace: Namespace,
@@ -355,5 +354,23 @@ impl Blob {
     pub fn sha2_hash(&self) -> [u8; 32] {
         use sha2::Digest;
         sha2::Sha256::digest(&self.data).into()
+    }
+}
+
+impl fmt::Debug for Blob {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let abridged_data = if self.data.len() > 16 {
+            let mut s = hex::encode(&self.data[..16]);
+            s.push_str("...");
+            s
+        } else {
+            hex::encode(&self.data)
+        };
+        f.debug_struct("Blob")
+            .field("extrinsic_index", &self.extrinsic_index)
+            .field("namespace", &self.namespace)
+            .field("sender", &self.sender)
+            .field("data", &abridged_data)
+            .finish()
     }
 }

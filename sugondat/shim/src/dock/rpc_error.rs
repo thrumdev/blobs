@@ -16,10 +16,10 @@ pub fn no_signing_key() -> ErrorObjectOwned {
     )
 }
 
-pub fn submission_error() -> ErrorObjectOwned {
+pub fn submission_error(e: anyhow::Error) -> ErrorObjectOwned {
     ErrorObjectOwned::owned(
         jsonrpsee::types::error::INTERNAL_ERROR_CODE,
-        "Internal Error: failed to submit blob",
+        format!("Internal Error: failed to submit blob: {:?}", e),
         None::<()>,
     )
 }

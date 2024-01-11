@@ -69,7 +69,7 @@ impl SovereignRPCServer for SovereignDock {
         self.client
             .submit_blob(blob, namespace, submit_key)
             .await
-            .map_err(|_| err::submission_error())?;
+            .map_err(err::submission_error)?;
         Ok(())
     }
 }

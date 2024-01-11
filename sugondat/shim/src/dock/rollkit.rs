@@ -56,7 +56,7 @@ impl RollkitRPCServer for RollkitDock {
             self.client
                 .submit_blob(blob.data, namespace, submit_key.clone())
                 .await
-                .map_err(|_| err::submission_error())?;
+                .map_err(err::submission_error)?;
         }
         // TODO:
         Ok(0)
@@ -70,6 +70,12 @@ impl RollkitRPCServer for RollkitDock {
 fn parse_namespace(namespace: &str) -> anyhow::Result<sugondat_nmt::Namespace> {
     use sugondat_nmt::NS_ID_SIZE;
     let namespace_bytes = hex::decode(namespace)?;
+    if namespace_bytes.len() != NS_ID_SIZE {
+        debug!(
+            "The namespace '{}' is not {} bytes long. Resizing...",
+            namespace, NS_ID_SIZE
+        );
+    }
     let namespace_bytes = match namespace_bytes.len() {
         0 => anyhow::bail!("namespace must not be empty"),
         1..=NS_ID_SIZE => {

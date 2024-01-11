@@ -38,7 +38,7 @@ impl Client {
     /// The RPC URL must be a valid URL pointing to a sugondat node. If it's not a malformed URL,
     /// returns an error.
     #[tracing::instrument(level = Level::DEBUG)]
-    pub async fn new(rpc_url: String) -> anyhow::Result<Self> {
+    pub async fn new(rpc_url: String, no_retry: bool) -> anyhow::Result<Self> {
         anyhow::ensure!(
             url::Url::parse(&rpc_url).is_ok(),
             "invalid RPC URL: {}",
@@ -50,7 +50,12 @@ impl Client {
         let me = Self {
             connector: Arc::new(conn::Connector::new(rpc_url)),
         };
-        me.connector.ensure_connected().await;
+
+        match no_retry {
+            true => me.connector.try_connect().await?,
+            false => me.connector.ensure_connected().await,
+        };
+
         Ok(me)
     }
 

@@ -10,7 +10,7 @@ TOKEN_AMOUNT="10000000000000000000000000stake"
 STAKING_AMOUNT="1000000000stake"
 
 # create a random Namespace ID for your rollup to post blocks to
-NAMESPACE=01020304050607080910111213141516
+NAMESPACE=00000000000011111111111111111111
 
 # query the DA Layer start height, in this case we are querying
 # our local devnet at port 26657, the RPC. The RPC endpoint is
@@ -77,13 +77,5 @@ gmd gentx $KEY_NAME $STAKING_AMOUNT --chain-id $CHAIN_ID --keyring-backend test
 # collect genesis transactions
 gmd collect-gentxs
 
-# create a restart-local.sh file to restart the chain later
-[ -f restart-local.sh ] && rm restart-local.sh
-echo "DA_BLOCK_HEIGHT=$DA_BLOCK_HEIGHT" >> restart-local.sh
-echo "NAMESPACE=$NAMESPACE" >> restart-local.sh
-echo "AUTH_TOKEN=$AUTH_TOKEN" >> restart-local.sh
-
-echo "gmd start --rollkit.aggregator true --rollkit.da_layer sugondat --rollkit.da_config='{\"base_url\":\"http://localhost:10995\",\"namespace\":\"$NAMESPACE\"}' --rollkit.namespace_id \$NAMESPACE --rollkit.da_start_height \$DA_BLOCK_HEIGHT --rpc.laddr tcp://127.0.0.1:36657 --p2p.laddr \"0.0.0.0:36656\"" >> restart-local.sh
-
 # start the chain
-gmd start --rollkit.aggregator true --rollkit.da_layer sugondat --rollkit.da_config='{"base_url":"http://localhost:10995","namespace":"0102030405060708"}' --rollkit.namespace_id 0102030405060708 --rollkit.da_start_height 1 --rpc.laddr tcp://127.0.0.1:36657 --p2p.laddr "0.0.0.0:36656"
+gmd start --rollkit.aggregator true --rollkit.da_layer sugondat --rollkit.da_config='{"base_url":"http://localhost:10995","namespace":"00000000000011111111111111111111"}' --rollkit.namespace_id 00000000000011111111111111111111 --rollkit.da_start_height 1 --rpc.laddr tcp://127.0.0.1:36657 --p2p.laddr "0.0.0.0:36656"

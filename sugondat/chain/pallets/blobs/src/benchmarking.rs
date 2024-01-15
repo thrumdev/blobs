@@ -3,12 +3,12 @@ use super::*;
 
 #[allow(unused)]
 use crate::Pallet as Blobs;
-use codec::Encode;
 use frame_benchmarking::__private::traits::Hooks;
 #[allow(unused)]
 use frame_benchmarking::v2::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::traits::Get;
 use frame_system::RawOrigin;
+use parity_scale_codec::Encode;
 use sp_std::vec;
 
 // Command to run the benchmarks:

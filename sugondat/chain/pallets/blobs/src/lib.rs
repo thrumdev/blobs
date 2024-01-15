@@ -16,7 +16,7 @@ mod tests;
 mod benchmarking;
 pub mod weights;
 
-use codec::{Decode, Encode};
+use parity_scale_codec::{Decode, Encode};
 use scale_info::TypeInfo;
 use sp_runtime::{
     traits::{DispatchInfoOf, SignedExtension},

@@ -1,4 +1,3 @@
-use codec::Encode;
 use frame_support::{
     dispatch::GetDispatchInfo,
     traits::{fungible::Balanced, tokens::Precision},
@@ -6,6 +5,7 @@ use frame_support::{
 };
 use pallet_sugondat_length_fee_adjustment::NextLengthMultiplier;
 use pallet_transaction_payment::Multiplier;
+use parity_scale_codec::Encode;
 use sp_block_builder::runtime_decl_for_block_builder::BlockBuilderV6;
 use sp_core::{crypto::Pair, sr25519};
 use sp_runtime::{

@@ -1,8 +1,8 @@
 use crate as pallet_blobs;
 use crate::{mock::*, *};
-use codec::Encode;
 use frame_support::traits::Hooks;
 use frame_support::{assert_noop, assert_ok, traits::Get};
+use parity_scale_codec::Encode;
 use sha2::Digest;
 use sp_core::storage::well_known_keys;
 use sp_core::{crypto::Pair, sr25519};

@@ -1,18 +1,21 @@
 [package]
 name = "sugondat-primitives"
 version = "0.1.0"
-edition = "2021"
-license = "MIT OR Apache-2.0"
+authors.workspace = true
+homepage.workspace = true
+repository.workspace = true
+license.workspace = true
+edition.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "3.0.0", features = ["derive"], default-features = false }
+parity-scale-codec = { workspace = true, features = ["derive"] }
 
-sp-runtime = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, branch = "release-polkadot-v1.4.0" }
-sp-core = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, branch = "release-polkadot-v1.4.0" }
-sp-consensus-aura = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, branch = "release-polkadot-v1.4.0" }
+sp-runtime = { workspace = true }
+sp-core = { workspace = true }
+sp-consensus-aura = { workspace = true }
 
 [features]
 default = ["std"]
-std = ["codec/std", "sp-runtime/std", "sp-core/std", "sp-consensus-aura/std"]
+std = ["parity-scale-codec/std", "sp-runtime/std", "sp-core/std", "sp-consensus-aura/std"]

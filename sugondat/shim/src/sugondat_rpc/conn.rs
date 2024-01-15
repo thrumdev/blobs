@@ -87,6 +87,29 @@ impl Connector {
         }
     }
 
+    pub async fn try_connect(&self) -> anyhow::Result<Arc<Conn>> {
+        let mut state = self.state.lock().await;
+        match &mut *state {
+            State::Connected(_) => Err(anyhow::anyhow!("Client already Connected")),
+            State::Connecting { .. } => Err(anyhow::anyhow!("Client already Connecting")),
+            State::Disconnected => {
+                // We are the first to connect.
+                let conn_id = self.gen_conn_id();
+                let rpc_url = self.rpc_url.clone();
+                match Conn::connect(conn_id, &rpc_url).await {
+                    Ok(conn) => {
+                        *state = State::Connected(conn.clone());
+                        Ok(conn)
+                    }
+                    Err(e) => Err(anyhow::anyhow!(
+                        "failed to connect to sugondat node: {}\n",
+                        e
+                    )),
+                }
+            }
+        }
+    }
+
     /// Makes sure that the client is connected. Returns the connection handle.
     pub async fn ensure_connected(&self) -> Arc<Conn> {
         let mut state = self.state.lock().await;

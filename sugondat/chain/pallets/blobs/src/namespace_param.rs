@@ -7,7 +7,7 @@
 //!   - In version 0, bytes 1 through 5 are required to be equal to `0x00` and bytes 6 through
 //!     15 are allowed to hold any value.
 
-use codec::{Decode, Encode, MaxEncodedLen};
+use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::RuntimeDebug;
 

@@ -1,35 +1,36 @@
 [package]
 name = "sugondat-da-adapter"
 version = "0.1.0"
-edition = "2021"
-license = "MIT OR Apache-2.0"
+authors.workspace = true
+homepage.workspace = true
+repository.workspace = true
+license.workspace = true
+edition.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-parity-scale-codec = "3.6.3"
+parity-scale-codec = { workspace = true }
 # The only required dependency for a DA adapter is the Sovereign SDK...
-sov-rollup-interface = { git = "https://github.com/Sovereign-Labs/sovereign-sdk", rev = "6058b31" }
+sov-rollup-interface = { workspace = true }
 
-tracing = "0.1.37"
-serde = { version = "1", features = ["derive"] }
-hex = { version = "0.4.3", features = ["serde"] }
+tracing = { workspace = true }
+serde = { workspace = true, default-features = true, features = ["derive"] }
+hex = { workspace = true, features = ["serde"] }
 # Derive borsh for instant implementations of the Sovereign SDK's encode/decode traits
-borsh = { version = "0.10.3", features = ["bytes"] }
+borsh = { workspace = true, features = ["bytes"] }
 
 # While not used by this crate, we need bytes to include serde.
-bytes = { version = "1", features = ["serde"] }
+bytes = { workspace = true, features = ["serde"] }
 
-sha2 = { version = "0.10.6", default-features = false }
-sugondat-nmt = { path = "../../sugondat/nmt", default-features = false }
-jsonrpsee = { version = "0.20.3", optional = true, features = ["ws-client"] }
-tokio = { version = "1", optional = true }
-sugondat-shim-common-sovereign = { path = "../../sugondat/shim/common/sovereign", optional = true, default-features = false, features = [
-    "client",
-] }
-anyhow = "1.0.68"
-async-trait = "0.1.71"
-digest = "0.10.7"
+sha2 = { workspace = true }
+sugondat-nmt = { workspace = true }
+jsonrpsee = { workspace = true, optional = true, features = ["ws-client"] }
+tokio = { workspace = true, optional = true }
+sugondat-shim-common-sovereign = { workspace = true, optional = true, features = ["client"] }
+anyhow = { workspace = true }
+async-trait = { workspace = true }
+digest = { workspace = true }
 
 [features]
 default = ["native"]

@@ -38,7 +38,7 @@ impl Client {
     /// The RPC URL must be a valid URL pointing to a sugondat node. If it's not a malformed URL,
     /// returns an error.
     #[tracing::instrument(level = Level::DEBUG)]
-    pub async fn new(rpc_url: String) -> anyhow::Result<Self> {
+    pub async fn new(rpc_url: String, no_retry: bool) -> anyhow::Result<Self> {
         anyhow::ensure!(
             url::Url::parse(&rpc_url).is_ok(),
             "invalid RPC URL: {}",
@@ -46,12 +46,20 @@ impl Client {
         );
 
         tracing::info!("connecting to sugondat node: {}", rpc_url);
+
         let rpc_url = Arc::new(rpc_url);
-        let me = Self {
-            connector: Arc::new(conn::Connector::new(rpc_url)),
+
+        let connector = if no_retry {
+            conn::Connector::try_new(rpc_url).await?
+        } else {
+            let connector = conn::Connector::new(rpc_url);
+            connector.ensure_connected().await;
+            connector
         };
-        me.connector.ensure_connected().await;
-        Ok(me)
+
+        Ok(Self {
+            connector: Arc::new(connector),
+        })
     }
 
     /// Blocks until the sugondat node has finalized a block at the given height. Returns

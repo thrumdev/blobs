@@ -87,6 +87,22 @@ impl Connector {
         }
     }
 
+    /// Creates a new connector and immediately attempts to create a connection,
+    /// returns the error if it fails
+    pub async fn try_new(rpc_url: Arc<String>) -> anyhow::Result<Self> {
+        match Conn::connect(0, &rpc_url).await {
+            Ok(conn) => Ok(Self {
+                state: Arc::new(Mutex::new(State::Connected(conn))),
+                next_conn_id: AtomicU64::new(1),
+                rpc_url,
+            }),
+            Err(e) => Err(anyhow::anyhow!(
+                "failed to connect to sugondat node: {}\n",
+                e
+            )),
+        }
+    }
+
     /// Makes sure that the client is connected. Returns the connection handle.
     pub async fn ensure_connected(&self) -> Arc<Conn> {
         let mut state = self.state.lock().await;

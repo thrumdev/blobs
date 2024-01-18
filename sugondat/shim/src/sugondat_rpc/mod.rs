@@ -2,7 +2,7 @@ use std::{fmt, sync::Arc};
 
 use crate::key::Keypair;
 use anyhow::Context;
-use subxt::{config::Header as _, rpc_params, utils::H256};
+use subxt::{config::Header as _, error::BlockError, rpc_params, utils::H256};
 use sugondat_nmt::Namespace;
 use sugondat_subxt::{
     sugondat::runtime_types::pallet_sugondat_blobs::namespace_param::UnvalidatedNamespace, Header,
@@ -63,6 +63,7 @@ impl Client {
     /// the block hash of the block at the given height.
     #[tracing::instrument(level = Level::DEBUG, skip(self))]
     pub async fn wait_finalized_height(&self, height: u64) -> [u8; 32] {
+        tracing::info!("Waiting for block at height: {}", height);
         loop {
             let conn = self.connector.ensure_connected().await;
             match conn.finalized.wait_until_finalized(self, height).await {
@@ -79,7 +80,7 @@ impl Client {
     ///
     /// If there is no block at the given height, returns `None`.
     #[tracing::instrument(level = Level::DEBUG, skip(self))]
-    pub async fn block_hash(&self, height: u64) -> anyhow::Result<Option<H256>> {
+    pub async fn block_hash(&self, height: u64) -> anyhow::Result<Option<[u8; 32]>> {
         loop {
             let conn = self.connector.ensure_connected().await;
             let block_hash: Option<H256> = match conn
@@ -102,43 +103,75 @@ impl Client {
                     // at the given height.
                     Ok(None)
                 }
-                Some(block_hash) => Ok(Some(block_hash)),
+                Some(block_hash) => Ok(Some(block_hash.into())),
             };
         }
     }
 
-    /// Returns the header and the body of the block with the given hash, automatically retrying
-    /// until it succeeds. `None` indicates the best block.
+    /// Returns the block hash of the block at the given height,
+    /// automatically retrying until it succeeds.
+    /// `None` indicates the best block.
+    pub async fn wait_block_hash(&self, height: u64) -> [u8; 32] {
+        loop {
+            match self.block_hash(height).await {
+                Ok(Some(res)) => break res,
+                Ok(None) => {
+                    tracing::info!("Block hash not available yet");
+                    tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+                }
+                Err(e) => {
+                    // any other error is treated as a failure, resulting in the connection being reset
+                    tracing::error!(?e, "failed to query block hash");
+                    self.connector.reset().await;
+                }
+            }
+        }
+    }
+
+    /// Returns the header and body of the block with the given hash.
+    /// If it is not available, it returns the reason of the failure.
+    /// `None` indicates the best block.
     async fn get_header_and_extrinsics(
         &self,
         block_hash: Option<[u8; 32]>,
-    ) -> anyhow::Result<(Header, Vec<sugondat_subxt::ExtrinsicDetails>)> {
+    ) -> Result<(Header, Vec<sugondat_subxt::ExtrinsicDetails>), subxt::error::Error> {
         let block_hash = block_hash.map(H256::from);
+
+        let conn = self.connector.ensure_connected().await;
+        let res = match block_hash {
+            Some(h) => conn.subxt.blocks().at(h).await,
+            None => conn.subxt.blocks().at_latest().await,
+        }?;
+
+        let header = res.header();
+        let body = res
+            .extrinsics()
+            .await?
+            .iter()
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok((header.clone(), body))
+    }
+
+    /// Returns the header and the body of the block with the given hash,
+    /// automatically retrying until it succeeds.
+    /// `None` indicates the best block.
+    async fn wait_header_and_extrinsics(
+        &self,
+        block_hash: Option<[u8; 32]>,
+    ) -> (Header, Vec<sugondat_subxt::ExtrinsicDetails>) {
         loop {
-            let conn = self.connector.ensure_connected().await;
-            let res = match block_hash {
-                Some(h) => conn.subxt.blocks().at(h).await,
-                None => conn.subxt.blocks().at_latest().await,
-            };
-            let err = match res {
-                Ok(it) => {
-                    let header = it.header();
-                    let body = match it.extrinsics().await {
-                        Ok(it) => it,
-                        Err(err) => {
-                            tracing::error!(?err, "failed to query block");
-                            self.connector.reset().await;
-                            continue;
-                        }
-                    }
-                    .iter()
-                    .collect::<Result<Vec<_>, _>>()?;
-                    return Ok((header.clone(), body));
+            match self.get_header_and_extrinsics(block_hash).await {
+                Ok(res) => break res,
+                Err(subxt::Error::Block(BlockError::NotFound(_hash))) => {
+                    tracing::info!("Block not available yet");
+                    tokio::time::sleep(std::time::Duration::from_secs(1)).await;
                 }
-                Err(err) => err,
-            };
-            tracing::error!(?err, "failed to query block");
-            self.connector.reset().await;
+                Err(e) => {
+                    // any other error is treated as a failure, resulting in the connection being reset
+                    tracing::error!(?e, "failed to query block");
+                    self.connector.reset().await;
+                }
+            }
         }
     }
 
@@ -148,19 +181,16 @@ impl Client {
     /// `None` indicates that the best block should be used.
     #[tracing::instrument(level = Level::DEBUG, skip(self))]
     pub async fn get_block_at(&self, block_hash: Option<[u8; 32]>) -> anyhow::Result<Block> {
-        let (header, extrinsics) = self.get_header_and_extrinsics(block_hash).await?;
-        let tree_root = tree_root(&header).ok_or_else(err::no_tree_root)?;
-        let timestamp = extract_timestamp(&extrinsics)?;
-        let blobs = extract_blobs(extrinsics);
-        tracing::debug!(?blobs, "found {} blobs in block", blobs.len());
-        Ok(Block {
-            number: header.number as u64,
-            hash: header.hash().0,
-            parent_hash: header.parent_hash.0,
-            tree_root,
-            timestamp,
-            blobs,
-        })
+        Block::from_header_and_extrinsics(self.get_header_and_extrinsics(block_hash).await?)
+    }
+
+    /// Returns the data of the block identified by the given block hash.
+    /// It retries until the block is present
+    ///
+    /// `None` indicates that the best block should be used.
+    #[tracing::instrument(level = Level::DEBUG, skip(self))]
+    pub async fn wait_block_at(&self, block_hash: Option<[u8; 32]>) -> anyhow::Result<Block> {
+        Block::from_header_and_extrinsics(self.wait_header_and_extrinsics(block_hash).await)
     }
 
     /// Submit a blob with the given namespace and signed with the given key. The block is submitted
@@ -319,7 +349,7 @@ impl FinalizedHeadWatcher {
                     // TODO: throttle the retries. // TODO: return an error
                     continue;
                 };
-                break Some(block_hash.0);
+                break Some(block_hash);
             }
         }
     }
@@ -345,6 +375,26 @@ pub struct Block {
     pub tree_root: sugondat_nmt::TreeRoot,
     pub timestamp: u64,
     pub blobs: Vec<Blob>,
+}
+
+impl Block {
+    fn from_header_and_extrinsics(
+        value: (Header, Vec<sugondat_subxt::ExtrinsicDetails>),
+    ) -> anyhow::Result<Self> {
+        let (header, extrinsics) = value;
+        let tree_root = tree_root(&header).ok_or_else(err::no_tree_root)?;
+        let timestamp = extract_timestamp(&extrinsics)?;
+        let blobs = extract_blobs(extrinsics);
+        tracing::debug!(?blobs, "found {} blobs in block", blobs.len());
+        Ok(Block {
+            number: header.number as u64,
+            hash: header.hash().0,
+            parent_hash: header.parent_hash.0,
+            tree_root,
+            timestamp,
+            blobs,
+        })
+    }
 }
 
 /// Represents a blob in a sugondat block.

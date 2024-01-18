@@ -1,5 +1,5 @@
-use super::connect_rpc;
-use crate::cli::query::{blob::Params, BlockRef};
+use super::{connect_rpc, get_block_at};
+use crate::cli::query::blob::Params;
 
 use std::io::Write;
 
@@ -12,20 +12,7 @@ pub async fn run(params: Params) -> anyhow::Result<()> {
     } = params;
 
     let client = connect_rpc(rpc).await?;
-
-    let maybe_hash = match block {
-        BlockRef::Best => None,
-        BlockRef::Hash(h) => Some(h),
-        BlockRef::Number(n) => Some(
-            client
-                .block_hash(n)
-                .await?
-                .ok_or_else(|| anyhow::anyhow!("No block with number {}", n))?
-                .0,
-        ),
-    };
-
-    let block = client.get_block_at(maybe_hash).await?;
+    let block = get_block_at(&client, block).await?;
 
     let i = block
         .blobs

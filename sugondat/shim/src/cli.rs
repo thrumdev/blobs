@@ -171,6 +171,25 @@ pub mod query {
         Hash([u8; 32]),
     }
 
+    #[derive(Debug, Args)]
+    pub struct BlockParams {
+        /// The block containing the blob to query.
+        ///
+        /// Possible values: ["best", number, hash]
+        ///
+        /// "best" is the highest finalized block.
+        ///
+        /// Hashes must be 32 bytes, hex-encoded, and prefixed with "0x".
+        #[arg(value_name = "BLOCK_REF")]
+        pub block_ref: BlockRef,
+
+        /// By default, if the block is not available (e.g. not yet produced), the shim will return immediately.
+        ///
+        /// By specifying this flag, the shim will wait until the block is available.
+        #[clap(long)]
+        pub wait: bool,
+    }
+
     impl std::fmt::Display for BlockRef {
         fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
             match *self {
@@ -221,22 +240,15 @@ pub mod query {
     pub mod blob {
         use clap::Args;
 
-        use super::{BlockRef, SugondatRpcParams};
+        use super::{BlockParams, SugondatRpcParams};
 
         #[derive(Debug, Args)]
         pub struct Params {
             #[clap(flatten)]
             pub rpc: SugondatRpcParams,
 
-            /// The block containing the blob to query.
-            ///
-            /// Possible values: ["best", number, hash]
-            ///
-            /// "best" is the highest finalized block.
-            ///
-            /// Hashes must be 32 bytes, hex-encoded, and prefixed with "0x".
-            #[arg(value_name = "BLOCK_REF")]
-            pub block: BlockRef,
+            #[clap(flatten)]
+            pub block: BlockParams,
 
             /// The index of the extrinsic (transaction) containing the blob.
             #[arg(value_name = "INDEX")]
@@ -254,22 +266,15 @@ pub mod query {
 
         use clap::Args;
 
-        use super::{BlockRef, SugondatRpcParams};
+        use super::{BlockParams, SugondatRpcParams};
 
         #[derive(Debug, Args)]
         pub struct Params {
             #[clap(flatten)]
             pub rpc: SugondatRpcParams,
 
-            /// The block to query information about.
-            ///
-            /// Possible values: ["best", number, hash]
-            ///
-            /// "best" is the highest finalized block.
-            ///
-            /// Hashes must be 32 bytes, hex-encoded, and prefixed with "0x".
-            #[arg(default_value_t = BlockRef::Best, value_name = "BLOCK_REF")]
-            pub block: BlockRef,
+            #[clap(flatten)]
+            pub block: BlockParams,
         }
     }
 

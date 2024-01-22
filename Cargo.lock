@@ -7207,6 +7207,7 @@ name = "pallet-sugondat-length-fee-adjustment"
 version = "0.1.0"
 dependencies = [
  "cumulus-pallet-parachain-system",
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "pallet-balances",

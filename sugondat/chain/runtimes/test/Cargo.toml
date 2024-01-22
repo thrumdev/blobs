@@ -78,7 +78,7 @@ parachain-info = { workspace = true }
 parachains-common = { workspace = true }
 
 [dev-dependencies]
-sp-io = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.4.0"}
+sp-io = { workspace = true }
 
 [features]
 default = [ "std" ]

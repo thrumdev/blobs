@@ -11,6 +11,9 @@ use sp_runtime::{
     FixedPointNumber, SaturatedConversion,
 };
 
+use pallet_sugondat_length_fee_adjustment::LastRelayBlockNumberProvider;
+use polkadot_primitives::v6::BlockNumber as RelayChainBlockNumber;
+
 type Block = frame_system::mocking::MockBlock<Test>;
 type Balance = u64;
 
@@ -87,6 +90,19 @@ parameter_types! {
 
     pub static WeightToFee: u64 = 1;
     pub static OperationalFeeMultiplier: u8 = 5;
+    pub static LastRelayBlockNumber: RelayChainBlockNumber = 0;
+}
+
+pub struct MockLastRelayBlockNumberProvider;
+
+impl LastRelayBlockNumberProvider for MockLastRelayBlockNumberProvider {
+    fn last_relay_block_number() -> RelayChainBlockNumber {
+        LastRelayBlockNumber::get()
+    }
+}
+
+pub fn set_last_relay_block_number(n: RelayChainBlockNumber) {
+    LastRelayBlockNumber::mutate(|x| *x = n);
 }
 
 impl WeightToFeeT for WeightToFee {
@@ -114,4 +130,5 @@ impl pallet_sugondat_length_fee_adjustment::Config for Test {
     type MinimumMultiplierBlockSize = MinimumMultiplierBlockSize;
     type MaximumMultiplierBlockSize = MaximumMultiplierBlockSize;
     type SkippedBlocksNumberTerms = SkippedBlocksNumberTerms;
+    type LastRelayBlockNumberProvider = MockLastRelayBlockNumberProvider;
 }

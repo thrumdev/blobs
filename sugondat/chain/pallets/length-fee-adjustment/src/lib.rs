@@ -54,11 +54,24 @@ pub mod pallet {
     use frame_support::pallet_prelude::*;
     use frame_system::pallet_prelude::*;
     use pallet_transaction_payment::{Multiplier, OnChargeTransaction};
-    use polkadot_primitives::v6::PersistedValidationData;
+    use polkadot_primitives::v6::{BlockNumber as RelayChainBlockNumber, PersistedValidationData};
     use sp_runtime::{
         traits::{Get, One, Zero},
         FixedPointNumber, Perquintill, SaturatedConversion, Saturating,
     };
+
+    /// A provider for the last relay-chain block number, i.e. the relay-parent number of the
+    /// previous block from _this_ chain.
+    pub trait LastRelayBlockNumberProvider {
+        /// Get the last relay chain block number.
+        fn last_relay_block_number() -> RelayChainBlockNumber;
+    }
+
+    impl<T: cumulus_pallet_parachain_system::Config> LastRelayBlockNumberProvider for T {
+        fn last_relay_block_number() -> RelayChainBlockNumber {
+            cumulus_pallet_parachain_system::Pallet::<T>::last_relay_block_number()
+        }
+    }
 
     /// Configure the pallet by specifying the parameters and types on which it depends.
     #[pallet::config]
@@ -92,6 +105,8 @@ pub mod pallet {
         /// This means that producing a block at most every n skipped blocks should be enforced to avoid falling into this error.
         #[pallet::constant]
         type SkippedBlocksNumberTerms: Get<u32>;
+
+        type LastRelayBlockNumberProvider: LastRelayBlockNumberProvider;
     }
 
     #[pallet::pallet]
@@ -118,9 +133,6 @@ pub mod pallet {
     #[pallet::storage]
     pub type TargetBlockSize<T: Config> =
         StorageValue<_, Perquintill, ValueQuery, TargetBlockSizeDefault>;
-
-    #[pallet::storage]
-    pub type PrevRelayBlockNumber<T: Config> = StorageValue<_, u32, OptionQuery>;
 
     #[pallet::hooks]
     impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
@@ -217,16 +229,14 @@ pub mod pallet {
     impl<T: Config> OnSystemEvent for Pallet<T> {
         fn on_validation_data(data: &PersistedValidationData) {
             let relay_block_number = data.relay_parent_number;
+            let prev_relay_block_number =
+                T::LastRelayBlockNumberProvider::last_relay_block_number();
 
-            let prev_relay_block_number = PrevRelayBlockNumber::<T>::get();
-            PrevRelayBlockNumber::<T>::put(relay_block_number);
-
-            // if nothing was already present then this is the first block to
-            // be executed with the fee adjustment so nothing should be done
-            let prev_relay_block_number = match prev_relay_block_number {
-                Some(prev) => prev,
-                None => return,
-            };
+            // a value of zero here implies this is the first block of the parachain. no need
+            // to do a massive fee update.
+            if prev_relay_block_number == RelayChainBlockNumber::zero() {
+                return;
+            }
 
             // It should never be negative because the relay_block_number is surely
             // greater than the para_block_number.

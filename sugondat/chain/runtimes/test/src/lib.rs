@@ -379,6 +379,7 @@ impl pallet_sugondat_length_fee_adjustment::Config for Runtime {
     type MaximumMultiplierBlockSize = MaximumMultiplierBlockSize;
     type MinimumMultiplierBlockSize = MinimumMultiplierBlockSize;
     type SkippedBlocksNumberTerms = SkippedBlocksNumberTerms;
+    type LastRelayBlockNumberProvider = Runtime;
 }
 
 pub type SlowAdjustingFeeUpdate<R> = TargetedFeeAdjustment<

@@ -1,5 +1,5 @@
 use crate::{
-    mock::{LengthFeeAdjustment, Test},
+    mock::{self, LengthFeeAdjustment, Test},
     *,
 };
 use cumulus_pallet_parachain_system::OnSystemEvent;
@@ -67,6 +67,27 @@ fn test_default_target_block_size() {
 }
 
 #[test]
+fn test_no_update_when_prev_is_zero() {
+    new_test_ext().execute_with(|| {
+        // using Multiplier::one() only e^(-vnt) is tested
+        NextLengthMultiplier::<Test>::put(Multiplier::one());
+        mock::set_last_relay_block_number(0);
+
+        let relay_data = PersistedValidationData {
+            parent_head: HeadData(vec![]),
+            relay_parent_number: 100_000_000,
+            relay_parent_storage_root: sp_core::H256::zero(),
+            max_pov_size: 0,
+        };
+
+        LengthFeeAdjustment::on_validation_data(&relay_data);
+
+        let mul = NextLengthMultiplier::<Test>::get();
+        assert_eq!(mul, Multiplier::one());
+    });
+}
+
+#[test]
 fn test_skipped_block_multiplier_update() {
     // TODO: change max_skipped_blocks to 7200
     // when updating to asynchronous backing
@@ -76,14 +97,14 @@ fn test_skipped_block_multiplier_update() {
         for d in (0..max_skipped_blocks).step_by(max_skipped_blocks as usize / 1000) {
             // using Multiplier::one() only e^(-vnt) is tested
             NextLengthMultiplier::<Test>::put(Multiplier::one());
-            PrevRelayBlockNumber::<Test>::put(0);
+            mock::set_last_relay_block_number(1);
 
             // TODO: update with `1 + d`
             // when updating to asynchronous backing
             // https://github.com/thrumdev/blobs/issues/166
             let relay_data = PersistedValidationData {
                 parent_head: HeadData(vec![]),
-                relay_parent_number: 2 + d * 2,
+                relay_parent_number: 1 + 2 + d * 2, // extra 1 is because last rp was 1
                 relay_parent_storage_root: sp_core::H256::zero(),
                 max_pov_size: 0,
             };
@@ -119,13 +140,6 @@ fn test_skipped_block_no_prev_data() {
         };
 
         LengthFeeAdjustment::on_validation_data(&relay_data);
-
-        // PrevRelayBlockNumber should be set to what passed in the argument
-        // as relay_parent_number and NextLengthMultiplier should remain the same
-        assert_eq!(
-            PrevRelayBlockNumber::<Test>::get(),
-            Some(relay_parent_number)
-        );
         assert_eq!(NextLengthMultiplier::<Test>::get(), prev_multiplier);
     });
 }

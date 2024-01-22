@@ -10,7 +10,6 @@
 //!
 //! If any of these conditions are met, then the block is authored.
 
-use anyhow::anyhow;
 use parity_scale_codec::Decode;
 
 use sc_client_api::backend::StorageProvider;
@@ -71,7 +70,7 @@ where
         inherent_digests: Digest,
         max_duration: Duration,
         block_size_limit: Option<usize>,
-    ) -> Result<Proposal<Block, StorageProof>, ProposerError> {
+    ) -> Result<Option<Proposal<Block, StorageProof>>, ProposerError> {
         let has_downward_message = !paras_inherent_data.downward_messages.is_empty();
         let has_transactions = self.transaction_pool.status().ready > 0;
         let has_go_ahead = {
@@ -148,9 +147,7 @@ where
                 )
                 .await
         } else {
-            Err(ProposerError::proposing(anyhow!(
-                "no need to create a block"
-            )))
+            Ok(None)
         }
     }
 }

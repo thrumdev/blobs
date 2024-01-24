@@ -37,6 +37,7 @@ sc-basic-authorship = { workspace = true }
 sc-chain-spec = { workspace = true }
 sc-cli = { workspace = true }
 sc-client-api = { workspace = true }
+sc-client-db = { workspace = true }
 sc-consensus = { workspace = true }
 sc-executor = { workspace = true }
 sc-network = { workspace = true }
@@ -60,6 +61,7 @@ sp-io = { workspace = true, default-features = false }
 sp-inherents = { workspace = true, default-features = true }
 sp-runtime = { workspace = true, default-features = false }
 sp-session = { workspace = true, default-features = true }
+sp-storage = { workspace = true, default-features = true }
 sp-timestamp = { workspace = true }
 sp-transaction-pool = { workspace = true, default-features = true }
 substrate-frame-rpc-system = { workspace = true }

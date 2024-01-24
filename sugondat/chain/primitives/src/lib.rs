@@ -56,3 +56,12 @@ pub enum InvalidTransactionCustomError {
     /// The namespace ID is invalid.
     InvalidNamespaceId = 101,
 }
+
+pub fn last_relay_block_number_key() -> Vec<u8> {
+    [
+        sp_core::twox_128(b"ParachainSystem"),
+        sp_core::twox_128(b"LastRelayChainBlockNumber"),
+    ]
+    .concat()
+    .to_vec()
+}

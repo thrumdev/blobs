@@ -6,11 +6,14 @@
 //! 2. There is an incoming downward message from the relay chain.
 //! 3. There is a go-ahead signal for a parachain code upgrade.
 //! 4. The block is the first block of the parachain. Useful for testing.
+//! 5. The chain is not producing blocks for more than the maximum allowed number of skipped blocks
 //!
 //! If any of these conditions are met, then the block is authored.
 
 use anyhow::anyhow;
+use parity_scale_codec::Decode;
 
+use sc_client_api::backend::StorageProvider;
 use sc_transaction_pool_api::TransactionPool;
 use sp_api::StorageProof;
 use sp_consensus::Proposal;
@@ -30,21 +33,24 @@ use std::time::Duration;
 use crate::service::ParachainClient;
 
 /// Proposes blocks, but only under certain conditions. See module docs.
-pub struct BlockLimitingProposer<P> {
+pub struct BlockLimitingProposer<P, C> {
     inner: P,
+    client: Arc<C>,
     para_id: ParaId,
     transaction_pool: Arc<sc_transaction_pool::FullPool<Block, ParachainClient>>,
 }
 
-impl<P> BlockLimitingProposer<P> {
+impl<P, C> BlockLimitingProposer<P, C> {
     /// Create a new block-limiting proposer.
     pub fn new(
         inner: P,
+        client: Arc<C>,
         para_id: ParaId,
         transaction_pool: Arc<sc_transaction_pool::FullPool<Block, ParachainClient>>,
     ) -> Self {
         BlockLimitingProposer {
             inner,
+            client,
             para_id,
             transaction_pool,
         }
@@ -52,7 +58,11 @@ impl<P> BlockLimitingProposer<P> {
 }
 
 #[async_trait::async_trait]
-impl<P: ProposerInterface<Block> + Send> ProposerInterface<Block> for BlockLimitingProposer<P> {
+impl<P, C> ProposerInterface<Block> for BlockLimitingProposer<P, C>
+where
+    P: ProposerInterface<Block> + Send,
+    C: StorageProvider<Block, sc_client_db::Backend<Block>> + Send + Sync,
+{
     async fn propose(
         &mut self,
         parent_header: &Header,
@@ -89,8 +99,44 @@ impl<P: ProposerInterface<Block> + Send> ProposerInterface<Block> for BlockLimit
             // testing for detection of healthiness.
             parent_header.number == 0
         };
+        let exceeded_max_skipped_blocks = 'max_skipped: {
+            let maybe_last_relay_block_number = self.client.storage(
+                parent_header.parent_hash,
+                &sp_storage::StorageKey(sugondat_primitives::last_relay_block_number_key()),
+            );
 
-        if has_downward_message || has_go_ahead || has_transactions || first_block {
+            // If the state of the previous block or the last relay block number
+            // is not available, to be sure of not exceeding the max amount of
+            // skippable blocks, the block will be produced.
+            let last_relay_block_number = match maybe_last_relay_block_number {
+                Ok(Some(raw_data)) => match Decode::decode(&mut &raw_data.0[..]) {
+                    Ok(last_relay_block_number) => last_relay_block_number,
+                    Err(_) => break 'max_skipped true,
+                },
+                _ => break 'max_skipped true,
+            };
+            let relay_block_number = paras_inherent_data.validation_data.relay_parent_number;
+
+            // TODO: Change 3600 to 7200 (half a day)
+            // and `n_skipped_blocks = relay_parent_distance.saturating_sub(1)`
+            // when updating to asynchronous backing
+            // https://github.com/thrumdev/blobs/issues/166
+
+            // The accepted error is less than 10^(-2) for an expected
+            // maximum of 3600 skipped blocks (half a day)
+            const MAX_SKIPPED_BLOCKS: u32 = 3600;
+
+            let relay_parent_distance = relay_block_number.saturating_sub(last_relay_block_number);
+            let n_skipped_blocks = relay_parent_distance.saturating_sub(2) / 2;
+            n_skipped_blocks >= MAX_SKIPPED_BLOCKS
+        };
+
+        if has_downward_message
+            || has_go_ahead
+            || has_transactions
+            || first_block
+            || exceeded_max_skipped_blocks
+        {
             self.inner
                 .propose(
                     parent_header,

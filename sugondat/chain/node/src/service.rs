@@ -402,7 +402,7 @@ fn start_consensus(
 
         let proposer = Proposer::new(proposer_factory);
 
-        BlockLimitingProposer::new(proposer, para_id, transaction_pool)
+        BlockLimitingProposer::new(proposer, client.clone(), para_id, transaction_pool)
     };
 
     let collator_service = CollatorService::new(

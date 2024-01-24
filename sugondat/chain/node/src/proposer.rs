@@ -24,7 +24,10 @@ use cumulus_pallet_parachain_system::relay_state_snapshot::RelayChainStateProof;
 use cumulus_primitives_core::ParaId;
 use cumulus_primitives_parachain_inherent::ParachainInherentData;
 
-use sugondat_primitives::opaque::{Block, Header};
+use sugondat_primitives::{
+    opaque::{Block, Header},
+    MAX_SKIPPED_BLOCKS,
+};
 
 use std::sync::Arc;
 use std::time::Duration;
@@ -115,15 +118,6 @@ where
                 _ => break 'max_skipped true,
             };
             let relay_block_number = paras_inherent_data.validation_data.relay_parent_number;
-
-            // TODO: Change 3600 to 7200 (half a day)
-            // and `n_skipped_blocks = relay_parent_distance.saturating_sub(1)`
-            // when updating to asynchronous backing
-            // https://github.com/thrumdev/blobs/issues/166
-
-            // The accepted error is less than 10^(-2) for an expected
-            // maximum of 3600 skipped blocks (half a day)
-            const MAX_SKIPPED_BLOCKS: u32 = 3600;
 
             let relay_parent_distance = relay_block_number.saturating_sub(last_relay_block_number);
             let n_skipped_blocks = relay_parent_distance.saturating_sub(2) / 2;

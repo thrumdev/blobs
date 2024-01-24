@@ -8,6 +8,22 @@ use sp_runtime::{
 // Maximum Length of the Block in bytes
 pub const MAXIMUM_BLOCK_LENGTH: u32 = 5 * 1024 * 1024;
 
+/// The maximum acceptable number of skipped parachain blocks.
+///
+/// This is not a hard limit, but it should be respected by block proposers
+/// in order to ensure that the error in fee calculations does not exceed
+/// 10^(-2). Blob runtimes use an imperfect approximation of e^x when updating fee
+/// levels after long periods of inactivity. This approximation loses
+/// fidelity when many blocks are skipped.
+/// (https://github.com/thrumdev/blobs/issues/165)
+///
+/// The value of 3600 has been chosen as it is half a day's worth of blocks
+/// at a 12-second block interval.
+// TODO: Change 3600 to 7200 (half a day)
+// when updating to asynchronous backing
+// https://github.com/thrumdev/blobs/issues/166
+pub const MAX_SKIPPED_BLOCKS: BlockNumber = 3600;
+
 /// An index to a block.
 pub type BlockNumber = u32;
 

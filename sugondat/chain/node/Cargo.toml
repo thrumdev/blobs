@@ -27,7 +27,7 @@ serde_json = { workspace = true }
 # Local
 sugondat-test-runtime = { workspace = true }
 sugondat-kusama-runtime = { workspace = true }
-sugondat-primitives = { workspace = true }
+sugondat-primitives = { workspace = true, default-features = true }
 
 # Substrate
 frame-benchmarking = { workspace = true, default-features = true }

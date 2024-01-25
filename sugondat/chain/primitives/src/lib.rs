@@ -57,6 +57,7 @@ pub enum InvalidTransactionCustomError {
     InvalidNamespaceId = 101,
 }
 
+#[cfg(feature = "std")]
 pub fn last_relay_block_number_key() -> Vec<u8> {
     [
         sp_core::twox_128(b"ParachainSystem"),

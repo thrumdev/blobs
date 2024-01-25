@@ -89,12 +89,9 @@ fn test_no_update_when_prev_is_zero() {
 
 #[test]
 fn test_skipped_block_multiplier_update() {
-    // TODO: change max_skipped_blocks to 7200
-    // when updating to asynchronous backing
-    // https://github.com/thrumdev/blobs/issues/166
     new_test_ext().execute_with(|| {
-        let max_skipped_blocks = 3600;
-        for d in (0..max_skipped_blocks).step_by(max_skipped_blocks as usize / 1000) {
+        let max_skipped_blocks = <Test as Config>::MaximumSkippedBlocks::get();
+        for d in (0..max_skipped_blocks).step_by(max_skipped_blocks as usize / 100) {
             // using Multiplier::one() only e^(-vnt) is tested
             NextLengthMultiplier::<Test>::put(Multiplier::one());
             mock::set_last_relay_block_number(1);
@@ -121,6 +118,39 @@ fn test_skipped_block_multiplier_update() {
             //Accepted error is less than 10^(-2)
             assert_eq_error_rate!(mul, expected_mul, Multiplier::from_inner(10000000000000000));
         }
+    });
+}
+
+#[test]
+fn test_max_skipped_block_exceeded() {
+    new_test_ext().execute_with(|| {
+        NextLengthMultiplier::<Test>::put(Multiplier::one());
+        mock::set_last_relay_block_number(1);
+
+        let max_skipped_blocks = <Test as Config>::MaximumSkippedBlocks::get();
+        let relay_data = PersistedValidationData {
+            parent_head: HeadData(vec![]),
+            // The previous relay parent was 10 times greater than the expected MaximumSkippedBlocks.
+            // If the multiplier is updated with that number of skipped blocks
+            // there's should be a significant divergence in the final result.
+            // However, we expect it to be bounded by max_skipped_blocks.
+            relay_parent_number: 1 + 2 + ((max_skipped_blocks * 10) * 2),
+            relay_parent_storage_root: sp_core::H256::zero(),
+            max_pov_size: 0,
+        };
+
+        LengthFeeAdjustment::on_validation_data(&relay_data);
+
+        let mul = NextLengthMultiplier::<Test>::get();
+
+        // calculate expected result using f64::exp and assert on the error rate
+        let target = Multiplier::from(TargetBlockSize::<Test>::get()).to_float();
+        let v = <Test as Config>::AdjustmentVariableBlockSize::get().to_float();
+        let expected_mul =
+            Multiplier::from_float((-1.0 * target * v * max_skipped_blocks as f64).exp());
+
+        //Accepted error is less than 10^(-2)
+        assert_eq_error_rate!(mul, expected_mul, Multiplier::from_inner(10000000000000000));
     });
 }
 

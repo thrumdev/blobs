@@ -7309,6 +7309,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-weights",
+ "sugondat-primitives",
 ]
 
 [[package]]

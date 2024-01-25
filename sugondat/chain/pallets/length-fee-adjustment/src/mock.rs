@@ -87,6 +87,7 @@ parameter_types! {
     // https://github.com/thrumdev/blobs/issues/166
     // Accepted error is less than 10^(-2)
     pub SkippedBlocksNumberTerms: u32 = 3;
+    pub MaximumSkippedBlocks: u32 = sugondat_primitives::MAX_SKIPPED_BLOCKS;
 
     pub static WeightToFee: u64 = 1;
     pub static OperationalFeeMultiplier: u8 = 5;
@@ -130,5 +131,6 @@ impl pallet_sugondat_length_fee_adjustment::Config for Test {
     type MinimumMultiplierBlockSize = MinimumMultiplierBlockSize;
     type MaximumMultiplierBlockSize = MaximumMultiplierBlockSize;
     type SkippedBlocksNumberTerms = SkippedBlocksNumberTerms;
+    type MaximumSkippedBlocks = MaximumSkippedBlocks;
     type LastRelayBlockNumberProvider = MockLastRelayBlockNumberProvider;
 }

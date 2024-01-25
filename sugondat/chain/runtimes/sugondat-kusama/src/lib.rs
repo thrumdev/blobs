@@ -303,6 +303,9 @@ parameter_types! {
     // The accepted error is less than 10^(-2) for an expected
     // maximum of 3600 skipped blocks (half a day)
     pub SkippedBlocksNumberTerms: u32 = 3;
+
+    // Maximum acceptable number of skipped parachain blocks.
+    pub MaximumSkippedBlocks: u32 = sugondat_primitives::MAX_SKIPPED_BLOCKS;
 }
 
 impl pallet_sugondat_length_fee_adjustment::Config for Runtime {
@@ -312,6 +315,7 @@ impl pallet_sugondat_length_fee_adjustment::Config for Runtime {
     type MaximumMultiplierBlockSize = MaximumMultiplierBlockSize;
     type MinimumMultiplierBlockSize = MinimumMultiplierBlockSize;
     type SkippedBlocksNumberTerms = SkippedBlocksNumberTerms;
+    type MaximumSkippedBlocks = MaximumSkippedBlocks;
     type LastRelayBlockNumberProvider = Runtime;
 }
 

@@ -99,13 +99,18 @@ pub mod pallet {
         ///
         /// Here, m represents the number of terms needed to be below the error.
         /// The smallest value of m that satisfies the inequality should be used as the value for this parameter.
-        ///
-        /// The maximum number of skipped blocks is used to ensure that only the right amount of terms is used,
-        /// and no terms are wasted. If n is exceeded, the approximation could diverge significantly from the actual value of e^x.
-        /// This means that producing a block at most every n skipped blocks should be enforced to avoid falling into this error.
         #[pallet::constant]
         type SkippedBlocksNumberTerms: Get<u32>;
 
+        /// The maximum number of skipped blocks is used to ensure that only the right amount of terms is used
+        /// and no terms are wasted. If n is exceeded, the approximation could diverge significantly from the actual value of e^x.
+        /// If the number of skipped blocks exceeds this value, it will be bounded to this value.
+        /// However, this limitation comes at the cost of losing the real fee adjustment update.
+        /// Therefore, producing a block at most every n skipped blocks should be enforced to avoid falling into this circumstance.
+        #[pallet::constant]
+        type MaximumSkippedBlocks: Get<u32>;
+
+        /// A source to provide the relay-parent number of the previous block.
         type LastRelayBlockNumberProvider: LastRelayBlockNumberProvider;
     }
 
@@ -243,10 +248,11 @@ pub mod pallet {
             // However, saturating it to zero will prevent the multiplier from changing
             let relay_parent_distance = relay_block_number.saturating_sub(prev_relay_block_number);
 
-            // TODO: update with `n_skipped_blocks = relay_parent_distance.saturating_sub(1)`
+            // TODO: update with `relay_parent_distance.saturating_sub(1)`
             // when updating to asynchronous backing
             // https://github.com/thrumdev/blobs/issues/166
-            let n_skipped_blocks = relay_parent_distance.saturating_sub(2) / 2;
+            let n_skipped_blocks =
+                (relay_parent_distance.saturating_sub(2) / 2).min(T::MaximumSkippedBlocks::get());
 
             let n_skipped_blocks = Multiplier::saturating_from_integer(n_skipped_blocks);
             let target_block_size = Multiplier::from(TargetBlockSize::<T>::get());

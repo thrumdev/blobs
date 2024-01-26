@@ -27,7 +27,8 @@ RUN \
         cmake \
         make \
         libssl-dev \
-        pkg-config
+        pkg-config \
+        docker-compose-plugin
 
 RUN \
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain $RUSTC_VERSION

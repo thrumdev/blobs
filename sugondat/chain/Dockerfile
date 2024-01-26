@@ -37,6 +37,7 @@ RUN \
 RUN \
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain $RUSTC_VERSION
 RUN $CARGO_HOME/bin/rustup target add wasm32-unknown-unknown
+RUN $CARGO_HOME/bin/rustup component add rust-src
 
 WORKDIR /sugondat
 COPY . /sugondat

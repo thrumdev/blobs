@@ -34,6 +34,7 @@ RUN \
 ENV PATH=$CARGO_HOME/bin:$PATH
 
 RUN rustup target add wasm32-unknown-unknown
+RUN rustup component add rust-src
 
 # Install cargo binstall, using it install cargo-risczero, and using it install risc0 toolchain.
 RUN curl \

@@ -31,3 +31,19 @@ jobs:
         run: cargo build --verbose --all
       - name: cargo test
         run: cargo test --verbose --all
+  docker_build:
+    name: docker build
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v3
+      - name: Start Docker Daemon
+        run: |
+          dockerd &
+      - name: Wait for Docker Daemon to start
+        run: |
+          until docker info; do
+            echo "Waiting for Docker daemon to start..."
+            sleep 1
+          done
+      - name: Build docker image
+        run: docker compose -f docker/docker-compose.yml build

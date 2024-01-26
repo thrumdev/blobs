@@ -27,13 +27,15 @@ RUN \
         cmake \
         make \
         libssl-dev \
-        pkg-config
+        pkg-config \
+        docker-compose-plugin
 
 RUN \
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain $RUSTC_VERSION
 ENV PATH=$CARGO_HOME/bin:$PATH
 
 RUN rustup target add wasm32-unknown-unknown
+RUN rustup component add rust-src
 
 # Install cargo binstall, using it install cargo-risczero, and using it install risc0 toolchain.
 RUN curl \

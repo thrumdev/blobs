@@ -1,5 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+pub mod namespace;
+
 use sp_runtime::{
     traits::{IdentifyAccount, Verify},
     MultiSignature,

@@ -30,8 +30,6 @@ sugondat-nmt = { workspace = true }
 
 [dev-dependencies]
 sugondat-nmt = { workspace = true, default-features = true }
-quickcheck = { workspace = true }
-quickcheck_macros = { workspace = true }
 
 # Substrate
 sp-core = { workspace = true }

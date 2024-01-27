@@ -12,6 +12,7 @@ edition.workspace = true
 [dependencies]
 sugondat-nmt = { workspace = true, default-features = true, features = ["serde"] }
 sugondat-subxt = { workspace = true }
+sugondat-primitives = { workspace = true, default-features = true }
 sugondat-shim-common-sovereign = { workspace = true, default-features = true, features = ["server"] }
 sugondat-shim-common-rollkit = { workspace = true }
 

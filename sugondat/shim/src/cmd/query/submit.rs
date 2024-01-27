@@ -38,7 +38,7 @@ fn read_blob(path: &str) -> anyhow::Result<Vec<u8>> {
     Ok(blob)
 }
 
-/// Reads the namespace from a given namespace specifier.
+/// Reads the namespace from a given namespace specifier and checks its validity against known schemas.
 ///
 /// The original namespace format is a 16-byte vector. so we support both the original format and
 /// a more human-readable format, which is an unsigned 128-bit integer. To distinguish between the
@@ -46,16 +46,23 @@ fn read_blob(path: &str) -> anyhow::Result<Vec<u8>> {
 ///
 /// The integer is interpreted as big-endian.
 fn read_namespace(namespace: &str) -> anyhow::Result<sugondat_nmt::Namespace> {
-    if let Some(hex) = namespace.strip_prefix("0x") {
-        let namespace = hex::decode(hex)?;
-        let namespace: [u8; 16] = namespace.try_into().map_err(|e: Vec<u8>| {
-            anyhow::anyhow!("namespace must be 16 bytes long, but was {}", e.len())
-        })?;
-        return Ok(sugondat_nmt::Namespace::from_raw_bytes(namespace));
-    }
+    let namespace = match namespace.strip_prefix("0x") {
+        Some(hex) => {
+            let namespace = hex::decode(hex)?;
+            let namespace: [u8; 16] = namespace.try_into().map_err(|e: Vec<u8>| {
+                anyhow::anyhow!("namespace must be 16 bytes long, but was {}", e.len())
+            })?;
+            sugondat_nmt::Namespace::from_raw_bytes(namespace)
+        }
+        None => {
+            let namespace = namespace
+                .parse::<u128>()
+                .with_context(|| format!("cannot parse namespace id '{}'", namespace))?;
+            sugondat_nmt::Namespace::from_u128_be(namespace)
+        }
+    };
 
-    let namespace_id = namespace
-        .parse::<u128>()
-        .with_context(|| format!("cannot parse namespace id '{}'", namespace))?;
-    Ok(sugondat_nmt::Namespace::from_u128_be(namespace_id))
+    sugondat_primitives::namespace::validate(&namespace.to_raw_bytes())
+        .map_err(|e| anyhow::anyhow!("cannot validate the namespace, {}", e))?;
+    Ok(namespace)
 }

@@ -7277,8 +7277,6 @@ dependencies = [
  "frame-support",
  "frame-system",
  "parity-scale-codec",
- "quickcheck",
- "quickcheck_macros",
  "scale-info",
  "sha2 0.10.8",
  "sp-core",
@@ -13478,6 +13476,8 @@ name = "sugondat-primitives"
 version = "0.1.0"
 dependencies = [
  "parity-scale-codec",
+ "quickcheck",
+ "quickcheck_macros",
  "sp-consensus-aura",
  "sp-core",
  "sp-runtime",
@@ -13509,6 +13509,7 @@ dependencies = [
  "subxt",
  "subxt-signer",
  "sugondat-nmt",
+ "sugondat-primitives",
  "sugondat-shim-common-rollkit",
  "sugondat-shim-common-sovereign",
  "sugondat-subxt",

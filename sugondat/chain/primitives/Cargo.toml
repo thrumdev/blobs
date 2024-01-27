@@ -16,6 +16,10 @@ sp-runtime = { workspace = true }
 sp-core = { workspace = true }
 sp-consensus-aura = { workspace = true }
 
+[dev-dependencies]
+quickcheck = { workspace = true }
+quickcheck_macros = { workspace = true }
+
 [features]
 default = ["std"]
 std = ["parity-scale-codec/std", "sp-runtime/std", "sp-core/std", "sp-consensus-aura/std"]

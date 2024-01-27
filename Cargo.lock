@@ -13509,6 +13509,7 @@ dependencies = [
  "subxt",
  "subxt-signer",
  "sugondat-nmt",
+ "sugondat-primitives",
  "sugondat-shim-common-rollkit",
  "sugondat-shim-common-sovereign",
  "sugondat-subxt",

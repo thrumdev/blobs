@@ -62,11 +62,11 @@ impl Client {
     /// Blocks until the sugondat node has finalized a block at the given height. Returns
     /// the block hash of the block at the given height.
     #[tracing::instrument(level = Level::DEBUG, skip(self))]
-    pub async fn wait_finalized_height(&self, height: u64) -> [u8; 32] {
+    pub async fn await_finalized_height(&self, height: u64) -> [u8; 32] {
         tracing::info!("Waiting for block at height: {}", height);
         loop {
             let conn = self.connector.ensure_connected().await;
-            match conn.finalized.wait_until_finalized(self, height).await {
+            match conn.finalized.await_finalized(self, height).await {
                 Some(block_hash) => return block_hash,
                 None => {
                     // The watcher task has terminated. Reset the connection and retry.
@@ -111,7 +111,7 @@ impl Client {
     /// Returns the block hash of the block at the given height,
     /// automatically retrying until it succeeds.
     /// `None` indicates the best block.
-    pub async fn wait_block_hash(&self, height: u64) -> [u8; 32] {
+    pub async fn await_block_hash(&self, height: u64) -> [u8; 32] {
         loop {
             match self.block_hash(height).await {
                 Ok(Some(res)) => break res,
@@ -155,7 +155,7 @@ impl Client {
     /// Returns the header and the body of the block with the given hash,
     /// automatically retrying until it succeeds.
     /// `None` indicates the best block.
-    async fn wait_header_and_extrinsics(
+    async fn await_header_and_extrinsics(
         &self,
         block_hash: Option<[u8; 32]>,
     ) -> (Header, Vec<sugondat_subxt::ExtrinsicDetails>) {
@@ -189,8 +189,8 @@ impl Client {
     ///
     /// `None` indicates that the best block should be used.
     #[tracing::instrument(level = Level::DEBUG, skip(self))]
-    pub async fn wait_block_at(&self, block_hash: Option<[u8; 32]>) -> anyhow::Result<Block> {
-        Block::from_header_and_extrinsics(self.wait_header_and_extrinsics(block_hash).await)
+    pub async fn await_block_at(&self, block_hash: Option<[u8; 32]>) -> anyhow::Result<Block> {
+        Block::from_header_and_extrinsics(self.await_header_and_extrinsics(block_hash).await)
     }
 
     /// Submit a blob with the given namespace and signed with the given key. The block is submitted
@@ -325,7 +325,7 @@ impl FinalizedHeadWatcher {
 
     /// Wait until the sugondat node has finalized a block at the given height. Returns the block
     /// hash of that finalized block, or `None` in case the watcher task has terminated.
-    async fn wait_until_finalized(&self, client: &Client, height: u64) -> Option<[u8; 32]> {
+    async fn await_finalized(&self, client: &Client, height: u64) -> Option<[u8; 32]> {
         let mut rx = self.rx.clone();
         let (finalized_height, block_hash) = loop {
             if let Err(_) = rx.changed().await {

@@ -75,9 +75,9 @@ RUN curl -sL https://deb.nodesource.com/setup_20.x | bash -
 RUN apt-get install -y nodejs multitail
 RUN npm install -g @zombienet/cli
 
-COPY --from=parity/polkadot:v1.4.0 /usr/bin/polkadot /usr/bin/
-COPY --from=parity/polkadot:v1.4.0 /usr/lib/polkadot/polkadot-prepare-worker /usr/bin/
-COPY --from=parity/polkadot:v1.4.0 /usr/lib/polkadot/polkadot-execute-worker /usr/bin/
+COPY --from=parity/polkadot:v1.6.0 /usr/bin/polkadot /usr/bin/
+COPY --from=parity/polkadot:v1.6.0 /usr/lib/polkadot/polkadot-prepare-worker /usr/bin/
+COPY --from=parity/polkadot:v1.6.0 /usr/lib/polkadot/polkadot-execute-worker /usr/bin/
 
 COPY ./testnet.toml /testnet.toml
 

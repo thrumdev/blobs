@@ -1,0 +1,9 @@
+services:
+  sov-tests:
+    build:
+      context: ..
+      dockerfile: ./demo/sovereign/docker/Dockerfile
+    entrypoint: ./test_create_token.sh
+    # Use the same network as the `sov` service. This would make the sovereign RPC available for
+    # sov-cli.
+    network_mode: "service:sov"

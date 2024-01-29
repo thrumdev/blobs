@@ -12,8 +12,6 @@ services:
       context: ..
       dockerfile: ./sugondat/chain/Dockerfile
       target: zombienet
-    ports:
-      - "9988:9988"
     # Mount /zombienet as tmpfs so as to avoid zombienet prompting if it should ignore existing
     # directory.
     tmpfs: /zombienet

@@ -56,7 +56,9 @@ RUN \
     apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
         libssl-dev \
-        pkg-config
+        pkg-config \
+        curl \
+        jq
 
 ENV TINI_VERSION v0.19.0
 ARG TARGETARCH

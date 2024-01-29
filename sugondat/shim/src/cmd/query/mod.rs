@@ -26,7 +26,7 @@ pub async fn get_block_at(
         BlockRef::Best => None,
         BlockRef::Hash(h) => Some(h),
         BlockRef::Number(n) => Some(match block.wait {
-            true => client.wait_block_hash(n).await,
+            true => client.await_block_hash(n).await,
             false => client
                 .block_hash(n)
                 .await?
@@ -35,7 +35,7 @@ pub async fn get_block_at(
     };
 
     match block.wait {
-        true => client.wait_block_at(maybe_hash).await,
+        true => client.await_block_at(maybe_hash).await,
         false => client.get_block_at(maybe_hash).await,
     }
 }

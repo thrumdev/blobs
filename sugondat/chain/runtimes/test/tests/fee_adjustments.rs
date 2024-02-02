@@ -15,7 +15,7 @@ use sugondat_test_runtime::{
     AdjustmentVariableBlockFullness, AdjustmentVariableBlockSize, LengthFeeAdjustment,
     MinimumMultiplierBlockFullness, MinimumMultiplierBlockSize, Runtime,
     RuntimeBlockWeights as BlockWeights, SlowAdjustingFeeUpdate, System, TargetBlockFullness,
-    TransactionPayment, CENTS, DAYS, MILLICENTS,
+    TransactionPayment, CENTS, DAYS, MILLICENTS, NORMAL_DISPATCH_RATIO,
 };
 
 // The following tests check if the parameters used to define
@@ -134,7 +134,10 @@ impl MultiplierType {
     fn target_percentage(&self) -> Multiplier {
         match self {
             MultiplierType::Length => TargetBlockSize::<Runtime>::get().into(),
-            MultiplierType::Fee => TargetBlockFullness::get().into(),
+            MultiplierType::Fee => {
+                Multiplier::from(TargetBlockFullness::get())
+                    * Multiplier::from_perbill(NORMAL_DISPATCH_RATIO)
+            }
         }
     }
 
@@ -236,11 +239,7 @@ fn multiplier_cannot_go_below_limit() {
 
 #[test]
 fn time_to_reach_zero() {
-    // TODO: 1440 needs to be used instead of 7200
-    // when updating to asynchronous backing
-    // https://github.com/thrumdev/blobs/issues/166
-    //
-    // blocks per 24h in cumulus-node: 7200 (k)
+    // blocks per 24h in cumulus-node: 14400 (k)
     // s* = 0.1875 (TargetBlockFullness) or 0.16 (TargetBlockSize)
     // The bound from the research in an empty chain is:
     // v <~ (p / k(0 - s*))
@@ -251,9 +250,9 @@ fn time_to_reach_zero() {
     // 1 / (v * s*) < k
     //
     // if s* = 0.1875
-    //  then k > 71_111 ~ 9.8 days
+    //  then k > 71_111 ~ 4.3 days
     // else s* = 0.16
-    //  then k > 83_333 ~ 11.5 days
+    //  then k > 10_500 ~ 0.72 days
 
     let test = |mul_type: MultiplierType| {
         mul_type.run_with(Weight::zero(), || {
@@ -283,11 +282,7 @@ fn time_to_reach_zero() {
 
 #[test]
 fn time_to_reach_one() {
-    // TODO: 1440 needs to ne used insted of 7200
-    // when updating to asynchronous backing
-    // https://github.com/thrumdev/blobs/issues/166
-    //
-    // blocks per 24h in cumulus-node: 7200 (k)
+    // blocks per 24h in cumulus-node: 14400 (k)
     // s* = 0.1875 (TargetBlockFullness) or 0.16 (TargetBlockSize)
     // The bound from the research in an full chain is:
     // v <~ (p / k(1 - s*))
@@ -297,9 +292,9 @@ fn time_to_reach_one() {
     // k < 1 / (v * (1 - s*))
 
     // if s* = 0.1875
-    //  then k > 17_778 ~ 2.47 days
+    //  then k > 16_410 ~ 1.3 days
     // else s* = 0.16
-    //  then k > 1000 ~ 3.3 hours
+    //  then k > 2000 ~ 3.3 hours
 
     let test = |mul_type: MultiplierType| {
         mul_type.run_with(mul_type.max(), || {
@@ -340,14 +335,10 @@ fn min_change_per_day() {
                 let next = mul_type.runtime_multiplier_update(fm);
                 fm = next;
             }
-            // TODO: 1440 needs to ne used insted of 7200
-            // when updating to asynchronous backing
-            // https://github.com/thrumdev/blobs/issues/166
-            //
-            // 7200 blocks per day with one 12 seconds blocks
+            // 14400 blocks per day with one 6 seconds blocks
             // v * k * (1 - s)
             let expected = mul_type.adjustment_variable()
-                * Multiplier::saturating_from_integer(7200)
+                * Multiplier::saturating_from_integer(14400)
                 * (Multiplier::saturating_from_integer(1) - mul_type.target_percentage());
             assert!(fm > expected);
         })

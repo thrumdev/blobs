@@ -96,12 +96,9 @@ fn test_skipped_block_multiplier_update() {
             NextLengthMultiplier::<Test>::put(Multiplier::one());
             mock::set_last_relay_block_number(1);
 
-            // TODO: update with `1 + d`
-            // when updating to asynchronous backing
-            // https://github.com/thrumdev/blobs/issues/166
             let relay_data = PersistedValidationData {
                 parent_head: HeadData(vec![]),
-                relay_parent_number: 1 + 2 + d * 2, // extra 1 is because last rp was 1
+                relay_parent_number: 1 + 1 + d, // extra 1 is because last rp was 1
                 relay_parent_storage_root: sp_core::H256::zero(),
                 max_pov_size: 0,
             };

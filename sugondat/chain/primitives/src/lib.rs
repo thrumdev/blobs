@@ -19,12 +19,9 @@ pub const MAXIMUM_BLOCK_LENGTH: u32 = 5 * 1024 * 1024;
 /// fidelity when many blocks are skipped.
 /// (https://github.com/thrumdev/blobs/issues/165)
 ///
-/// The value of 3600 has been chosen as it is half a day's worth of blocks
-/// at a 12-second block interval.
-// TODO: Change 3600 to 7200 (half a day)
-// when updating to asynchronous backing
-// https://github.com/thrumdev/blobs/issues/166
-pub const MAX_SKIPPED_BLOCKS: BlockNumber = 3600;
+/// The value of 7200 has been chosen as it is half a day's worth of blocks
+/// at a 6-second block interval.
+pub const MAX_SKIPPED_BLOCKS: BlockNumber = 7200;
 
 /// An index to a block.
 pub type BlockNumber = u32;

@@ -66,6 +66,7 @@ xcm-executor = { workspace = true }
 
 # Cumulus
 cumulus-pallet-aura-ext = { workspace = true }
+cumulus-primitives-aura = { workspace = true }
 cumulus-pallet-parachain-system = { workspace = true, features = ["parameterized-consensus-hook"] }
 cumulus-pallet-session-benchmarking = { workspace = true }
 cumulus-pallet-xcm = { workspace = true }
@@ -91,6 +92,7 @@ std = [
 	"cumulus-pallet-xcmp-queue/std",
 	"cumulus-primitives-core/std",
 	"cumulus-primitives-utility/std",
+	"cumulus-primitives-aura/std",
 	"frame-benchmarking?/std",
 	"frame-executive/std",
 	"frame-support/std",

@@ -78,13 +78,10 @@ impl pallet_balances::Config for Test {
 parameter_types! {
     pub TransactionByteFee: Balance = 333333u64;
     pub MaximumBlockLength: u32 = 5 * 1024 * 1024;
-    pub AdjustmentVariableBlockSize: Multiplier = Multiplier::saturating_from_rational(1, 840);
+    pub AdjustmentVariableBlockSize: Multiplier = Multiplier::saturating_from_rational(1, 1680);
     pub MinimumMultiplierBlockSize: Multiplier = Multiplier::saturating_from_rational(1, 200u128);
     pub MaximumMultiplierBlockSize: Multiplier = Multiplier::saturating_from_integer(10);
 
-    // TODO: NumberTerms neets to be changed 5
-    // when updating to asynchronous backing
-    // https://github.com/thrumdev/blobs/issues/166
     // Accepted error is less than 10^(-2)
     pub SkippedBlocksNumberTerms: u32 = 3;
     pub MaximumSkippedBlocks: u32 = sugondat_primitives::MAX_SKIPPED_BLOCKS;

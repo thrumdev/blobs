@@ -6,7 +6,7 @@ pub mod consensus {
 
     /// Maximum number of blocks simultaneously accepted by the Runtime, not yet included
     /// into the relay chain.
-    pub const UNINCLUDED_SEGMENT_CAPACITY: u32 = 1;
+    pub const UNINCLUDED_SEGMENT_CAPACITY: u32 = 3;
     /// How many parachain blocks are processed by the relay chain per parent. Limits the
     /// number of blocks authored per slot.
     pub const BLOCK_PROCESSING_VELOCITY: u32 = 1;
@@ -19,7 +19,7 @@ pub mod consensus {
     /// slot_duration()`.
     ///
     /// Change this to adjust the block time.
-    pub const MILLISECS_PER_BLOCK: u64 = 12000;
+    pub const MILLISECS_PER_BLOCK: u64 = 6000;
     pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 
     // Time is measured by number of blocks.
@@ -34,6 +34,7 @@ pub mod consensus {
     /// Operational  extrinsics.
     pub const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 
+    // TODO: why 0.5 and not 2??
     /// We allow for 0.5 seconds of compute with a 6 second average block time.
     pub const MAXIMUM_BLOCK_WEIGHT: Weight = Weight::from_parts(
         WEIGHT_REF_TIME_PER_SECOND.saturating_div(2),

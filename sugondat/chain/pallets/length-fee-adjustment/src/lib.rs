@@ -248,11 +248,9 @@ pub mod pallet {
             // However, saturating it to zero will prevent the multiplier from changing
             let relay_parent_distance = relay_block_number.saturating_sub(prev_relay_block_number);
 
-            // TODO: update with `relay_parent_distance.saturating_sub(1)`
-            // when updating to asynchronous backing
-            // https://github.com/thrumdev/blobs/issues/166
-            let n_skipped_blocks =
-                (relay_parent_distance.saturating_sub(2) / 2).min(T::MaximumSkippedBlocks::get());
+            let n_skipped_blocks = relay_parent_distance
+                .saturating_sub(1)
+                .min(T::MaximumSkippedBlocks::get());
 
             let n_skipped_blocks = Multiplier::saturating_from_integer(n_skipped_blocks);
             let target_block_size = Multiplier::from(TargetBlockSize::<T>::get());

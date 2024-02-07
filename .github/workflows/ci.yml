@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Install rustfmt from the rust stable toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -26,7 +26,7 @@ jobs:
     name: Sugondat - latest
     runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: cargo build
         run: cargo build --verbose --all
       - name: cargo test
@@ -35,7 +35,7 @@ jobs:
     name: docker build
     runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Start Docker Daemon
         run: |
           dockerd &

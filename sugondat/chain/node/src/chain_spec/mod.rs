@@ -3,9 +3,10 @@ use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
 use sp_core::{sr25519, Pair, Public};
-use sp_runtime::traits::{IdentifyAccount, Verify};
+use sp_runtime::{traits::{IdentifyAccount, Verify}, Perquintill};
+use sugondat_kusama_runtime::Runtime;
 use sugondat_primitives::{AccountId, AuraId, Signature};
-use sugondat_test_runtime::EXISTENTIAL_DEPOSIT as TEST_EXISTENTIAL_DEPOSIT;
+use sugondat_test_runtime::{Runtime as TestRuntime,Multiplier, EXISTENTIAL_DEPOSIT as TEST_EXISTENTIAL_DEPOSIT};
 
 pub type GenericChainSpec = sc_service::GenericChainSpec<(), Extensions>;
 
@@ -122,6 +123,8 @@ pub fn development_config() -> TestRuntimeChainSpec {
         ],
         get_account_id_from_seed::<sr25519::Public>("Alice"),
         1000.into(),
+        None,
+        None
     ))
     .build()
 }
@@ -164,6 +167,8 @@ pub fn kusama_staging_config() -> KusamaRuntimeChainSpec {
         vec![], // no endowed accounts - must teleport.
         get_account_id_from_seed::<sr25519::Public>("Alice"),
         KUSAMA_PARA_ID.into(),
+        None,
+        None
     ))
     .build()
 }
@@ -216,6 +221,8 @@ pub fn local_testnet_config() -> TestRuntimeChainSpec {
         ],
         get_account_id_from_seed::<sr25519::Public>("Alice"),
         1000.into(),
+        None,
+        None
     ))
     .build()
 }
@@ -225,6 +232,8 @@ fn test_runtime_genesis_patch(
     endowed_accounts: Vec<AccountId>,
     root: AccountId,
     id: ParaId,
+    next_len_mult: Option<Multiplier>,
+    target_block_size: Option<Perquintill>
 ) -> serde_json::Value {
     serde_json::json! ({
         "balances": {
@@ -252,7 +261,11 @@ fn test_runtime_genesis_patch(
         "polkadotXcm": {
             "safeXcmVersion": Some(SAFE_XCM_VERSION),
         },
-        "sudo": { "key": Some(root) }
+        "sudo": { "key": Some(root) },
+        "pallet-sugondat-length-fee-adjustment": {
+            "next_length_multiplier": next_len_mult,
+            "target_block_size": target_block_size
+        }
     })
 }
 
@@ -261,6 +274,8 @@ fn kusama_runtime_genesis_patch(
     endowed_accounts: Vec<AccountId>,
     root: AccountId,
     id: ParaId,
+    next_len_mult: Option<Multiplier>,
+    target_block_size: Option<Perquintill>
 ) -> serde_json::Value {
     serde_json::json! ({
         "balances": {
@@ -288,6 +303,10 @@ fn kusama_runtime_genesis_patch(
         "polkadotXcm": {
             "safeXcmVersion": Some(SAFE_XCM_VERSION),
         },
-        "sudo": { "key": Some(root) }
+        "sudo": { "key": Some(root) },
+        "pallet-sugondat-length-fee-adjustment": {
+            "next_length_multiplier": next_len_mult,
+            "target_block_size": target_block_size
+        }
     })
 }

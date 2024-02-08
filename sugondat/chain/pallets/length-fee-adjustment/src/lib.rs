@@ -55,6 +55,7 @@ pub mod pallet {
     use frame_system::pallet_prelude::*;
     use pallet_transaction_payment::{Multiplier, OnChargeTransaction};
     use polkadot_primitives::v6::{BlockNumber as RelayChainBlockNumber, PersistedValidationData};
+    use sp_arithmetic::FixedU128;
     use sp_runtime::{
         traits::{Get, One, Zero},
         FixedPointNumber, Perquintill, SaturatedConversion, Saturating,
@@ -138,6 +139,26 @@ pub mod pallet {
     #[pallet::storage]
     pub type TargetBlockSize<T: Config> =
         StorageValue<_, Perquintill, ValueQuery, TargetBlockSizeDefault>;
+
+    #[pallet::genesis_config]
+    #[derive(frame_support::DefaultNoBound)]
+    pub struct GenesisConfig<T: Config> {
+        pub next_length_multiplier: Option<FixedU128>,
+        pub target_block_size: Option<Perquintill>,
+        _phantom: PhantomData<T>,
+    }
+
+    #[pallet::genesis_build]
+    impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
+        fn build(&self) {
+            if let Some(next_len_mult) = self.next_length_multiplier {
+                NextLengthMultiplier::<T>::put(next_len_mult)
+            }
+            if let Some(target_block_size) = self.target_block_size {
+                TargetBlockSize::<T>::put(target_block_size)
+            }
+        }
+    }
 
     #[pallet::hooks]
     impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {

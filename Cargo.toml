@@ -21,7 +21,8 @@ members = [
     "sugondat/shim",
     "sugondat/shim/common/rollkit",
     "sugondat/shim/common/sovereign",
-    "sugondat/subxt-autogen"
+    "sugondat/subxt-autogen",
+    "xtask"
 ]
 
 [workspace.package]
@@ -177,3 +178,6 @@ sugondat-kusama-runtime = { path = "sugondat/chain/runtimes/sugondat-kusama" }
 sugondat-primitives = { path = "sugondat/chain/primitives", default-features = false }
 pallet-sugondat-blobs = { path = "sugondat/chain/pallets/blobs", default-features = false }
 pallet-sugondat-length-fee-adjustment = { path = "sugondat/chain/pallets/length-fee-adjustment", default-features = false }
+
+# xtask
+duct = { version = "0.13.7" }

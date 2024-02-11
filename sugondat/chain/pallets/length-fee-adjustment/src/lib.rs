@@ -140,13 +140,13 @@ pub mod pallet {
     pub type TargetBlockSize<T: Config> =
         StorageValue<_, Perquintill, ValueQuery, TargetBlockSizeDefault>;
 
-    /// Genesis config for setting up `NextLengthMultiplier` and `TargetBlockSize` storage.
+    /// Genesis config for setting up `NextLengthMultiplier` and `TargetBlockSize` storage values.
     /// Set None if the default values `NextLengthMultiplierDefault` & `TargetBlockSizeDefault` are to be used.
     #[pallet::genesis_config]
     #[derive(frame_support::DefaultNoBound)]
     pub struct GenesisConfig<T: Config> {
         /// Genesis set up for next length multiplier storage item
-        pub next_length_multiplier: Option<FixedU128>,
+        pub next_length_multiplier: Option<Multiplier>,
         /// Genesis set up for target_block_size storage item
         pub target_block_size: Option<Perquintill>,
         _phantom: PhantomData<T>,

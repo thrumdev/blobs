@@ -21,7 +21,6 @@ use sp_runtime::{
     transaction_validity::{TransactionSource, TransactionValidity},
     ApplyExtrinsicResult, FixedPointNumber, Perquintill,
 };
-pub use pallet_transaction_payment::Multiplier;
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
@@ -53,7 +52,7 @@ use sugondat_primitives::{AccountId, AuraId, Balance, BlockNumber, Nonce, Signat
 pub use sp_runtime::{MultiAddress, Perbill, Permill};
 use xcm_config::{RelayLocation, XcmOriginToTransactDispatchOrigin};
 
-use pallet_transaction_payment::TargetedFeeAdjustment;
+pub use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
 
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;

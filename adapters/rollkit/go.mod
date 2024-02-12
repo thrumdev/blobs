@@ -1,4 +1,4 @@
-module sugondat
+module ikura
 
 go 1.21
 

@@ -1,5 +1,5 @@
 [da]
-sugondat_rpc = "ws://localhost:10995/"
+ikura_rpc = "ws://localhost:10995/"
 rpc_timeout_seconds = 180
 
 [storage]

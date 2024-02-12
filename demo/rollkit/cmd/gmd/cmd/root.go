@@ -42,7 +42,7 @@ import (
 	"gm/app"
 	appparams "gm/app/params"
 
-	"sugondat"
+	"ikura"
 )
 
 // NewRootCmd creates a new root command for a Cosmos SDK application
@@ -106,7 +106,7 @@ func initRootCmd(
 	rootCmd *cobra.Command,
 	encodingConfig appparams.EncodingConfig,
 ) {
-	sugondat.Register()
+	ikura.Register()
 
 	// Set config
 	initSDKConfig()

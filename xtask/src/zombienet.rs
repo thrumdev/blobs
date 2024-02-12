@@ -38,9 +38,9 @@ impl Zombienet {
         )?;
 
         check_binary(
-            "sugondat-node",
-            "'sugondat-node' is not found in PATH.  \n \
-             cd to 'sugondat/chain' and run 'cargo build --release' and add the result into your PATH."
+            "ikura-node",
+            "'ikura-node' is not found in PATH.  \n \
+             cd to 'ikura/chain' and run 'cargo build --release' and add the result into your PATH."
         )?;
 
         tracing::info!("Zombienet logs redirected to {}", params.log_path);

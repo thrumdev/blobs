@@ -11,17 +11,17 @@ debug = 0
 [workspace]
 resolver = "2"
 members = [
-    "sugondat/chain/node",
-    "sugondat/chain/pallets/*",
-    "sugondat/chain/runtimes/*",
-    "sugondat/chain/primitives",
+    "ikura/chain/node",
+    "ikura/chain/pallets/*",
+    "ikura/chain/runtimes/*",
+    "ikura/chain/primitives",
     "adapters/sovereign",
-    "sugondat/nmt",
-    "sugondat/serde-util",
-    "sugondat/shim",
-    "sugondat/shim/common/rollkit",
-    "sugondat/shim/common/sovereign",
-    "sugondat/subxt-autogen",
+    "ikura/nmt",
+    "ikura/serde-util",
+    "ikura/shim",
+    "ikura/shim/common/rollkit",
+    "ikura/shim/common/sovereign",
+    "ikura/subxt-autogen",
     "xtask"
 ]
 
@@ -168,16 +168,16 @@ bytes = { version = "1", features = ["serde"] }
 digest = "0.10.7"
 
 # Local
-sugondat-serde-util = { path = "sugondat/serde-util" }
-sugondat-nmt = { path = "sugondat/nmt", default-features = false }
-sugondat-subxt = { path = "sugondat/subxt-autogen" }
-sugondat-shim-common-sovereign = { path = "sugondat/shim/common/sovereign", default-features = false }
-sugondat-shim-common-rollkit = { path = "sugondat/shim/common/rollkit" }
-sugondat-test-runtime = { path = "sugondat/chain/runtimes/test" }
-sugondat-kusama-runtime = { path = "sugondat/chain/runtimes/sugondat-kusama" }
-sugondat-primitives = { path = "sugondat/chain/primitives", default-features = false }
-pallet-sugondat-blobs = { path = "sugondat/chain/pallets/blobs", default-features = false }
-pallet-sugondat-length-fee-adjustment = { path = "sugondat/chain/pallets/length-fee-adjustment", default-features = false }
+ikura-serde-util = { path = "ikura/serde-util" }
+ikura-nmt = { path = "ikura/nmt", default-features = false }
+ikura-subxt = { path = "ikura/subxt-autogen" }
+ikura-shim-common-sovereign = { path = "ikura/shim/common/sovereign", default-features = false }
+ikura-shim-common-rollkit = { path = "ikura/shim/common/rollkit" }
+ikura-test-runtime = { path = "ikura/chain/runtimes/test" }
+ikura-kusama-runtime = { path = "ikura/chain/runtimes/ikura-kusama" }
+ikura-primitives = { path = "ikura/chain/primitives", default-features = false }
+pallet-ikura-blobs = { path = "ikura/chain/pallets/blobs", default-features = false }
+pallet-ikura-length-fee-adjustment = { path = "ikura/chain/pallets/length-fee-adjustment", default-features = false }
 
 # xtask
 duct = { version = "0.13.7" }

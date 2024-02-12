@@ -20,7 +20,7 @@ id = 100
 
   [parachains.collator]
   name = "collator01"
-  command = "sugondat-node"
+  command = "ikura-node"
   ws_port = 9988
   rpc_port = 31200
   args = ["--state-pruning=archive"]

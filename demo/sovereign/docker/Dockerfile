@@ -37,10 +37,10 @@ COPY --from=risczero $CARGO_HOME/bin/cargo-risczero $CARGO_HOME/bin/cargo-riscze
 COPY --from=risczero $CARGO_HOME/bin/r0vm $CARGO_HOME/bin/r0vm
 COPY --from=risczero /rustup/toolchains/risc0 $RUSTUP_HOME/toolchains/risc0
 
-WORKDIR /sugondat
-COPY . /sugondat
+WORKDIR /ikura
+COPY . /ikura
 
-ENV CONSTANTS_MANIFEST=/sugondat/demo/sovereign/constants.json
+ENV CONSTANTS_MANIFEST=/ikura/demo/sovereign/constants.json
 RUN \
     --mount=type=cache,id=demo-sovereign,target=/cargo/git \
     --mount=type=cache,id=demo-sovereign,target=/cargo/registry \
@@ -66,9 +66,9 @@ RUN chmod +x /tini
 COPY --from=builder /usr/bin/sov-demo-rollup /usr/bin/sov-demo-rollup
 COPY --from=builder /usr/bin/sov-cli /usr/bin/sov-cli
 
-COPY ./demo/sovereign /sugondat/demo/sovereign
-COPY ./demo/sovereign/docker/rollup_config.docker.toml /sugondat/demo/sovereign/demo-rollup/rollup_config.toml
-WORKDIR /sugondat/demo/sovereign/demo-rollup
+COPY ./demo/sovereign /ikura/demo/sovereign
+COPY ./demo/sovereign/docker/rollup_config.docker.toml /ikura/demo/sovereign/demo-rollup/rollup_config.toml
+WORKDIR /ikura/demo/sovereign/demo-rollup
 
 EXPOSE 12345
 

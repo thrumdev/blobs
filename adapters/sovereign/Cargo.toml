@@ -1,5 +1,5 @@
 [package]
-name = "sugondat-da-adapter"
+name = "ikura-da-adapter"
 version = "0.1.0"
 authors.workspace = true
 homepage.workspace = true
@@ -24,10 +24,10 @@ borsh = { workspace = true, features = ["bytes"] }
 bytes = { workspace = true, features = ["serde"] }
 
 sha2 = { workspace = true }
-sugondat-nmt = { workspace = true }
+ikura-nmt = { workspace = true }
 jsonrpsee = { workspace = true, optional = true, features = ["ws-client"] }
 tokio = { workspace = true, optional = true }
-sugondat-shim-common-sovereign = { workspace = true, optional = true, features = ["client"] }
+ikura-shim-common-sovereign = { workspace = true, optional = true, features = ["client"] }
 anyhow = { workspace = true }
 async-trait = { workspace = true }
 digest = { workspace = true }
@@ -36,10 +36,10 @@ digest = { workspace = true }
 default = ["native"]
 native = [
     "sov-rollup-interface/native",
-    "sugondat-nmt/serde",
-    "sugondat-nmt/native",
+    "ikura-nmt/serde",
+    "ikura-nmt/native",
     "dep:tokio",
     "dep:jsonrpsee",
-    "dep:sugondat-shim-common-sovereign",
+    "dep:ikura-shim-common-sovereign",
 ]
-verifier = ["sugondat-nmt/serde"]
+verifier = ["ikura-nmt/serde"]

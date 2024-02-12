@@ -16,14 +16,14 @@ pub fn build(params: BuildParams) -> anyhow::Result<()> {
     let cargo = std::env::var("CARGO").unwrap_or_else(|_| "cargo".to_string());
 
     with_logs(
-        "Building sugondat-node",
-        cmd!(&cargo, "build", "-p", "sugondat-node", "--release"),
+        "Building ikura-node",
+        cmd!(&cargo, "build", "-p", "ikura-node", "--release"),
     )
     .run()?;
 
     with_logs(
-        "Building sugondat-shim",
-        cmd!(&cargo, "build", "-p", "sugondat-shim", "--release"),
+        "Building ikura-shim",
+        cmd!(&cargo, "build", "-p", "ikura-shim", "--release"),
     )
     .run()?;
 

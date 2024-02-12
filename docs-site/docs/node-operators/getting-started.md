@@ -15,7 +15,7 @@ Blobs is a standard Polkadot-SDK parachain node, which means that it actually ru
 You can pass arguments to each one of these underlying nodes with the following approach:
 
 ```sh
-./sugondat-node --arg-for-blobs --arg2-for-blobs -- --arg-for-relay --arg2-for-relay
+./ikura-node --arg-for-blobs --arg2-for-blobs -- --arg-for-relay --arg2-for-relay
 ```
 
 ## Hardware Requirements
@@ -50,12 +50,12 @@ Building the node:
 ```bash
 git clone https://github.com/thrumdev/blobs
 cd blobs
-cargo build --release -p sugondat-node
+cargo build --release -p ikura-node
 ```
 
 Running the node:
 ```bash
-target/release/sugondat-node --chain sugondat-kusama
+target/release/ikura-node --chain ikura-kusama
 ```
 
 ## Blobs and Storage Usage

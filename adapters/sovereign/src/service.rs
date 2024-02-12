@@ -1,12 +1,12 @@
 use crate::{
     spec::{ChainParams, DaLayerSpec},
     types::{self, Hash},
-    verifier::SugondatVerifier,
+    verifier::IkuraVerifier,
 };
 use async_trait::async_trait;
+use ikura_shim_common_sovereign::SovereignRPCClient;
 use sov_rollup_interface::da::DaSpec;
 use std::time::Duration;
-use sugondat_shim_common_sovereign::SovereignRPCClient;
 
 mod client;
 
@@ -24,15 +24,15 @@ fn default_rpc_timeout_seconds() -> u64 {
 #[derive(Default, Debug, Clone, PartialEq, serde::Deserialize, serde::Serialize)]
 pub struct DaServiceConfig {
     #[serde(default = "default_rpc_addr")]
-    pub sugondat_rpc: String,
+    pub ikura_rpc: String,
     #[serde(default = "default_rpc_timeout_seconds")]
     pub rpc_timeout_seconds: u64,
 }
 
-/// Implementation of the DA provider that uses sugondat.
+/// Implementation of the DA provider that uses ikura.
 #[derive(Clone)]
 pub struct DaProvider {
-    namespace: sugondat_nmt::Namespace,
+    namespace: ikura_nmt::Namespace,
     client: Client,
 }
 
@@ -40,9 +40,9 @@ impl DaProvider {
     /// Creates new instance of the service.
     pub fn new(config: DaServiceConfig, chain_params: ChainParams) -> Self {
         let request_timeout = Duration::from_secs(config.rpc_timeout_seconds);
-        let client = Client::new(config.sugondat_rpc, request_timeout);
+        let client = Client::new(config.ikura_rpc, request_timeout);
         Self {
-            namespace: sugondat_nmt::Namespace::from_raw_bytes(chain_params.namespace_id),
+            namespace: ikura_nmt::Namespace::from_raw_bytes(chain_params.namespace_id),
             client,
         }
     }
@@ -53,13 +53,13 @@ impl sov_rollup_interface::services::da::DaService for DaProvider {
     type Spec = DaLayerSpec;
     type FilteredBlock = crate::types::Block;
     type Error = anyhow::Error;
-    type Verifier = SugondatVerifier;
+    type Verifier = IkuraVerifier;
 
     // Make an RPC call to the node to get the finalized block at the given height, if one exists.
     // If no such block exists, block until one does.
     async fn get_finalized_at(&self, height: u64) -> Result<Self::FilteredBlock, Self::Error> {
         let client = self.client.ensure_connected().await?;
-        let block: sugondat_shim_common_sovereign::Block =
+        let block: ikura_shim_common_sovereign::Block =
             client.get_block(height, self.namespace).await?;
         let header = types::Header::new(
             Hash(block.block_hash),

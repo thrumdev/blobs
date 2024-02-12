@@ -37,7 +37,7 @@ impl Sovereign {
         })
     }
 
-    // All the networks must be up (relaychain and sugondat-node), including the sovereign rollup."
+    // All the networks must be up (relaychain and ikura-node), including the sovereign rollup."
     pub fn test_sovereign_rollup(&self) -> anyhow::Result<()> {
         info!("Running sovereign rollup test");
 

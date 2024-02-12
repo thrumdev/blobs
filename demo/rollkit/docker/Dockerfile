@@ -11,12 +11,12 @@ RUN \
 # Install ignite CLI
 RUN curl https://get.ignite.com/cli@v0.27.1! | bash
 
-# it seems that `go work` is broken in docker. Let's just copy the sugondat package.
+# it seems that `go work` is broken in docker. Let's just copy the ikura package.
 COPY ./demo/rollkit /demo-rollkit
-COPY ./adapters/rollkit /demo-rollkit/sugondat
+COPY ./adapters/rollkit /demo-rollkit/ikura
 # Patch the source file
-RUN sed -i 's/\"sugondat\"/\"gm\/sugondat\"/' /demo-rollkit/cmd/gmd/cmd/root.go
-RUN rm /demo-rollkit/sugondat/go.*
+RUN sed -i 's/\"ikura\"/\"gm\/ikura\"/' /demo-rollkit/cmd/gmd/cmd/root.go
+RUN rm /demo-rollkit/ikura/go.*
 WORKDIR /demo-rollkit
 
 RUN --mount=type=cache,target=/go/pkg \

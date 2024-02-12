@@ -34,7 +34,7 @@ pub mod test {
     #[derive(clap::Args, Debug, Clone)]
     pub struct BuildParams {
         /// Skip building required binaries
-        /// (sugondat-node, sugondat-shim, sov-demo-rollup and sov-cli)
+        /// (ikura-node, ikura-shim, sov-demo-rollup and sov-cli)
         #[clap(default_value = "false")]
         #[arg(long = "skip-build", value_name = "skip", id = "build.skip")]
         pub skip: bool,

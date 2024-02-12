@@ -78,4 +78,4 @@ gmd gentx $KEY_NAME $STAKING_AMOUNT --chain-id $CHAIN_ID --keyring-backend test
 gmd collect-gentxs
 
 # start the chain
-gmd start --rollkit.aggregator true --rollkit.da_layer sugondat --rollkit.da_config='{"base_url":"http://localhost:10995","namespace":"00000000000011111111111111111111"}' --rollkit.namespace_id 00000000000011111111111111111111 --rollkit.da_start_height 1 --rpc.laddr tcp://127.0.0.1:36657 --p2p.laddr "0.0.0.0:36656"
+gmd start --rollkit.aggregator true --rollkit.da_layer ikura --rollkit.da_config='{"base_url":"http://localhost:10995","namespace":"00000000000011111111111111111111"}' --rollkit.namespace_id 00000000000011111111111111111111 --rollkit.da_start_height 1 --rpc.laddr tcp://127.0.0.1:36657 --p2p.laddr "0.0.0.0:36656"

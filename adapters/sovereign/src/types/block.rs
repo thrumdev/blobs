@@ -8,7 +8,7 @@ use sov_rollup_interface::{da::BlockHeaderTrait, services::da::SlotData};
 pub struct Block {
     pub header: Header,
     pub transactions: Vec<BlobTransaction>,
-    pub blob_proof: sugondat_nmt::NamespaceProof,
+    pub blob_proof: ikura_nmt::NamespaceProof,
 }
 
 impl SlotData for Block {

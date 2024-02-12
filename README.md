@@ -7,18 +7,18 @@ Blobchains on Polkadot and Kusama
 <pre>
 <a href=".">blobs</a>: The blobs monorepo.
 ├──<a href="./adapters">adapters</a>: Adapters for various rollup development kits (RDK).
-│   ├── <a href="./adapters/rollkit">rollkit</a>: An adapter connecting Rollkit to Sugondat
-│   ├── <a href="./adapters/sovereign">sovereign</a>: An adapter connecting Sovereign to Sugondat.
-├──<a href="./demo">demo</a>: Projects showcasing integration of RDKs with Sugondat.
+│   ├── <a href="./adapters/rollkit">rollkit</a>: An adapter connecting Rollkit to Ikura
+│   ├── <a href="./adapters/sovereign">sovereign</a>: An adapter connecting Sovereign to Ikura.
+├──<a href="./demo">demo</a>: Projects showcasing integration of RDKs with Ikura.
 │   ├── <a href="./demo/rollkit">rollkit</a>: Rollkit's GM rollup.
 │   ├── <a href="./demo/sovereign">sovereign</a>: Sovereign Demo Rollup.
 |--<a href="./docs-site">docs-site</a>: Documentation site source, using Docusaurus.
-|──<a href="./sugondat">sugondat</a>: Sugondat source code.
-│   ├──<a href="./sugondat/chain">sugondat-chain</a>: Implementation of the Sugondat parachain.
-│   ├──<a href="./sugondat/nmt">sugondat-nmt</a>: Namespaced Merkle Trie definitions.
-│   ├──<a href="./sugondat/serde-util">sugondat-serde-util</a>: Various utilities for serde.
-│   ├──<a href="./sugondat/shim">sugondat-shim</a>: Shim between sugondat parachain RPC and RDK adapters.
-│   ├──<a href="./sugondat/subxt-autogen">sugondat-subxt</a>: Bindings to Sugondat RPC.
+|──<a href="./ikura">ikura</a>: Ikura source code.
+│   ├──<a href="./ikura/chain">ikura-chain</a>: Implementation of the Ikura parachain.
+│   ├──<a href="./ikura/nmt">ikura-nmt</a>: Namespaced Merkle Trie definitions.
+│   ├──<a href="./ikura/serde-util">ikura-serde-util</a>: Various utilities for serde.
+│   ├──<a href="./ikura/shim">ikura-shim</a>: Shim between ikura parachain RPC and RDK adapters.
+│   ├──<a href="./ikura/subxt-autogen">ikura-subxt</a>: Bindings to Ikura RPC.
 </pre>
 
 ## Running Demos
@@ -27,26 +27,26 @@ Blobchains on Polkadot and Kusama
 
 In general you need to have the following components running:
 
-build sugondat-chain:
+build ikura-chain:
 
 ``` sh
-cd sugondat/chain
+cd ikura/chain
 cargo build --release
 ```
 
-Make sure that zombienet binary and sugondat-chain binary are in your PATH.
+Make sure that zombienet binary and ikura-chain binary are in your PATH.
 
-Now you can launch 2 polkadot validators and one sugondat-chain collator
+Now you can launch 2 polkadot validators and one ikura-chain collator
 
 ``` sh
 ./zombienet.sh
 ```
 
-Then launch the sugondat-shim with:
+Then launch the ikura-shim with:
 
 ``` sh
-cd sugondat/shim/
-cargo run -p sugondat-shim -- serve --submit-dev-alice
+cd ikura/shim/
+cargo run -p ikura-shim -- serve --submit-dev-alice
 ``````
 
 ### Sovereign Demo

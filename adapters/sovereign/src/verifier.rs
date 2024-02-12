@@ -1,12 +1,12 @@
 use crate::spec::DaLayerSpec;
 use alloc::vec::Vec;
 use digest::Digest;
+use ikura_nmt::{Namespace, NS_ID_SIZE};
 use serde::{Deserialize, Serialize};
 use sov_rollup_interface::{
     da::{BlockHeaderTrait, DaSpec, DaVerifier},
     zk::ValidityCondition,
 };
-use sugondat_nmt::{Namespace, NS_ID_SIZE};
 
 /// A validity condition expressing that a chain of DA layer blocks is contiguous and canonical
 #[derive(
@@ -36,14 +36,14 @@ impl ValidityCondition for ChainValidityCondition {
     }
 }
 
-pub struct SugondatVerifier {
+pub struct IkuraVerifier {
     namespace: Namespace,
 }
 
-// NOTE: this method is implemented because in the guest_sugondat (prover)
+// NOTE: this method is implemented because in the guest_ikura (prover)
 // is needed a way to create the verifier without knowing the trait DaVerifier,
 // so without new method
-impl SugondatVerifier {
+impl IkuraVerifier {
     pub fn from_raw(raw_namespace_id: [u8; NS_ID_SIZE]) -> Self {
         Self {
             namespace: Namespace::from_raw_bytes(raw_namespace_id),
@@ -51,7 +51,7 @@ impl SugondatVerifier {
     }
 }
 
-impl DaVerifier for SugondatVerifier {
+impl DaVerifier for IkuraVerifier {
     type Spec = DaLayerSpec;
 
     type Error = anyhow::Error;

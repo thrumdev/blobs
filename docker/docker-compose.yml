@@ -4,13 +4,13 @@
 # build. Instead, the context is specified relative to the location of this file. In turn, the
 # location of the dockerfile is relative to the context.
 
-name: sugondat
+name: ikura
 
 services:
   zombienet:
     build:
       context: ..
-      dockerfile: ./sugondat/chain/Dockerfile
+      dockerfile: ./ikura/chain/Dockerfile
       target: zombienet
     ports:
       - "9988:9988"
@@ -20,14 +20,14 @@ services:
   shim:
     build:
       context: ..
-      dockerfile: ./sugondat/shim/Dockerfile
+      dockerfile: ./ikura/shim/Dockerfile
     ports:
       - "10995:10995"
     # depends_on:
     #   zombienet:
     #     condition: service_healthy
     environment:
-      - RUST_LOG=sugondat=trace
+      - RUST_LOG=ikura=trace
     command: ["serve", "-p", "10995", "--node-url=ws://zombienet:9988", "--submit-dev-alice"]
     # Health check.
     #

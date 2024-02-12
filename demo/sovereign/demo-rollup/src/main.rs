@@ -3,7 +3,7 @@ use std::str::FromStr;
 use anyhow::Context as _;
 use clap::Parser;
 use demo_stf::genesis_config::GenesisPaths;
-use sov_demo_rollup::{MockDemoRollup, SugondatDemoRollup};
+use sov_demo_rollup::{IkuraDemoRollup, MockDemoRollup};
 use sov_modules_rollup_template::{Rollup, RollupProverConfig, RollupTemplate};
 use sov_rollup_interface::mocks::MockDaConfig;
 use sov_stf_runner::{from_toml_path, RollupConfig};
@@ -22,7 +22,7 @@ mod test_rpc;
 #[command(author, version, about, long_about = None)]
 struct Args {
     /// The data layer type.
-    #[arg(long, default_value = "sugondat")]
+    #[arg(long, default_value = "ikura")]
     da_layer: String,
 
     /// The path to the rollup config.
@@ -51,8 +51,8 @@ async fn main() -> Result<(), anyhow::Error> {
             .await?;
             rollup.run().await
         }
-        "sugondat" => {
-            let rollup = new_rollup_with_sugondat_da(
+        "ikura" => {
+            let rollup = new_rollup_with_ikura_da(
                 &GenesisPaths::from_dir("../test-data/genesis/demo-tests"),
                 rollup_config_path,
                 Some(RollupProverConfig::Execute),
@@ -64,21 +64,18 @@ async fn main() -> Result<(), anyhow::Error> {
     }
 }
 
-async fn new_rollup_with_sugondat_da(
+async fn new_rollup_with_ikura_da(
     genesis_paths: &GenesisPaths,
     rollup_config_path: &str,
     prover_config: Option<RollupProverConfig>,
-) -> Result<Rollup<SugondatDemoRollup>, anyhow::Error> {
-    debug!(
-        "Starting sugondat rollup with config {}",
-        rollup_config_path
-    );
+) -> Result<Rollup<IkuraDemoRollup>, anyhow::Error> {
+    debug!("Starting ikura rollup with config {}", rollup_config_path);
 
-    let rollup_config: RollupConfig<sugondat_da_adapter::service::DaServiceConfig> =
+    let rollup_config: RollupConfig<ikura_da_adapter::service::DaServiceConfig> =
         from_toml_path(rollup_config_path).context("Failed to read rollup configuration")?;
 
-    let sugondat_rollup = SugondatDemoRollup {};
-    sugondat_rollup
+    let ikura_rollup = IkuraDemoRollup {};
+    ikura_rollup
         .create_new_rollup(genesis_paths, rollup_config, prover_config)
         .await
 }

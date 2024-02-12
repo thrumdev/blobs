@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 pub struct DaLayerSpec;
 
 pub struct ChainParams {
-    pub namespace_id: [u8; sugondat_nmt::NS_ID_SIZE],
+    pub namespace_id: [u8; ikura_nmt::NS_ID_SIZE],
 }
 
 impl sov_rollup_interface::da::DaSpec for DaLayerSpec {
@@ -17,7 +17,7 @@ impl sov_rollup_interface::da::DaSpec for DaLayerSpec {
     type BlobTransaction = BlobTransaction;
     type Address = Address;
     type ValidityCondition = ChainValidityCondition;
-    type InclusionMultiProof = sugondat_nmt::NamespaceProof;
+    type InclusionMultiProof = ikura_nmt::NamespaceProof;
     type CompletenessProof = ();
     type ChainParams = ChainParams;
 }

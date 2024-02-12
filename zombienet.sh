@@ -17,9 +17,9 @@ To obtain, refer to https://github.com/paritytech/polkadot-sdk/tree/master/polka
     exit 1
 fi
 
-if ! [ -x "$(command -v sugondat-node)" ]; then
+if ! [ -x "$(command -v ikura-node)" ]; then
   echo "\
-'sugondat-node' is not found in PATH. cd to 'sugondat/chain' and run 'cargo build --release'
+'ikura-node' is not found in PATH. cd to 'ikura/chain' and run 'cargo build --release'
 and add the result into your PATH."
   exit 1
 fi

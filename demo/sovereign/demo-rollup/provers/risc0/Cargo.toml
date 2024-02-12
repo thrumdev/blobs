@@ -10,7 +10,7 @@ publish = false
 risc0-build = "0.18"
 
 [package.metadata.risc0]
-methods = ["guest-sugondat", "guest-mock"]
+methods = ["guest-ikura", "guest-mock"]
 
 [features]
 bench = []

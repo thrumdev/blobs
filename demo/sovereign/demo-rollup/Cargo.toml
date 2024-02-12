@@ -12,7 +12,7 @@ default-run = "sov-demo-rollup"
 
 [dependencies]
 # non-optional dependencies
-sugondat-da-adapter = { path = "../../../adapters/sovereign" }
+ikura-da-adapter = { path = "../../../adapters/sovereign" }
 
 const-rollup-config = { path = "../const-rollup-config" }
 sov-stf-runner = { git = "https://github.com/Sovereign-Labs/sovereign-sdk", features = ["native"], rev = "6058b31" }

@@ -1,5 +1,6 @@
 mod build;
 mod cli;
+mod logging;
 mod shim;
 mod sovereign;
 mod zombienet;
@@ -49,18 +50,4 @@ fn init_logging() -> anyhow::Result<()> {
         .with(filter)
         .try_init()?;
     Ok(())
-}
-
-fn run_maybe_quiet(cmd: duct::Expression, quiet: bool) -> std::io::Result<std::process::Output> {
-    match quiet {
-        true => cmd.stdout_null().run(),
-        false => cmd.run(),
-    }
-}
-
-fn start_maybe_quiet(cmd: duct::Expression, quiet: bool) -> std::io::Result<duct::Handle> {
-    match quiet {
-        true => cmd.stdout_null().start(),
-        false => cmd.start(),
-    }
 }

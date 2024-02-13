@@ -1,4 +1,4 @@
-use crate::{cli::test::ZombienetParams, start_maybe_quiet};
+use crate::{cli::test::ZombienetParams, logging::create_with_logs};
 use duct::cmd;
 use tracing::info;
 
@@ -43,12 +43,14 @@ impl Zombienet {
              cd to 'sugondat/chain' and run 'cargo build --release' and add the result into your PATH."
         )?;
 
-        info!("Launching zombienet");
+        tracing::info!("Zombienet logs redirected to {}", params.log_path);
+        let with_logs = create_with_logs(params.log_path);
+
         #[rustfmt::skip]
-        let zombienet_handle = start_maybe_quiet(
+        let zombienet_handle = with_logs(
+            "Launching zombienet",
             cmd!("zombienet", "spawn", "-p", "native", "--dir", "zombienet", "testnet.toml"),
-            params.quiet,
-        )?;
+        ).start()?;
 
         Ok(Self(zombienet_handle))
     }

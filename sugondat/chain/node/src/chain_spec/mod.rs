@@ -3,7 +3,7 @@ use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
 use sp_core::{sr25519, Pair, Public};
-use sp_runtime::{traits::{IdentifyAccount, Verify}, Perquintill};
+use sp_runtime::{traits::{IdentifyAccount, Verify}, FixedPointNumber, Perquintill};
 use sugondat_kusama_runtime::Runtime;
 use sugondat_primitives::{AccountId, AuraId, Signature};
 use sugondat_test_runtime::{Runtime as TestRuntime,Multiplier, EXISTENTIAL_DEPOSIT as TEST_EXISTENTIAL_DEPOSIT};
@@ -123,8 +123,8 @@ pub fn development_config() -> TestRuntimeChainSpec {
         ],
         get_account_id_from_seed::<sr25519::Public>("Alice"),
         1000.into(),
-        None,
-        None
+        Multiplier::saturating_from_integer(1),
+        Perquintill::from_percent(16)
     ))
     .build()
 }
@@ -167,8 +167,8 @@ pub fn kusama_staging_config() -> KusamaRuntimeChainSpec {
         vec![], // no endowed accounts - must teleport.
         get_account_id_from_seed::<sr25519::Public>("Alice"),
         KUSAMA_PARA_ID.into(),
-        None,
-        None
+        Multiplier::saturating_from_integer(1),
+        Perquintill::from_percent(16)
     ))
     .build()
 }
@@ -221,8 +221,8 @@ pub fn local_testnet_config() -> TestRuntimeChainSpec {
         ],
         get_account_id_from_seed::<sr25519::Public>("Alice"),
         1000.into(),
-        None,
-        None
+        Multiplier::saturating_from_integer(1),
+        Perquintill::from_percent(16)
     ))
     .build()
 }
@@ -232,8 +232,8 @@ fn test_runtime_genesis_patch(
     endowed_accounts: Vec<AccountId>,
     root: AccountId,
     id: ParaId,
-    next_len_mult: Option<Multiplier>,
-    target_block_size: Option<Perquintill>
+    next_len_mult: Multiplier,
+    target_block_size: Perquintill
 ) -> serde_json::Value {
     serde_json::json! ({
         "balances": {
@@ -274,8 +274,8 @@ fn kusama_runtime_genesis_patch(
     endowed_accounts: Vec<AccountId>,
     root: AccountId,
     id: ParaId,
-    next_len_mult: Option<Multiplier>,
-    target_block_size: Option<Perquintill>
+    next_len_mult: Multiplier,
+    target_block_size: Perquintill
 ) -> serde_json::Value {
     serde_json::json! ({
         "balances": {

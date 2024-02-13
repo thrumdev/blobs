@@ -36,32 +36,48 @@ pub mod test {
         /// Skip building required binaries
         /// (sugondat-node, sugondat-shim, sov-demo-rollup and sov-cli)
         #[clap(default_value = "false")]
-        #[arg(long = "build-skip", value_name = "skip", id = "build.skip")]
+        #[arg(long = "skip-build", value_name = "skip", id = "build.skip")]
         pub skip: bool,
 
-        /// Don't print to stdout during the build process
-        #[arg(long = "build-quiet", value_name = "quiet", id = "build.quiet")]
-        pub quiet: bool,
+        /// Build process stdout and stderr are redirected into this file
+        #[arg(
+            long = "build-log-path",
+            value_name = "log-path",
+            id = "build.log-path"
+        )]
+        #[clap(default_value = "test_log/build.log")]
+        pub log_path: String,
     }
 
     #[derive(clap::Args, Debug, Clone)]
     pub struct ShimParams {
-        /// Don't print shim process stdout
-        #[arg(long = "shim-quiet", value_name = "quiet", id = "shim.quiet")]
-        pub quiet: bool,
+        /// Shim process stdout and stderr are redirected into this file
+        #[arg(long = "shim-log-path", value_name = "log-path", id = "shim.log-path")]
+        #[clap(default_value = "test_log/shim.log")]
+        pub log_path: String,
     }
 
     #[derive(clap::Args, Debug, Clone)]
     pub struct ZombienetParams {
-        /// Don't print zombienet process stdout
-        #[arg(long = "zombienet-quiet", value_name = "quiet", id = "zombienet.quiet")]
-        pub quiet: bool,
+        /// Zombienet process stdout and stderr are redirected into this file
+        #[arg(
+            long = "zombienet-log-path",
+            value_name = "log-path",
+            id = "zombienet.log-path"
+        )]
+        #[clap(default_value = "test_log/zombienet.log")]
+        pub log_path: String,
     }
 
     #[derive(clap::Args, Debug, Clone)]
     pub struct SovereignParams {
-        /// Don't print sovereing rollup processes stdout
-        #[arg(long = "sovereign-quiet", value_name = "quiet", id = "sovereign.quiet")]
-        pub quiet: bool,
+        /// Sovereign rollup process stdout and stderr are redirected into this file
+        #[arg(
+            long = "sovereign-log-path",
+            value_name = "log-path",
+            id = "sovereign.log-path"
+        )]
+        #[clap(default_value = "test_log/sovereign.log")]
+        pub log_path: String,
     }
 }

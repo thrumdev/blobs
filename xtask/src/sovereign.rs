@@ -1,9 +1,12 @@
-use crate::{cli::test::SovereignParams, start_maybe_quiet};
+use crate::{cli::test::SovereignParams, logging::create_with_logs};
 use anyhow::bail;
 use duct::cmd;
 use tracing::info;
 
-pub struct Sovereign(duct::Handle);
+pub struct Sovereign {
+    process: duct::Handle,
+    with_logs: Box<dyn Fn(&str, duct::Expression) -> duct::Expression>,
+}
 
 impl Sovereign {
     // Try launching the sovereing rollup using zombienet
@@ -11,20 +14,27 @@ impl Sovereign {
         info!("Deleting rollup db if it already exists");
         cmd!("rm", "-r", "demo/sovereign/demo-rollup/demo_data")
             .unchecked()
+            .stderr_null()
+            .stdout_null()
             .run()?;
 
+        info!("Sovereign logs redirected to {}", params.log_path);
+        let with_logs = create_with_logs(params.log_path.clone());
+
         //TODO: https://github.com/thrumdev/blobs/issues/227
-        info!("Launching sovereign rollup");
         #[rustfmt::skip]
-        let sovereign_handle = start_maybe_quiet(
+        let sovereign_handle = with_logs(
+            "Launching sovereign rollup",
             cmd!(
                 "sh", "-c",
                 "cd demo/sovereign/demo-rollup && ./../target/release/sov-demo-rollup"
             ),
-            params.quiet,
-        )?;
+        ).start()?;
 
-        Ok(Self(sovereign_handle))
+        Ok(Self {
+            process: sovereign_handle,
+            with_logs,
+        })
     }
 
     // All the networks must be up (relaychain and sugondat-node), including the sovereign rollup."
@@ -34,37 +44,43 @@ impl Sovereign {
         //TODO: https://github.com/thrumdev/blobs/issues/227
         let cli = "../target/release/sov-cli";
         let test_data_path = "../test-data/";
-        let run_cli_cmd = |args: &str| {
-            let args = [
-                "-c",
-                &format!("cd demo/sovereign/demo-rollup/ && ./{} {}", cli, args),
-            ];
+        let run_cli_cmd =
+            |description: &str, args: &str| -> std::io::Result<std::process::Output> {
+                let args = [
+                    "-c",
+                    &format!("cd demo/sovereign/demo-rollup/ && ./{} {}", cli, args),
+                ];
 
-            duct::cmd("sh", args).run()
-        };
+                (self.with_logs)(description, duct::cmd("sh", args)).run()
+            };
 
-        info!("setup rpc endpoint");
-        run_cli_cmd("rpc set-url http://127.0.0.1:12345")?;
+        run_cli_cmd("setup rpc endpoint", "rpc set-url http://127.0.0.1:12345")?;
 
-        info!("import keys");
-        run_cli_cmd(&format!(
-            "keys import --nickname token_deployer --path {}keys/token_deployer_private_key.json",
-            test_data_path
-        ))?;
+        run_cli_cmd(
+            "import keys",
+            &format!("keys import --nickname token_deployer --path {}keys/token_deployer_private_key.json", test_data_path),
+        )?;
 
-        info!("create and mint a new token");
-        run_cli_cmd(&format!(
-            "transactions import from-file bank --path {}requests/create_token.json",
-            test_data_path
-        ))?;
+        run_cli_cmd(
+            "create a new token",
+            &format!(
+                "transactions import from-file bank --path {}requests/create_token.json",
+                test_data_path
+            ),
+        )?;
 
-        run_cli_cmd(&format!(
-            "transactions import from-file bank --path {}requests/mint.json",
-            test_data_path
-        ))?;
+        run_cli_cmd(
+            "mint just created token",
+            &format!(
+                "transactions import from-file bank --path {}requests/mint.json",
+                test_data_path
+            ),
+        )?;
 
-        info!("submit batch with two transactions");
-        run_cli_cmd("rpc submit-batch by-nickname token_deployer")?;
+        run_cli_cmd(
+            "submit batch with two transactions",
+            "rpc submit-batch by-nickname token_deployer",
+        )?;
 
         // TODO: https://github.com/thrumdev/blobs/issues/226
         info!("waiting for the rollup to process the transactions");
@@ -90,6 +106,6 @@ impl Drop for Sovereign {
     // duct::Handle does not implement kill on drop
     fn drop(&mut self) {
         info!("Sovereign rollup process is going to be killed");
-        let _ = self.0.kill();
+        let _ = self.process.kill();
     }
 }

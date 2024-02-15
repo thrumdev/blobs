@@ -20,6 +20,8 @@ fn main() -> anyhow::Result<()> {
 }
 
 fn test(params: test::Params) -> anyhow::Result<()> {
+    init_env(params.ci)?;
+
     build::build(params.build)?;
 
     // the variables must be kept alive and not dropped
@@ -35,6 +37,37 @@ fn test(params: test::Params) -> anyhow::Result<()> {
     std::thread::sleep(std::time::Duration::from_secs(20));
 
     sovereign.test_sovereign_rollup()?;
+
+    Ok(())
+}
+
+// Set up environment variables needed by the compilation and testing process.
+//
+// If ci flag is specified, all the binaries are added to the path,
+// and also the path to the sovereign constant manifest is added to the env variables.
+fn init_env(ci: bool) -> anyhow::Result<()> {
+    if ci {
+        #[rustfmt::skip]
+        let project_dir = duct::cmd!(
+            "sh", "-c",
+            "cargo locate-project | jq -r '.root' | grep -oE '^.*/'"
+        )
+        .stdout_capture()
+        .run()?;
+        let project_dir = std::str::from_utf8(&project_dir.stdout)?.trim();
+
+        let path = std::env::var("PATH").unwrap_or_else(|_| "".to_string());
+
+        // To ensure persistent storage between runs,
+        // all cargo binaries are compiled in the following folder in ci
+        let new_path = format!("/cargo_target/release/:{}", path);
+        std::env::set_var("PATH", new_path);
+
+        std::env::set_var(
+            "CONSTANTS_MANIFEST",
+            format!("{}demo/sovereign/constants.json", project_dir),
+        );
+    }
 
     Ok(())
 }

@@ -5,7 +5,7 @@
 
 FROM rodnymolina588/gha-sysbox-runner@sha256:d10a36f2da30aa0df71d1ac062cc79fc5114eec7b6ae8a0c42cadf568e6eefa8
 
-ARG RUSTC_VERSION=nightly-2023-10-16
+ARG RUSTC_VERSION=stable
 
 LABEL org.opencontainers.image.source=https://github.com/thrumdev/blobs
 
@@ -44,3 +44,12 @@ RUN curl \
     | bash
 RUN cargo binstall --no-confirm --no-symlinks cargo-risczero
 RUN cargo risczero install
+
+# Install Zombienet and copy Polkadot binaries, which are all required for xtask tests
+RUN curl -sL https://deb.nodesource.com/setup_20.x | bash -
+RUN apt-get install -y nodejs multitail
+RUN npm install -g @zombienet/cli
+
+COPY --from=parity/polkadot:v1.6.0 /usr/bin/polkadot /usr/bin/
+COPY --from=parity/polkadot:v1.6.0 /usr/lib/polkadot/polkadot-prepare-worker /usr/bin/
+COPY --from=parity/polkadot:v1.6.0 /usr/lib/polkadot/polkadot-execute-worker /usr/bin/

@@ -39,7 +39,7 @@ pub fn create_with_logs(
 
         info!("{description}");
         let _ = log_file
-            .write(format!("{}/n", description).as_bytes())
+            .write(format!("{}\n", description).as_bytes())
             .map_err(|e| warn!("Error writing into {log_path}, error: {e}"));
         let _ = log_file
             .flush()

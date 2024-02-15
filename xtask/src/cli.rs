@@ -18,6 +18,10 @@ pub mod test {
     use clap::Args;
     #[derive(Debug, Args)]
     pub struct Params {
+        /// If the test is executed in CI
+        #[clap(long, default_value = "false")]
+        pub ci: bool,
+
         #[clap(flatten)]
         pub build: BuildParams,
 

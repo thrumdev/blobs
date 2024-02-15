@@ -168,13 +168,14 @@ bytes = { version = "1", features = ["serde"] }
 digest = "0.10.7"
 
 # Local
+gondatsu-runtime = { path = "ikura/chain/runtimes/gondatsu" }
+
 ikura-serde-util = { path = "ikura/serde-util" }
 ikura-nmt = { path = "ikura/nmt", default-features = false }
 ikura-subxt = { path = "ikura/subxt-autogen" }
 ikura-shim-common-sovereign = { path = "ikura/shim/common/sovereign", default-features = false }
 ikura-shim-common-rollkit = { path = "ikura/shim/common/rollkit" }
 ikura-test-runtime = { path = "ikura/chain/runtimes/test" }
-ikura-kusama-runtime = { path = "ikura/chain/runtimes/ikura-kusama" }
 ikura-primitives = { path = "ikura/chain/primitives", default-features = false }
 pallet-ikura-blobs = { path = "ikura/chain/pallets/blobs", default-features = false }
 pallet-ikura-length-fee-adjustment = { path = "ikura/chain/pallets/length-fee-adjustment", default-features = false }

@@ -55,7 +55,7 @@ cargo build --release -p ikura-node
 
 Running the node:
 ```bash
-target/release/ikura-node --chain ikura-kusama
+target/release/ikura-node --chain gondatsu
 ```
 
 ## Blobs and Storage Usage

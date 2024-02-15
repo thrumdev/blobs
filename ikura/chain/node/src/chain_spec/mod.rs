@@ -21,7 +21,7 @@ pub type TestRuntimeChainSpec =
 
 /// Specialized `ChainSpec` for the kusama parachain runtime.
 pub type KusamaRuntimeChainSpec =
-    sc_service::GenericChainSpec<ikura_kusama_runtime::RuntimeGenesisConfig, Extensions>;
+    sc_service::GenericChainSpec<gondatsu_runtime::RuntimeGenesisConfig, Extensions>;
 
 /// The default XCM version to set in genesis config.
 const SAFE_XCM_VERSION: u32 = xcm::prelude::XCM_VERSION;
@@ -77,8 +77,8 @@ pub fn test_runtime_session_keys(keys: AuraId) -> ikura_test_runtime::SessionKey
 /// Generate the session keys from individual elements.
 ///
 /// The input must be a tuple of individual keys (a single arg for now since we have just one key).
-pub fn kusama_runtime_session_keys(keys: AuraId) -> ikura_kusama_runtime::SessionKeys {
-    ikura_kusama_runtime::SessionKeys { aura: keys }
+pub fn kusama_runtime_session_keys(keys: AuraId) -> gondatsu_runtime::SessionKeys {
+    gondatsu_runtime::SessionKeys { aura: keys }
 }
 
 pub fn development_config() -> TestRuntimeChainSpec {
@@ -137,7 +137,7 @@ pub fn development_config() -> TestRuntimeChainSpec {
 const KUSAMA_PARA_ID: u32 = 3338;
 
 // For use with the Kusama network.
-pub fn kusama_staging_config() -> KusamaRuntimeChainSpec {
+pub fn gondatsu_staging_config() -> KusamaRuntimeChainSpec {
     // Use KSM
     let mut properties = sc_chain_spec::Properties::new();
     properties.insert("tokenSymbol".into(), "KSM".into());
@@ -145,16 +145,16 @@ pub fn kusama_staging_config() -> KusamaRuntimeChainSpec {
     properties.insert("ss58Format".into(), 2.into());
 
     KusamaRuntimeChainSpec::builder(
-        ikura_kusama_runtime::WASM_BINARY.expect("WASM binary was not built, please build it!"),
+        gondatsu_runtime::WASM_BINARY.expect("WASM binary was not built, please build it!"),
         Extensions {
             relay_chain: "kusama".into(),
             // You MUST set this to the correct network!
             para_id: KUSAMA_PARA_ID,
         },
     )
-    .with_name("Kusama Blobs Staging")
-    .with_id("blobs_kusama_staging")
-    .with_protocol_id("ikura-kusama")
+    .with_name("Gondatsu Staging")
+    .with_id("gondatsu_staging")
+    .with_protocol_id("gondatsu_staging")
     .with_properties(properties)
     .with_chain_type(ChainType::Local)
     .with_genesis_config_patch(kusama_runtime_genesis_patch(

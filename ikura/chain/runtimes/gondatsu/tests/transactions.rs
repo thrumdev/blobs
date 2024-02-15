@@ -3,7 +3,7 @@ use frame_support::{
     traits::{fungible::Balanced, tokens::Precision},
     weights::{Weight, WeightToFee},
 };
-use ikura_kusama_runtime::{
+use gondatsu_runtime::{
     Address, Hash, LengthFeeAdjustment, MaxBlobSize, MaxBlobs, MaxTotalBlobSize, Runtime,
     RuntimeCall, SignedExtra, UncheckedExtrinsic,
 };

@@ -27,11 +27,17 @@ pub fn build(params: BuildParams) -> anyhow::Result<()> {
     )
     .run()?;
 
+    #[rustfmt::skip]
     with_logs(
         "Building sovereign demo-rollup",
-        cmd!(&cargo, "build", "--release").dir("demo/sovereign/demo-rollup"),
-    )
-    .run()?;
+        cmd!(
+            "sh", "-c",
+            format!(
+                "cd demo/sovereign/demo-rollup/ && {} build --release",
+                cargo
+            )
+        ),
+    ).run()?;
 
     Ok(())
 }

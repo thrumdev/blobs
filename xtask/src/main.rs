@@ -20,6 +20,8 @@ fn main() -> anyhow::Result<()> {
 }
 
 fn test(params: test::Params) -> anyhow::Result<()> {
+    init_env(params.ci)?;
+
     build::build(params.build)?;
 
     // the variables must be kept alive and not dropped
@@ -35,6 +37,42 @@ fn test(params: test::Params) -> anyhow::Result<()> {
     std::thread::sleep(std::time::Duration::from_secs(20));
 
     sovereign.test_sovereign_rollup()?;
+
+    Ok(())
+}
+
+// Set up environment variables needed by the compilation and testing process.
+//
+// If ci flag is specified, all binaries are added to PATH env variable
+// and the sovereign constant manifest position is specified through the
+// CONSTANTS_MANIFEST new env variable
+fn init_env(ci: bool) -> anyhow::Result<()> {
+    if ci {
+        #[rustfmt::skip]
+        let project_dir = duct::cmd!(
+            "sh", "-c",
+            "cargo locate-project | jq -r '.root' | grep -oE '^.*/'"
+        )
+        .stdout_capture()
+        .run()?;
+        let project_dir = std::str::from_utf8(&project_dir.stdout)?.trim();
+
+        let path = std::env::var("PATH").unwrap_or_else(|_| "".to_string());
+
+        // `cargo_target` is the target used in ci by cargo as destination
+        // for all intermediate and final artifacts
+        let new_path = format!("/cargo_target/release/:{}", path);
+        std::env::set_var("PATH", new_path);
+
+        let path = std::path::Path::new(project_dir).join("demo/sovereign/constants.json");
+        if !path.exists() {
+            anyhow::bail!(
+                "The `constants.json` file for Sovereign does not exist,\n \
+                   or it is not in the expected position, `demo/sovereign/constants.json`"
+            )
+        }
+        std::env::set_var("CONSTANTS_MANIFEST", path);
+    }
 
     Ok(())
 }

@@ -3,7 +3,7 @@ use frame_support::{
     dispatch::DispatchClass,
     weights::{Weight, WeightToFee},
 };
-use ikura_kusama_runtime::{
+use gondatsu_runtime::{
     constants::{
         consensus::DAYS,
         kusama::currency::{CENTS, MILLICENTS},

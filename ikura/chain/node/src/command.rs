@@ -23,12 +23,19 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn ChainSpec>, String> {
     Ok(match id {
         "dev" => Box::new(chain_spec::development_config()),
         "ikura-rococo" => Box::new(chain_spec::local_testnet_config()),
-        "ikura-kusama-staging" => Box::new(chain_spec::kusama_staging_config()),
-        "ikura-kusama" | "gondatsu-kusama" => {
+        "gondatsu-staging" => Box::new(chain_spec::gondatsu_staging_config()),
+        "sugondat-kusama" => {
+            println!(
+                "NOTE: sugondat-kusama has been renamed to gondatsu. Use --chain gondatsu instead."
+            );
+            println!("The option --chain sugondat-kusama will be removed in a future release.");
             Box::new(chain_spec::KusamaRuntimeChainSpec::from_json_bytes(
-                &include_bytes!("chain_spec/res/blobs_kusama.json")[..],
+                &include_bytes!("chain_spec/res/gondatsu.json")[..],
             )?)
         }
+        "gondatsu" => Box::new(chain_spec::KusamaRuntimeChainSpec::from_json_bytes(
+            &include_bytes!("chain_spec/res/gondatsu.json")[..],
+        )?),
         "" | "local" => Box::new(chain_spec::local_testnet_config()),
         path => Box::new(chain_spec::GenericChainSpec::from_json_file(
             std::path::PathBuf::from(path),

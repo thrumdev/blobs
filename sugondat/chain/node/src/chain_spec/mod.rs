@@ -267,9 +267,9 @@ fn test_runtime_genesis_patch(
             "safeXcmVersion": Some(SAFE_XCM_VERSION),
         },
         "sudo": { "key": Some(root) },
-        "pallet-sugondat-length-fee-adjustment": {
-            "next_length_multiplier": next_len_mult,
-            "target_block_size": target_block_size
+        "lengthFeeAdjustment": {
+            "nextLengthMultiplier": next_len_mult,
+            "targetBlockSize": target_block_size
         }
     })
 }
@@ -309,9 +309,9 @@ fn kusama_runtime_genesis_patch(
             "safeXcmVersion": Some(SAFE_XCM_VERSION),
         },
         "sudo": { "key": Some(root) },
-        "pallet-sugondat-length-fee-adjustment": {
-            "next_length_multiplier": next_len_mult,
-            "target_block_size": target_block_size
+        "lengthFeeAdjustment": {
+            "nextLengthMultiplier": next_len_mult,
+            "targetBlockSize": target_block_size
         }
     })
 }

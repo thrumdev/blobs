@@ -13,13 +13,13 @@ impl Shim {
         // Wait for the shim to be connected, which indicates that the network is ready
         with_logs(
             "Wait for the network to be ready",
-            cmd!("sugondat-shim", "query", "block", "--wait", "1",).dir("target/release/"),
+            cmd!("sugondat-shim", "query", "block", "--wait", "1"),
         )
         .run()?;
 
         let shim_handle = with_logs(
             "Launching Shim",
-            cmd!("sugondat-shim", "serve", "--submit-dev-alice").dir("target/release/"),
+            cmd!("sugondat-shim", "serve", "--submit-dev-alice"),
         )
         .start()?;
 

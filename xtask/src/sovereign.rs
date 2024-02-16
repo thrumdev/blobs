@@ -22,14 +22,11 @@ impl Sovereign {
         let with_logs = create_with_logs(params.log_path.clone());
 
         //TODO: https://github.com/thrumdev/blobs/issues/227
-        #[rustfmt::skip]
         let sovereign_handle = with_logs(
             "Launching sovereign rollup",
-            cmd!(
-                "sh", "-c",
-                "cd demo/sovereign/demo-rollup && ./../target/release/sov-demo-rollup"
-            ),
-        ).start()?;
+            cmd!("sov-demo-rollup").dir("demo/sovereign/demo-rollup/"),
+        )
+        .start()?;
 
         Ok(Self {
             process: sovereign_handle,

@@ -37,12 +37,6 @@ impl Zombienet {
               To obtain, refer to https://github.com/paritytech/polkadot-sdk/tree/master/polkadot#polkadot"
         )?;
 
-        check_binary(
-            "sugondat-node",
-            "'sugondat-node' is not found in PATH.  \n \
-             cd to 'sugondat/chain' and run 'cargo build --release' and add the result into your PATH."
-        )?;
-
         tracing::info!("Zombienet logs redirected to {}", params.log_path);
         let with_logs = create_with_logs(params.log_path);
 

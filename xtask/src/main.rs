@@ -20,6 +20,8 @@ fn main() -> anyhow::Result<()> {
 }
 
 fn test(params: test::Params) -> anyhow::Result<()> {
+    set_path(params.ci)?;
+
     build::build(params.build)?;
 
     // the variables must be kept alive and not dropped
@@ -36,6 +38,34 @@ fn test(params: test::Params) -> anyhow::Result<()> {
 
     sovereign.test_sovereign_rollup()?;
 
+    Ok(())
+}
+
+fn set_path(ci: bool) -> anyhow::Result<()> {
+    let path = std::env::var("PATH").unwrap_or_else(|_| "".to_string());
+    let new_path = if ci {
+        // To ensure persistent storage between runs,
+        // all cargo binaries are compiled in the following folder in ci
+        format!("/cargo_target/release/:{}", path)
+    } else {
+        // adding target/release/ and demo/sovereign/target/release to path
+        // so that zombienet will find sugondat-node as command
+        // and the test can be shared between local testing and ci
+        #[rustfmt::skip]
+        let project_dir = duct::cmd!(
+            "sh", "-c",
+            "cargo locate-project | jq -r '.root' | grep -oE '^.*/'"
+        )
+        .stdout_capture()
+        .run()?;
+        let project_dir = std::str::from_utf8(&project_dir.stdout)?.trim();
+
+        format!(
+            "{}target/release/:{}demo/sovereign/target/release:{}",
+            project_dir, project_dir, path
+        )
+    };
+    std::env::set_var("PATH", new_path);
     Ok(())
 }
 

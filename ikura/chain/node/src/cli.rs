@@ -36,6 +36,7 @@ pub enum Subcommand {
     /// Export the genesis head-data of the parachain.
     ///
     /// Head data is the encoded block header.
+    #[clap(alias = "export-genesis-state")]
     ExportGenesisHead(cumulus_client_cli::ExportGenesisHeadCommand),
 
     /// Export the genesis wasm of the parachain.

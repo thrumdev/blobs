@@ -23,7 +23,7 @@ jobs:
       - name: Rustfmt
         run: cargo fmt --all -- --check
   build_and_test:
-    name: Sugondat - latest
+    name: testing
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4

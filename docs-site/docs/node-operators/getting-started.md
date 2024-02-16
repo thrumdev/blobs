@@ -4,18 +4,18 @@ title: Getting Started
 
 ## Releases
 
-At the moment, there are no downloadable binary releases available of the Blobs node. We recommend building a binary from source.
+At the moment, there are no downloadable binary releases available of the Ikura node. We recommend building a binary from source.
 
 ## Node Architecture
 
-Blobs is a standard Polkadot-SDK parachain node, which means that it actually runs two nodes:
-  1. A node for the Parachain (Blobs) on Polkadot or Kusama
+Ikura is a standard Polkadot-SDK parachain node, which means that it actually runs two nodes:
+  1. A node for the Parachain (Ikura) on Polkadot or Kusama
   2. A node for the Relay Chain, Polkadot or Kusama.
 
 You can pass arguments to each one of these underlying nodes with the following approach:
 
 ```sh
-./ikura-node --arg-for-blobs --arg2-for-blobs -- --arg-for-relay --arg2-for-relay
+./ikura-node --arg-for-ikura --arg2-for-ikura -- --arg-for-relay --arg2-for-relay
 ```
 
 ## Hardware Requirements
@@ -58,9 +58,9 @@ Running the node:
 target/release/ikura-node --chain gondatsu
 ```
 
-## Blobs and Storage Usage
+## Ikura and Storage Usage
 
-Blobs can potentially use enormous amounts of disk space under heavy usage. This is because all historical blobs are stored within the blobchain's history. While the Polkadot and Kusama expunge ancient blobs after 24 hours, any full node of the blobchain will have all the blobs going back to the genesis, as well as all of the other block data.
+Ikura can potentially use enormous amounts of disk space under heavy usage. This is because all historical blobs are stored within the blobchain's history. While the Polkadot and Kusama expunge ancient blobs after 24 hours, any full node of the blobchain will have all the blobs going back to the genesis, as well as all of the other block data.
 
 To avoid this issue, run with `--blocks-pruning <number>`, where `number` is some relatively small value such as `1000` to avoid keeping all historical blobs.
 

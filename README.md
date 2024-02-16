@@ -1,11 +1,11 @@
-# Blobs
+# Ikura
 
 Blobchains on Polkadot and Kusama
 
 ## Project Structure
 
 <pre>
-<a href=".">blobs</a>: The blobs monorepo.
+<a href=".">blobs</a>: The Ikura monorepo.
 ├──<a href="./adapters">adapters</a>: Adapters for various rollup development kits (RDK).
 │   ├── <a href="./adapters/rollkit">rollkit</a>: An adapter connecting Rollkit to Ikura
 │   ├── <a href="./adapters/sovereign">sovereign</a>: An adapter connecting Sovereign to Ikura.

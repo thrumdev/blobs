@@ -1,9 +1,6 @@
 use cumulus_primitives_core::ParaId;
-use ikura_kusama_runtime::Runtime;
 use ikura_primitives::{AccountId, AuraId, Signature};
-use ikura_test_runtime::{
-    Multiplier, Runtime as TestRuntime, EXISTENTIAL_DEPOSIT as TEST_EXISTENTIAL_DEPOSIT,
-};
+use ikura_test_runtime::{Multiplier, EXISTENTIAL_DEPOSIT as TEST_EXISTENTIAL_DEPOSIT};
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};

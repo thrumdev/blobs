@@ -8,7 +8,7 @@ import {themes as prismThemes} from 'prism-react-renderer';
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'Blobs - Documentation',
+  title: 'Ikura - Documentation',
   tagline: 'Blobchains on Polkadot and Kusama',
   favicon: 'img/blobs-favicon-line.webp',
 
@@ -21,7 +21,7 @@ const config = {
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
   organizationName: 'ThrumDev', // Usually your GitHub org/user name.
-  projectName: 'blobs', // Usually your repo name.
+  projectName: 'Ikura', // Usually your repo name.
 
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
@@ -60,7 +60,7 @@ const config = {
       // Replace with your project's social card
       image: 'img/docusaurus-social-card.jpg',
       navbar: {
-        title: 'Blobs',
+        title: 'Ikura',
         logo: {
           alt: 'Thrum Logo',
           src: './img/blobs-simple.png',

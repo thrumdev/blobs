@@ -3,10 +3,15 @@ use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
 use sp_core::{sr25519, Pair, Public};
-use sp_runtime::{traits::{IdentifyAccount, Verify}, FixedPointNumber, Perquintill};
+use sp_runtime::{
+    traits::{IdentifyAccount, Verify},
+    FixedPointNumber, Perquintill,
+};
 use sugondat_kusama_runtime::Runtime;
 use sugondat_primitives::{AccountId, AuraId, Signature};
-use sugondat_test_runtime::{Runtime as TestRuntime,Multiplier, EXISTENTIAL_DEPOSIT as TEST_EXISTENTIAL_DEPOSIT};
+use sugondat_test_runtime::{
+    Multiplier, Runtime as TestRuntime, EXISTENTIAL_DEPOSIT as TEST_EXISTENTIAL_DEPOSIT,
+};
 
 pub type GenericChainSpec = sc_service::GenericChainSpec<(), Extensions>;
 
@@ -124,7 +129,7 @@ pub fn development_config() -> TestRuntimeChainSpec {
         get_account_id_from_seed::<sr25519::Public>("Alice"),
         1000.into(),
         Multiplier::saturating_from_integer(1),
-        Perquintill::from_percent(16)
+        Perquintill::from_percent(16),
     ))
     .build()
 }
@@ -168,7 +173,7 @@ pub fn kusama_staging_config() -> KusamaRuntimeChainSpec {
         get_account_id_from_seed::<sr25519::Public>("Alice"),
         KUSAMA_PARA_ID.into(),
         Multiplier::saturating_from_integer(1),
-        Perquintill::from_percent(16)
+        Perquintill::from_percent(16),
     ))
     .build()
 }
@@ -222,7 +227,7 @@ pub fn local_testnet_config() -> TestRuntimeChainSpec {
         get_account_id_from_seed::<sr25519::Public>("Alice"),
         1000.into(),
         Multiplier::saturating_from_integer(1),
-        Perquintill::from_percent(16)
+        Perquintill::from_percent(16),
     ))
     .build()
 }
@@ -233,7 +238,7 @@ fn test_runtime_genesis_patch(
     root: AccountId,
     id: ParaId,
     next_len_mult: Multiplier,
-    target_block_size: Perquintill
+    target_block_size: Perquintill,
 ) -> serde_json::Value {
     serde_json::json! ({
         "balances": {
@@ -275,7 +280,7 @@ fn kusama_runtime_genesis_patch(
     root: AccountId,
     id: ParaId,
     next_len_mult: Multiplier,
-    target_block_size: Perquintill
+    target_block_size: Perquintill,
 ) -> serde_json::Value {
     serde_json::json! ({
         "balances": {

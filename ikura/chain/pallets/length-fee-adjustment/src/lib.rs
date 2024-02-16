@@ -55,7 +55,6 @@ pub mod pallet {
     use frame_system::pallet_prelude::*;
     use pallet_transaction_payment::{Multiplier, OnChargeTransaction};
     use polkadot_primitives::v6::{BlockNumber as RelayChainBlockNumber, PersistedValidationData};
-    use sp_arithmetic::FixedU128;
     use sp_runtime::{
         traits::{Get, One, Zero},
         FixedPointNumber, Perquintill, SaturatedConversion, Saturating,

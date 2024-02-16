@@ -154,11 +154,9 @@ pub mod pallet {
     #[pallet::genesis_build]
     impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
         fn build(&self) {
-            
             NextLengthMultiplier::<T>::put(self.next_length_multiplier);
-        
+
             TargetBlockSize::<T>::put(self.target_block_size)
-         
         }
     }
 

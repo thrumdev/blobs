@@ -51,3 +51,13 @@ fn init_logging() -> anyhow::Result<()> {
         .try_init()?;
     Ok(())
 }
+
+fn check_binary(binary: &'static str, error_msg: &'static str) -> anyhow::Result<()> {
+    if let Err(_) = duct::cmd!("sh", "-c", format!("command -v {}", binary))
+        .stdout_null()
+        .run()
+    {
+        anyhow::bail!(error_msg);
+    }
+    Ok(())
+}

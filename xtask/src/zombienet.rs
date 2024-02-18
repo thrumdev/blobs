@@ -1,4 +1,4 @@
-use crate::{cli::test::ZombienetParams, logging::create_with_logs};
+use crate::{check_binary, cli::test::ZombienetParams, logging::create_with_logs};
 use duct::cmd;
 use tracing::info;
 
@@ -15,15 +15,6 @@ impl Zombienet {
         cmd!("rm", "-r", "zombienet").unchecked().run()?;
 
         info!("Checking binaries availability");
-        let check_binary = |binary: &'static str, error_msg: &'static str| -> anyhow::Result<()> {
-            if let Err(_) = cmd!("sh", "-c", format!("command -v {}", binary))
-                .stdout_null()
-                .run()
-            {
-                anyhow::bail!(error_msg);
-            }
-            Ok(())
-        };
 
         check_binary(
             "zombienet",

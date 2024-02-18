@@ -1,4 +1,4 @@
-use crate::{cli::test::SovereignParams, logging::create_with_logs};
+use crate::{check_binary, cli::test::SovereignParams, logging::create_with_logs};
 use anyhow::bail;
 use duct::cmd;
 use tracing::info;
@@ -18,6 +18,12 @@ impl Sovereign {
             .stdout_null()
             .run()?;
 
+        check_binary(
+            "sov-demo-rollup",
+            "'sov-demo-rollup' is not found in PATH.  \n \
+             cd to 'demo/sovereign/demo-rollup' and run 'cargo build --release' and add the result into your PATH."
+        )?;
+
         info!("Sovereign logs redirected to {}", params.log_path);
         let with_logs = create_with_logs(params.log_path.clone());
 
@@ -27,7 +33,7 @@ impl Sovereign {
             "Launching sovereign rollup",
             cmd!(
                 "sh", "-c",
-                "cd demo/sovereign/demo-rollup && ./../target/release/sov-demo-rollup"
+                "cd demo/sovereign/demo-rollup && sov-demo-rollup"
             ),
         ).start()?;
 
@@ -39,16 +45,21 @@ impl Sovereign {
 
     // All the networks must be up (relaychain and ikura-node), including the sovereign rollup."
     pub fn test_sovereign_rollup(&self) -> anyhow::Result<()> {
+        check_binary(
+            "sov-cli",
+            "'sov-cli' is not found in PATH.  \n \
+             cd to 'demo/sovereign/demo-rollup' and run 'cargo build --release' and add the result into your PATH."
+        )?;
+
         info!("Running sovereign rollup test");
 
         //TODO: https://github.com/thrumdev/blobs/issues/227
-        let cli = "../target/release/sov-cli";
         let test_data_path = "../test-data/";
         let run_cli_cmd =
             |description: &str, args: &str| -> std::io::Result<std::process::Output> {
                 let args = [
                     "-c",
-                    &format!("cd demo/sovereign/demo-rollup/ && ./{} {}", cli, args),
+                    &format!("cd demo/sovereign/demo-rollup/ && sov-cli {}", args),
                 ];
 
                 (self.with_logs)(description, duct::cmd("sh", args)).run()

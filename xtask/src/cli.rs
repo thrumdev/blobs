@@ -22,6 +22,13 @@ pub mod test {
         #[clap(long, default_value = "false")]
         pub ci: bool,
 
+        /// If the test is executed locally
+        ///
+        /// This flag will not require to add ikura-node, ikura-shim, and sov-demo-rollup
+        /// to the path. This will work ONLY if you keep the default CARGO_TARGET_DIR
+        #[clap(long, default_value = "false")]
+        pub local: bool,
+
         #[clap(flatten)]
         pub build: BuildParams,
 

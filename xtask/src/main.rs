@@ -20,7 +20,7 @@ fn main() -> anyhow::Result<()> {
 }
 
 fn test(params: test::Params) -> anyhow::Result<()> {
-    init_env(params.ci)?;
+    init_env(params.ci, params.local)?;
 
     build::build(params.build)?;
 
@@ -45,19 +45,23 @@ fn test(params: test::Params) -> anyhow::Result<()> {
 //
 // If ci flag is specified, all the binaries are added to the path,
 // and also the path to the sovereign constant manifest is added to the env variables.
-fn init_env(ci: bool) -> anyhow::Result<()> {
+fn init_env(ci: bool, local: bool) -> anyhow::Result<()> {
+    if ci && local {
+        anyhow::bail!("You cannot specify both `--ci` and `--local` flag");
+    }
+
+    #[rustfmt::skip]
+    let project_dir = duct::cmd!(
+        "sh", "-c",
+        "cargo locate-project | jq -r '.root' | grep -oE '^.*/'"
+    )
+    .stdout_capture()
+    .run()?;
+    let project_dir = std::str::from_utf8(&project_dir.stdout)?.trim();
+
+    let path = std::env::var("PATH").unwrap_or_else(|_| "".to_string());
+
     if ci {
-        #[rustfmt::skip]
-        let project_dir = duct::cmd!(
-            "sh", "-c",
-            "cargo locate-project | jq -r '.root' | grep -oE '^.*/'"
-        )
-        .stdout_capture()
-        .run()?;
-        let project_dir = std::str::from_utf8(&project_dir.stdout)?.trim();
-
-        let path = std::env::var("PATH").unwrap_or_else(|_| "".to_string());
-
         // To ensure persistent storage between runs,
         // all cargo binaries are compiled in the following folder in ci
         let new_path = format!("/cargo_target/release/:{}", path);
@@ -67,6 +71,14 @@ fn init_env(ci: bool) -> anyhow::Result<()> {
             "CONSTANTS_MANIFEST",
             format!("{}demo/sovereign/constants.json", project_dir),
         );
+    }
+
+    if local {
+        let new_path = format!(
+            "{}target/release/:{}demo/sovereign/target/release:{}",
+            project_dir, project_dir, path
+        );
+        std::env::set_var("PATH", new_path);
     }
 
     Ok(())

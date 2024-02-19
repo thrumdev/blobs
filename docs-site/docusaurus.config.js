@@ -8,9 +8,9 @@ import {themes as prismThemes} from 'prism-react-renderer';
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'Ikura - Documentation',
+  title: 'Ikura',
   tagline: 'Blobchains on Polkadot and Kusama',
-  favicon: 'img/blobs-favicon-line.webp',
+  favicon: 'img/ikura_can_128.png',
 
   // Set the production url of your site here
   url: 'https://your-docusaurus-site.example.com',
@@ -62,8 +62,8 @@ const config = {
       navbar: {
         title: 'Ikura',
         logo: {
-          alt: 'Thrum Logo',
-          src: './img/blobs-simple.png',
+          alt: 'Ikura Logo',
+          src: './img/ikura_can_128.png',
         },
         items: [
           {

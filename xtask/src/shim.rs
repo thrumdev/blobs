@@ -6,7 +6,7 @@ pub struct Shim(duct::Handle);
 
 impl Shim {
     // Try launching the shim, it requires an up an running ikura-node
-    pub fn try_new(params: ShimParams) -> anyhow::Result<Self> {
+    pub fn try_new(project_path: &std::path::Path, params: ShimParams) -> anyhow::Result<Self> {
         check_binary(
             "ikura-shim",
             "'ikura-node' is not found in PATH.  \n \
@@ -14,7 +14,7 @@ impl Shim {
         )?;
 
         tracing::info!("Shim logs redirected to {}", params.log_path);
-        let with_logs = create_with_logs(params.log_path);
+        let with_logs = create_with_logs(project_path, params.log_path);
 
         // Wait for the shim to be connected, which indicates that the network is ready
         with_logs(

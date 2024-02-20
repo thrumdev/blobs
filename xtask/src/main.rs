@@ -7,6 +7,7 @@ mod zombienet;
 
 use clap::Parser;
 use cli::{test, Cli, Commands};
+use std::path::Path;
 
 fn main() -> anyhow::Result<()> {
     init_logging()?;
@@ -20,17 +21,28 @@ fn main() -> anyhow::Result<()> {
 }
 
 fn test(params: test::Params) -> anyhow::Result<()> {
-    init_env(params.ci)?;
+    // extract project path
+    #[rustfmt::skip]
+    let project_path = duct::cmd!(
+        "sh", "-c",
+        "cargo metadata --format-version 1 | jq -r '.workspace_root'"
+    )
+    .stdout_capture()
+    .run()?;
 
-    build::build(params.build)?;
+    let project_path = Path::new(std::str::from_utf8(&project_path.stdout)?.trim());
+
+    init_env(&project_path, params.ci)?;
+
+    build::build(&project_path, params.build)?;
 
     // the variables must be kept alive and not dropped
     // otherwise the child process will be killed
     #[allow(unused)]
-    let zombienet = zombienet::Zombienet::try_new(params.zombienet)?;
+    let zombienet = zombienet::Zombienet::try_new(&project_path, params.zombienet)?;
     #[allow(unused)]
-    let shim = shim::Shim::try_new(params.shim)?;
-    let sovereign = sovereign::Sovereign::try_new(params.sovereign)?;
+    let shim = shim::Shim::try_new(&project_path, params.shim)?;
+    let sovereign = sovereign::Sovereign::try_new(&project_path, params.sovereign)?;
 
     // TODO: https://github.com/thrumdev/blobs/issues/226
     // Wait for the sovereign rollup to be ready
@@ -46,17 +58,8 @@ fn test(params: test::Params) -> anyhow::Result<()> {
 // If ci flag is specified, all binaries are added to PATH env variable
 // and the sovereign constant manifest position is specified through the
 // CONSTANTS_MANIFEST new env variable
-fn init_env(ci: bool) -> anyhow::Result<()> {
+fn init_env(project_path: &Path, ci: bool) -> anyhow::Result<()> {
     if ci {
-        #[rustfmt::skip]
-        let project_dir = duct::cmd!(
-            "sh", "-c",
-            "cargo locate-project | jq -r '.root' | grep -oE '^.*/'"
-        )
-        .stdout_capture()
-        .run()?;
-        let project_dir = std::str::from_utf8(&project_dir.stdout)?.trim();
-
         let path = std::env::var("PATH").unwrap_or_else(|_| "".to_string());
 
         // `cargo_target` is the target used in ci by cargo as destination
@@ -64,7 +67,7 @@ fn init_env(ci: bool) -> anyhow::Result<()> {
         let new_path = format!("/cargo_target/release/:{}", path);
         std::env::set_var("PATH", new_path);
 
-        let path = std::path::Path::new(project_dir).join("demo/sovereign/constants.json");
+        let path = project_path.join("demo/sovereign/constants.json");
         if !path.exists() {
             anyhow::bail!(
                 "The `constants.json` file for Sovereign does not exist,\n \

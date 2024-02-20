@@ -1,22 +1,24 @@
 use crate::{check_binary, cli::test::SovereignParams, logging::create_with_logs};
 use anyhow::bail;
 use duct::cmd;
+use std::path::{Path, PathBuf};
 use tracing::info;
 
 pub struct Sovereign {
     process: duct::Handle,
     with_logs: Box<dyn Fn(&str, duct::Expression) -> duct::Expression>,
+    project_path: PathBuf,
 }
 
 impl Sovereign {
     // Try launching the sovereing rollup using zombienet
-    pub fn try_new(params: SovereignParams) -> anyhow::Result<Self> {
+    pub fn try_new(project_path: &Path, params: SovereignParams) -> anyhow::Result<Self> {
         info!("Deleting rollup db if it already exists");
-        cmd!("rm", "-r", "demo/sovereign/demo-rollup/demo_data")
-            .unchecked()
-            .stderr_null()
-            .stdout_null()
-            .run()?;
+
+        let sovereign_demo_data = project_path.join("demo/sovereign/demo-rollup/demo_data");
+        if sovereign_demo_data.as_path().exists() {
+            cmd!("rm", "-r", sovereign_demo_data).run()?;
+        }
 
         check_binary(
             "sov-demo-rollup",
@@ -25,21 +27,26 @@ impl Sovereign {
         )?;
 
         info!("Sovereign logs redirected to {}", params.log_path);
-        let with_logs = create_with_logs(params.log_path.clone());
+        let with_logs = create_with_logs(project_path, params.log_path.clone());
 
+        let sov_demo_rollup_path = project_path.join("demo/sovereign/demo-rollup/");
         //TODO: https://github.com/thrumdev/blobs/issues/227
         #[rustfmt::skip]
         let sovereign_handle = with_logs(
             "Launching sovereign rollup",
             cmd!(
                 "sh", "-c",
-                "cd demo/sovereign/demo-rollup && sov-demo-rollup"
+                format!(
+                    "cd {} && sov-demo-rollup",
+                    sov_demo_rollup_path.to_string_lossy()
+                )
             ),
         ).start()?;
 
         Ok(Self {
             process: sovereign_handle,
             with_logs,
+            project_path: project_path.to_path_buf(),
         })
     }
 
@@ -54,12 +61,16 @@ impl Sovereign {
         info!("Running sovereign rollup test");
 
         //TODO: https://github.com/thrumdev/blobs/issues/227
+        let sov_demo_rollup_path = self.project_path.join("demo/sovereign/demo-rollup/");
         let test_data_path = "../test-data/";
         let run_cli_cmd =
             |description: &str, args: &str| -> std::io::Result<std::process::Output> {
                 let args = [
                     "-c",
-                    &format!("cd demo/sovereign/demo-rollup/ && sov-cli {}", args),
+                    &format!(
+                        "cd {} && sov-cli {args}",
+                        sov_demo_rollup_path.to_string_lossy()
+                    ),
                 ];
 
                 (self.with_logs)(description, duct::cmd("sh", args)).run()

@@ -44,6 +44,9 @@ pub mod test {
         pub skip: bool,
 
         /// Build process stdout and stderr are redirected into this file
+        ///
+        /// Relative paths will be treated as relative to the root project directory
+        /// and not relative to where it is called
         #[arg(
             long = "build-log-path",
             value_name = "log-path",
@@ -56,6 +59,9 @@ pub mod test {
     #[derive(clap::Args, Debug, Clone)]
     pub struct ShimParams {
         /// Shim process stdout and stderr are redirected into this file
+        ///
+        /// Relative paths will be treated as relative to the root project directory
+        /// and not relative to where it is called
         #[arg(long = "shim-log-path", value_name = "log-path", id = "shim.log-path")]
         #[clap(default_value = "test_log/shim.log")]
         pub log_path: String,
@@ -64,6 +70,9 @@ pub mod test {
     #[derive(clap::Args, Debug, Clone)]
     pub struct ZombienetParams {
         /// Zombienet process stdout and stderr are redirected into this file
+        ///
+        /// Relative paths will be treated as relative to the root project directory
+        /// and not relative to where it is called
         #[arg(
             long = "zombienet-log-path",
             value_name = "log-path",
@@ -76,6 +85,9 @@ pub mod test {
     #[derive(clap::Args, Debug, Clone)]
     pub struct SovereignParams {
         /// Sovereign rollup process stdout and stderr are redirected into this file
+        ///
+        /// Relative paths will be treated as relative to the root project directory
+        /// and not relative to where it is called
         #[arg(
             long = "sovereign-log-path",
             value_name = "log-path",

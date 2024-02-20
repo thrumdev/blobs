@@ -1,5 +1,6 @@
 use crate::{check_binary, cli::test::ZombienetParams, logging::create_with_logs};
 use duct::cmd;
+use std::path::Path;
 use tracing::info;
 
 pub struct Zombienet(duct::Handle);
@@ -10,12 +11,14 @@ impl Zombienet {
     // The binaries for zombienet and polkadot are expected to be in the PATH,
     // while polkadot-execute-worker and polkadot-prepare-worker
     // need to be in the same directory as the polkadot binary.
-    pub fn try_new(params: ZombienetParams) -> anyhow::Result<Self> {
+    pub fn try_new(project_path: &Path, params: ZombienetParams) -> anyhow::Result<Self> {
         info!("Deleting the zombienet folder if it already exists");
-        cmd!("rm", "-r", "zombienet").unchecked().run()?;
+        let zombienet_folder = project_path.join("zombienet");
+        if zombienet_folder.as_path().exists() {
+            cmd!("rm", "-r", zombienet_folder).run()?;
+        }
 
         info!("Checking binaries availability");
-
         check_binary(
             "zombienet",
             "'zombienet' is not found in PATH. Install zombienet. \n \
@@ -35,12 +38,15 @@ impl Zombienet {
         )?;
 
         tracing::info!("Zombienet logs redirected to {}", params.log_path);
-        let with_logs = create_with_logs(params.log_path);
+        let with_logs = create_with_logs(project_path, params.log_path);
 
         #[rustfmt::skip]
         let zombienet_handle = with_logs(
             "Launching zombienet",
-            cmd!("zombienet", "spawn", "-p", "native", "--dir", "zombienet", "testnet.toml"),
+            cmd!(
+                "sh", "-c",
+                format!("cd {} && zombienet spawn -p native --dir zombienet testnet.toml", project_path.to_string_lossy())
+            ),
         ).start()?;
 
         Ok(Self(zombienet_handle))

@@ -1,7 +1,12 @@
+# syntax=docker/dockerfile:1
+
 # An image that acts as the base image for the GHA runner running in sysbox.
 #
 # Build: docker build -t ghcr.io/thrumdev/gha-runner -f docker/gha-runner.Dockerfile .
 # Push: docker push ghcr.io/thrumdev/gha-runner
+
+ARG POLKADOT_VERSION=v1.6.0
+FROM parity/polkadot:${POLKADOT_VERSION} AS polkadot
 
 FROM rodnymolina588/gha-sysbox-runner@sha256:d10a36f2da30aa0df71d1ac062cc79fc5114eec7b6ae8a0c42cadf568e6eefa8
 
@@ -51,6 +56,6 @@ RUN cargo risczero install
 # Install Zombienet and copy Polkadot binaries, which are all required for xtask tests
 RUN npm install -g @zombienet/cli
 
-COPY --from=parity/polkadot:v1.6.0 /usr/bin/polkadot /usr/bin/
-COPY --from=parity/polkadot:v1.6.0 /usr/lib/polkadot/polkadot-prepare-worker /usr/bin/
-COPY --from=parity/polkadot:v1.6.0 /usr/lib/polkadot/polkadot-execute-worker /usr/bin/
+COPY --from=polkadot /usr/bin/polkadot /usr/bin/
+COPY --from=polkadot /usr/lib/polkadot/polkadot-prepare-worker /usr/bin/
+COPY --from=polkadot /usr/lib/polkadot/polkadot-execute-worker /usr/bin/

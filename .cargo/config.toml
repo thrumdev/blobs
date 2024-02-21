@@ -1,2 +1,4 @@
 [alias]
 xtask = "run --package xtask --"
+xtest = "run --package xtask -- test"
+xzombienet = "run --package xtask -- zombienet"

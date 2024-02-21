@@ -1,4 +1,4 @@
-use crate::{cli::test::BuildParams, logging::create_with_logs};
+use crate::{cli::BuildParams, logging::create_with_logs};
 use duct::cmd;
 
 // TODO: https://github.com/thrumdev/blobs/issues/225

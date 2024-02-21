@@ -1,4 +1,4 @@
-use crate::{check_binary, cli::test::ZombienetParams, logging::create_with_logs};
+use crate::{check_binary, cli::ZombienetParams, logging::create_with_logs};
 use duct::cmd;
 use std::path::Path;
 use tracing::info;

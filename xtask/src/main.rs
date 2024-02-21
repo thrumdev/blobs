@@ -7,7 +7,10 @@ mod zombienet;
 
 use clap::Parser;
 use cli::{test, Cli, Commands};
-use std::path::Path;
+use std::{
+    path::{Path, PathBuf},
+    str,
+};
 
 fn main() -> anyhow::Result<()> {
     init_logging()?;
@@ -15,22 +18,14 @@ fn main() -> anyhow::Result<()> {
 
     match cli.command {
         Commands::Test(params) => test(params)?,
+        Commands::Zombienet(params) => zombienet(params)?,
     }
 
     Ok(())
 }
 
 fn test(params: test::Params) -> anyhow::Result<()> {
-    // extract project path
-    #[rustfmt::skip]
-    let project_path = duct::cmd!(
-        "sh", "-c",
-        "cargo metadata --format-version 1 | jq -r '.workspace_root'"
-    )
-    .stdout_capture()
-    .run()?;
-
-    let project_path = Path::new(std::str::from_utf8(&project_path.stdout)?.trim());
+    let project_path = obtain_project_path()?;
 
     init_env(&project_path, params.ci)?;
 
@@ -38,10 +33,8 @@ fn test(params: test::Params) -> anyhow::Result<()> {
 
     // the variables must be kept alive and not dropped
     // otherwise the child process will be killed
-    #[allow(unused)]
-    let zombienet = zombienet::Zombienet::try_new(&project_path, params.zombienet)?;
-    #[allow(unused)]
-    let shim = shim::Shim::try_new(&project_path, params.shim)?;
+    let _zombienet = zombienet::Zombienet::try_new(&project_path, params.zombienet)?;
+    let _shim = shim::Shim::try_new(&project_path, params.shim)?;
     let sovereign = sovereign::Sovereign::try_new(&project_path, params.sovereign)?;
 
     // TODO: https://github.com/thrumdev/blobs/issues/226
@@ -51,6 +44,36 @@ fn test(params: test::Params) -> anyhow::Result<()> {
     sovereign.test_sovereign_rollup()?;
 
     Ok(())
+}
+
+fn zombienet(params: crate::cli::zombienet::Params) -> anyhow::Result<()> {
+    let project_path = obtain_project_path()?;
+    build::build(&project_path, params.build)?;
+    let _zombienet = zombienet::Zombienet::try_new(&project_path, params.zombienet)?;
+    wait_interrupt();
+    Ok(())
+}
+
+fn obtain_project_path() -> anyhow::Result<PathBuf> {
+    #[rustfmt::skip]
+    let project_path = duct::cmd!(
+        "sh", "-c",
+        "cargo metadata --format-version 1 | jq -r '.workspace_root'"
+    )
+    .stdout_capture()
+    .run()?;
+    Ok(PathBuf::from(str::from_utf8(&project_path.stdout)?.trim()))
+}
+
+/// Blocks until ^C signal is delivered to this process. Uses global resource, don't proliferate.
+fn wait_interrupt() {
+    use std::sync::mpsc;
+    let (tx, rx) = mpsc::channel();
+    ctrlc::set_handler(move || {
+        let _ = tx.send(());
+    })
+    .unwrap();
+    let _ = rx.recv();
 }
 
 // Set up environment variables needed by the compilation and testing process.

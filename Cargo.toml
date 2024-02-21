@@ -182,3 +182,4 @@ pallet-ikura-length-fee-adjustment = { path = "ikura/chain/pallets/length-fee-ad
 
 # xtask
 duct = { version = "0.13.7" }
+ctrlc = { version = "3.4.2" }

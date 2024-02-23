@@ -27,7 +27,7 @@ fn main() -> anyhow::Result<()> {
 fn test(params: test::Params) -> anyhow::Result<()> {
     let project_path = obtain_project_path()?;
 
-    init_env(&project_path, params.ci)?;
+    init_env(&project_path, params.no_infer_bin_path)?;
 
     build::build(&project_path, params.build)?;
 
@@ -78,27 +78,47 @@ fn wait_interrupt() {
 
 // Set up environment variables needed by the compilation and testing process.
 //
-// If ci flag is specified, all binaries are added to PATH env variable
-// and the sovereign constant manifest position is specified through the
-// CONSTANTS_MANIFEST new env variable
-fn init_env(project_path: &Path, ci: bool) -> anyhow::Result<()> {
-    if ci {
-        let path = std::env::var("PATH").unwrap_or_else(|_| "".to_string());
-
-        // `cargo_target` is the target used in ci by cargo as destination
-        // for all intermediate and final artifacts
-        let new_path = format!("/cargo_target/release/:{}", path);
-        std::env::set_var("PATH", new_path);
-
-        let path = project_path.join("demo/sovereign/constants.json");
-        if !path.exists() {
-            anyhow::bail!(
-                "The `constants.json` file for Sovereign does not exist,\n \
+// Add the sovereign constant manifest position through the
+// CONSTANTS_MANIFEST new env variable and if no_infer_bin_path is not specified
+// add to the path all required binaries.
+fn init_env(project_path: &PathBuf, no_infer_bin_path: bool) -> anyhow::Result<()> {
+    let path = project_path.join("demo/sovereign/constants.json");
+    if !path.exists() {
+        anyhow::bail!(
+            "The `constants.json` file for Sovereign does not exist,\n \
                    or it is not in the expected position, `demo/sovereign/constants.json`"
-            )
-        }
-        std::env::set_var("CONSTANTS_MANIFEST", path);
+        )
     }
+    std::env::set_var("CONSTANTS_MANIFEST", path);
+
+    if no_infer_bin_path {
+        return Ok(());
+    }
+
+    let path = std::env::var("PATH").unwrap_or_else(|_| "".to_string());
+
+    #[rustfmt::skip]
+    let chain_target_path = duct::cmd!(
+        "sh", "-c",
+        "cargo metadata --format-version 1 | jq -r '.target_directory'"
+    )
+    .stdout_capture()
+    .run()?;
+    let chain_target_path = str::from_utf8(&chain_target_path.stdout)?.trim();
+
+    #[rustfmt::skip]
+    let sovereign_target_path = duct::cmd!(
+        "sh", "-c",
+        "cd demo/sovereign && cargo metadata --format-version 1 | jq -r '.target_directory'"
+    )
+    .stdout_capture()
+    .run()?;
+    let sovereign_target_path = str::from_utf8(&sovereign_target_path.stdout)?.trim();
+
+    std::env::set_var(
+        "PATH",
+        format!("{chain_target_path}/release/:{sovereign_target_path}/release/:{path}"),
+    );
 
     Ok(())
 }

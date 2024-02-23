@@ -15,7 +15,7 @@ pub async fn run(params: Params) -> anyhow::Result<()> {
 
     let key = crate::cmd::load_key(key_management)
         .with_context(|| format!("cannot load submission signing key"))?
-        .ok_or_else(|| anyhow::anyhow!("submission signing key required"))?;
+        .ok_or_else(|| anyhow::anyhow!("submission signing key required. Specify the key with --submit-private-key or use the dev key with --submit-dev-alice"))?;
 
     let namespace = read_namespace(&namespace)?;
     let client = connect_rpc(rpc).await?;

@@ -181,7 +181,7 @@ pub mod query {
         ///
         /// Hashes must be 32 bytes, hex-encoded, and prefixed with "0x".
         #[arg(value_name = "BLOCK_REF")]
-        pub block_ref: BlockRef,
+        pub block_ref: Option<BlockRef>,
 
         /// By default, if the block is not available (e.g. not yet produced), the shim will return immediately.
         ///

@@ -23,9 +23,9 @@ pub async fn get_block_at(
     block: BlockParams,
 ) -> anyhow::Result<ikura_rpc::Block> {
     let maybe_hash = match block.block_ref {
-        BlockRef::Best => None,
-        BlockRef::Hash(h) => Some(h),
-        BlockRef::Number(n) => Some(match block.wait {
+        None | Some(BlockRef::Best) => None,
+        Some(BlockRef::Hash(h)) => Some(h),
+        Some(BlockRef::Number(n)) => Some(match block.wait {
             true => client.await_block_hash(n).await,
             false => client
                 .block_hash(n)

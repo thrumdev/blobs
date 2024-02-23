@@ -175,7 +175,7 @@ pub mod query {
     pub struct BlockParams {
         /// The block containing the blob to query.
         ///
-        /// Possible values: ["best", number, hash]
+        /// Possible values: ["best", number, hash]. Defaults to "best".
         ///
         /// "best" is the highest finalized block.
         ///

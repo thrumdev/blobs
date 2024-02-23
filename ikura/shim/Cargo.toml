@@ -11,6 +11,7 @@ edition.workspace = true
 
 [dependencies]
 ikura-nmt = { workspace = true, default-features = true, features = ["serde"] }
+ikura-serde-util = { workspace = true }
 ikura-subxt = { workspace = true }
 ikura-primitives = { workspace = true, default-features = true }
 ikura-shim-common-sovereign = { workspace = true, default-features = true, features = ["server"] }
@@ -24,6 +25,8 @@ tracing = { workspace = true }
 tracing-subscriber = { workspace = true, features = ["env-filter"] }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros", "net"] }
 async-trait = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
 subxt = { workspace = true }
 subxt-signer = { workspace = true, features = ["subxt"] }
 sha2 = { workspace = true, default-features = true }

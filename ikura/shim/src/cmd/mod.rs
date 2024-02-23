@@ -25,8 +25,8 @@ fn init_logging() -> anyhow::Result<()> {
         .with_default_directive(tracing_subscriber::filter::LevelFilter::INFO.into())
         .from_env_lossy();
     tracing_subscriber::registry()
-        .with(fmt::layer())
         .with(filter)
+        .with(fmt::layer().with_writer(std::io::stderr))
         .try_init()?;
     Ok(())
 }

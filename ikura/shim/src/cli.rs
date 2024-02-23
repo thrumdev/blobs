@@ -275,6 +275,10 @@ pub mod query {
 
             #[clap(flatten)]
             pub block: BlockParams,
+
+            /// Output the result as JSON.
+            #[clap(long)]
+            pub json: bool,
         }
     }
 

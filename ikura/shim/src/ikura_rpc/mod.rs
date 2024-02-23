@@ -368,9 +368,12 @@ mod err {
 }
 
 /// Represents a ikura block.
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Block {
     pub number: u64,
+    #[serde(with = "ikura_serde_util::bytes32_hex")]
     pub hash: [u8; 32],
+    #[serde(with = "ikura_serde_util::bytes32_hex")]
     pub parent_hash: [u8; 32],
     pub tree_root: ikura_nmt::TreeRoot,
     pub timestamp: u64,
@@ -398,10 +401,13 @@ impl Block {
 }
 
 /// Represents a blob in a ikura block.
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Blob {
     pub extrinsic_index: u32,
     pub namespace: Namespace,
+    #[serde(with = "ikura_serde_util::bytes32_hex")]
     pub sender: [u8; 32],
+    #[serde(with = "ikura_serde_util::bytes_hex")]
     pub data: Vec<u8>,
 }
 

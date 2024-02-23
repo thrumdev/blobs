@@ -32,4 +32,4 @@ jobs:
       - name: cargo test
         run: cargo test --verbose --all
       - name: cargo xtask test
-        run: cargo xtask test --ci
+        run: cargo xtask test

@@ -1,17 +1,32 @@
 use ikura_shim_common_sovereign::{Block, SovereignRPCServer};
-use jsonrpsee::{types::ErrorObjectOwned, Methods};
-use tracing::{debug, info};
+use jsonrpsee::{server::Server, types::ErrorObjectOwned};
+use tracing::info;
 
 use super::rpc_error as err;
 use crate::{ikura_rpc, key::Keypair};
 
+pub struct Config {
+    /// The RPC client handle to the ikura node.
+    pub client: ikura_rpc::Client,
+
+    /// The optional key used for signing when submitting blobs.
+    pub submit_key: Option<Keypair>,
+
+    /// The address to listen on.
+    pub address: String,
+
+    /// The port to listen on.
+    pub port: u16,
+}
+
 /// Registers the sovereign dock in the given methods.
-pub fn register(methods: &mut Methods, config: &super::Config) {
-    debug!("enabling sovereign adapter dock");
-    let dock = SovereignDock::new(config.client.clone(), config.submit_key.clone());
-    methods
-        .merge(dock.into_rpc())
-        .expect("adapter namespace must be unique");
+pub async fn run(config: Config) -> anyhow::Result<()> {
+    let listen_on = (config.address.as_str(), config.port);
+    let server = Server::builder().build(listen_on).await?;
+    let dock = SovereignDock::new(config.client.clone(), config.submit_key.clone()).into_rpc();
+    let handle = server.start(dock);
+    handle.stopped().await;
+    Ok(())
 }
 
 struct SovereignDock {

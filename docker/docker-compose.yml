@@ -36,16 +36,6 @@ services:
       test: [
         "CMD-SHELL",
         "curl -s -XPOST -H 'Content-Type: application/json' -d '{\"jsonrpc\":\"2.0\",\"id\":0,\"method\":\"sovereign_getBlock\", \"params\":[1, \"0x00000000000000000000000000000000\"]}' http://localhost:10995/"]
-  gm:
-    build:
-      context: ..
-      dockerfile: ./demo/rollkit/docker/Dockerfile
-    depends_on:
-      shim:
-        condition: service_healthy
-    # This unites the Linux network namespace with the one of the `shim` service. That means that
-    # shim will be available via localhost.
-    network_mode: "service:shim"
   sov:
     build:
       context: ..

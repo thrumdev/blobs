@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -eux
+
 # set variables for the chain
 VALIDATOR_NAME=validator1
 CHAIN_ID=gm
@@ -58,24 +60,37 @@ echo -e "\n\n\n\n\n Your NAMESPACE is $NAMESPACE \n\n Your DA_BLOCK_HEIGHT is $D
 ignite chain build
 
 # reset any existing genesis/chain data
-gmd tendermint unsafe-reset-all
+rm -rf ~/.gm
 
 # initialize the validator with the chain ID you set
-gmd init $VALIDATOR_NAME --chain-id $CHAIN_ID
+gmd init --overwrite $VALIDATOR_NAME --chain-id $CHAIN_ID
 
 # add keys for key 1 and key 2 to keyring-backend test
+gmd keys delete $KEY_NAME --keyring-backend test -y || true
+gmd keys delete $KEY_2_NAME --keyring-backend test -y || true
 gmd keys add $KEY_NAME --keyring-backend test
 gmd keys add $KEY_2_NAME --keyring-backend test
 
 # add these as genesis accounts
-gmd add-genesis-account $KEY_NAME $TOKEN_AMOUNT --keyring-backend test
-gmd add-genesis-account $KEY_2_NAME $TOKEN_AMOUNT --keyring-backend test
+gmd genesis add-genesis-account $KEY_NAME $TOKEN_AMOUNT --keyring-backend test
+gmd genesis add-genesis-account $KEY_2_NAME $TOKEN_AMOUNT --keyring-backend test
 
 # set the staking amounts in the genesis transaction
-gmd gentx $KEY_NAME $STAKING_AMOUNT --chain-id $CHAIN_ID --keyring-backend test
+gmd genesis gentx $KEY_NAME $STAKING_AMOUNT --chain-id $CHAIN_ID --keyring-backend test
 
 # collect genesis transactions
-gmd collect-gentxs
+gmd genesis collect-gentxs
+
+# copy centralized sequencer address into genesis.json
+# Note: validator and sequencer are used interchangeably here
+ADDRESS=$(jq -r '.address' ~/.gm/config/priv_validator_key.json)
+PUB_KEY=$(jq -r '.pub_key' ~/.gm/config/priv_validator_key.json)
+jq --argjson pubKey "$PUB_KEY" '.consensus["validators"]=[{"address": "'$ADDRESS'", "pub_key": $pubKey, "power": "1000", "name": "Rollkit Sequencer"}]' ~/.gm/config/genesis.json > temp.json && mv temp.json ~/.gm/config/genesis.json
 
 # start the chain
-gmd start --rollkit.aggregator true --rollkit.da_layer ikura --rollkit.da_config='{"base_url":"http://localhost:10995","namespace":"00000000000011111111111111111111"}' --rollkit.namespace_id 00000000000011111111111111111111 --rollkit.da_start_height 1 --rpc.laddr tcp://127.0.0.1:36657 --p2p.laddr "0.0.0.0:36656"
+gmd start \
+    --rollkit.aggregator \
+    --rollkit.da_start_height $DA_BLOCK_HEIGHT \
+    --rpc.laddr tcp://127.0.0.1:36657 \
+    --p2p.laddr "0.0.0.0:36656" \
+    --minimum-gas-prices="0.025stake"

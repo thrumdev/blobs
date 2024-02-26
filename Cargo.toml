@@ -19,7 +19,6 @@ members = [
     "ikura/nmt",
     "ikura/serde-util",
     "ikura/shim",
-    "ikura/shim/common/rollkit",
     "ikura/shim/common/sovereign",
     "ikura/subxt-autogen",
     "xtask"
@@ -167,6 +166,11 @@ borsh = { version = "0.10.3" }
 bytes = { version = "1", features = ["serde"] }
 digest = "0.10.7"
 
+# Rollkit DA adapter
+prost = "0.12.3"
+tonic = "0.11"
+tonic-build = "0.11"
+
 # Local
 gondatsu-runtime = { path = "ikura/chain/runtimes/gondatsu" }
 
@@ -174,7 +178,6 @@ ikura-serde-util = { path = "ikura/serde-util" }
 ikura-nmt = { path = "ikura/nmt", default-features = false }
 ikura-subxt = { path = "ikura/subxt-autogen" }
 ikura-shim-common-sovereign = { path = "ikura/shim/common/sovereign", default-features = false }
-ikura-shim-common-rollkit = { path = "ikura/shim/common/rollkit" }
 ikura-test-runtime = { path = "ikura/chain/runtimes/test" }
 ikura-primitives = { path = "ikura/chain/primitives", default-features = false }
 pallet-ikura-blobs = { path = "ikura/chain/pallets/blobs", default-features = false }

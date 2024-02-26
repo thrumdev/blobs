@@ -95,18 +95,6 @@ pub struct IkuraRpcParams {
     pub no_retry: bool,
 }
 
-impl DockParams {
-    /// Whether the sovereign dock should be enabled.
-    pub fn enable_sovereign(&self) -> bool {
-        true
-    }
-
-    /// Whether the rollkit dock should be enabled.
-    pub fn enable_rollkit(&self) -> bool {
-        true
-    }
-}
-
 #[derive(Subcommand, Debug)]
 pub enum Commands {
     /// Connect to the ikura node and serve requests from the rollup nodes.
@@ -120,19 +108,67 @@ pub enum Commands {
 pub mod serve {
     //! CLI definition for the `serve` subcommand.
 
-    use super::{DockParams, IkuraRpcParams, KeyManagementParams};
-    use clap::Args;
+    use super::{DockParams, IkuraRpcParams, KeyManagementParams, ENV_IKURA_NAMESPACE};
+    use clap::{Args, Subcommand};
 
     #[derive(Debug, Args)]
     pub struct Params {
-        #[clap(flatten)]
-        pub rpc: IkuraRpcParams,
+        #[command(subcommand)]
+        pub dock: Dock,
+    }
 
-        #[clap(flatten)]
-        pub dock: DockParams,
+    #[derive(Subcommand, Debug)]
+    pub enum Dock {
+        /// Serve requests of the Sovereign SDK rollups.
+        Sov(sov::Params),
+        /// Serve requests of the Rollkit SDK rollups.
+        Rollkit(rollkit::Params),
+    }
 
-        #[clap(flatten)]
-        pub key_management: KeyManagementParams,
+    pub mod sov {
+        //! CLI definition for the `serve sov` subcommand.
+
+        use super::{DockParams, IkuraRpcParams, KeyManagementParams};
+        use clap::Args;
+
+        #[derive(Debug, Args)]
+        pub struct Params {
+            #[clap(flatten)]
+            pub rpc: IkuraRpcParams,
+
+            #[clap(flatten)]
+            pub dock: DockParams,
+
+            #[clap(flatten)]
+            pub key_management: KeyManagementParams,
+        }
+    }
+
+    pub mod rollkit {
+        //! CLI definition for the `serve rollkit` subcommand.
+
+        use super::{DockParams, IkuraRpcParams, KeyManagementParams, ENV_IKURA_NAMESPACE};
+        use clap::Args;
+
+        #[derive(Debug, Args)]
+        pub struct Params {
+            #[clap(flatten)]
+            pub rpc: IkuraRpcParams,
+
+            #[clap(flatten)]
+            pub dock: DockParams,
+
+            #[clap(flatten)]
+            pub key_management: KeyManagementParams,
+
+            /// The namespace to submit the blobs into.
+            ///
+            /// The namespace can be specified either as a 16-byte vector, or as an unsigned 128-bit
+            /// big-endian integer. To distinguish between the two, the byte vector must be prefixed
+            /// with `0x`.
+            #[clap(long, short, env = ENV_IKURA_NAMESPACE)]
+            pub namespace: Option<String>,
+        }
     }
 }
 

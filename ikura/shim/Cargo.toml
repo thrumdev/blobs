@@ -15,7 +15,6 @@ ikura-serde-util = { workspace = true }
 ikura-subxt = { workspace = true }
 ikura-primitives = { workspace = true, default-features = true }
 ikura-shim-common-sovereign = { workspace = true, default-features = true, features = ["server"] }
-ikura-shim-common-rollkit = { workspace = true }
 
 anyhow = { workspace = true }
 clap = { workspace = true, features = ["derive", "env"] }
@@ -32,6 +31,11 @@ subxt-signer = { workspace = true, features = ["subxt"] }
 sha2 = { workspace = true, default-features = true }
 url = { workspace = true }
 hex = { workspace = true }
+tonic = { workspace = true }
+prost = { workspace = true }
+
+[build-dependencies]
+tonic-build = { workspace = true }
 
 [dev-dependencies]
 temp-dir = { workspace = true }

@@ -4,15 +4,15 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	testkeeper "gm/testutil/keeper"
+
+	keepertest "gm/testutil/keeper"
 	"gm/x/gm/types"
 )
 
 func TestGetParams(t *testing.T) {
-	k, ctx := testkeeper.GmKeeper(t)
+	k, ctx := keepertest.GmKeeper(t)
 	params := types.DefaultParams()
 
-	k.SetParams(ctx, params)
-
+	require.NoError(t, k.SetParams(ctx, params))
 	require.EqualValues(t, params, k.GetParams(ctx))
 }

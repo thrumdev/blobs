@@ -25,7 +25,7 @@ impl Shim {
 
         let shim_handle = with_logs(
             "Launching Shim",
-            cmd!("ikura-shim", "serve", "--submit-dev-alice"),
+            cmd!("ikura-shim", "serve", "sov", "--submit-dev-alice"),
         )
         .start()?;
 

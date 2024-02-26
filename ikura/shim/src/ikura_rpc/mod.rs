@@ -197,14 +197,14 @@ impl Client {
     /// at best effort. Not much is done to ensure that the blob is actually included. If this
     /// function returned an error, that does not mean that the blob was not included.
     ///
-    /// Returns a block hash in which the extrinsic was included.
+    /// Returns a block hash in which the extrinsic was included and the extrinsic index.
     #[tracing::instrument(level = Level::DEBUG, skip(self))]
     pub async fn submit_blob(
         &self,
         blob: Vec<u8>,
         namespace: ikura_nmt::Namespace,
         key: Keypair,
-    ) -> anyhow::Result<[u8; 32]> {
+    ) -> anyhow::Result<([u8; 32], u32)> {
         let extrinsic = ikura_subxt::ikura::tx()
             .blobs()
             .submit_blob(UnvalidatedNamespace(namespace.to_raw_bytes()), blob);
@@ -224,7 +224,8 @@ impl Client {
             .await?;
 
         let block_hash = events.block_hash();
-        Ok(block_hash.0)
+        let extrinsic_index = events.extrinsic_index();
+        Ok((block_hash.0, extrinsic_index))
     }
 }
 

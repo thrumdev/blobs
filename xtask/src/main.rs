@@ -7,10 +7,7 @@ mod zombienet;
 
 use clap::Parser;
 use cli::{test, Cli, Commands};
-use std::{
-    path::{Path, PathBuf},
-    str,
-};
+use std::{path::PathBuf, str};
 
 fn main() -> anyhow::Result<()> {
     init_logging()?;

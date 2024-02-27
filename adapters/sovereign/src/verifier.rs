@@ -73,11 +73,11 @@ impl DaVerifier for IkuraVerifier {
         _completeness_proof: <Self::Spec as DaSpec>::CompletenessProof,
     ) -> Result<<Self::Spec as DaSpec>::ValidityCondition, Self::Error> {
         let validity_condition = ChainValidityCondition {
-            prev_hash: block_header.prev_hash().0.into(),
-            block_hash: block_header.hash().0.into(),
+            prev_hash: block_header.prev_hash().0,
+            block_hash: block_header.hash().0,
         };
 
-        let blob_hashes: Vec<[u8; 32]> = txs.iter().map(|tx| tx.hash.0.clone()).collect();
+        let blob_hashes: Vec<[u8; 32]> = txs.iter().map(|tx| tx.hash.0).collect();
         let ip = inclusion_proof.verify(
             blob_hashes.as_slice(),
             block_header.nmt_root.clone(),

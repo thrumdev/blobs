@@ -25,8 +25,8 @@ impl SlotData for Block {
 
     fn validity_condition(&self) -> Self::Cond {
         ChainValidityCondition {
-            prev_hash: self.header.prev_hash().0.into(),
-            block_hash: self.header.hash().0.into(),
+            prev_hash: self.header.prev_hash().0,
+            block_hash: self.header.hash().0,
         }
     }
 }

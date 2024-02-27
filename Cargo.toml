@@ -41,7 +41,7 @@ futures = { version = "0.3.29" }
 jsonrpsee = { version = "0.20.3" }
 tracing = { version = "0.1.40" }
 tracing-subscriber = { version = "0.3.18" }
-tokio = { version = "1.34.0" }
+tokio = { version = "1.36.0" }
 async-trait = { version = "0.1.74" }
 fex = { version = "0.4.3" }
 hex-literal = { version = "0.4.1" }
@@ -184,5 +184,6 @@ pallet-ikura-blobs = { path = "ikura/chain/pallets/blobs", default-features = fa
 pallet-ikura-length-fee-adjustment = { path = "ikura/chain/pallets/length-fee-adjustment", default-features = false }
 
 # xtask
-duct = { version = "0.13.7" }
+xshell = { version = "0.2.5" }
+nix = { version = "0.27.1" }
 ctrlc = { version = "3.4.2" }

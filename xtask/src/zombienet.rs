@@ -1,9 +1,14 @@
-use crate::{check_binary, cli::ZombienetParams, logging::create_with_logs};
-use duct::cmd;
+use crate::{
+    check_binary,
+    cli::ZombienetParams,
+    logging::{create_log_file, WithLogs},
+    ProcessGroupId,
+};
 use std::path::Path;
 use tracing::info;
+use xshell::cmd;
 
-pub struct Zombienet(duct::Handle);
+pub struct Zombienet(tokio::process::Child);
 
 impl Zombienet {
     // Try launching the network using zombienet
@@ -11,11 +16,16 @@ impl Zombienet {
     // The binaries for zombienet and polkadot are expected to be in the PATH,
     // while polkadot-execute-worker and polkadot-prepare-worker
     // need to be in the same directory as the polkadot binary.
-    pub fn try_new(project_path: &Path, params: ZombienetParams) -> anyhow::Result<Self> {
+    pub async fn try_new(project_path: &Path, params: ZombienetParams) -> anyhow::Result<Self> {
+        let sh = xshell::Shell::new()?;
+
         info!("Deleting the zombienet folder if it already exists");
         let zombienet_folder = project_path.join("zombienet");
         if zombienet_folder.as_path().exists() {
-            cmd!("rm", "-r", zombienet_folder).run()?;
+            cmd!(sh, "rm -r {zombienet_folder}")
+                .quiet()
+                .ignore_status()
+                .run()?;
         }
 
         info!("Checking binaries availability");
@@ -38,26 +48,23 @@ impl Zombienet {
         )?;
 
         tracing::info!("Zombienet logs redirected to {}", params.log_path);
-        let with_logs = create_with_logs(project_path, params.log_path);
+        let log_path = create_log_file(project_path, &params.log_path);
 
-        #[rustfmt::skip]
-        let zombienet_handle = with_logs(
-            "Launching zombienet",
-            cmd!(
-                "sh", "-c",
-                format!("cd {} && zombienet spawn -p native --dir zombienet testnet.toml", project_path.to_string_lossy())
-            ),
-        ).start()?;
+        sh.change_dir(project_path);
 
-        Ok(Self(zombienet_handle))
+        let zombienet_process = cmd!(sh, "zombienet spawn -p native --dir zombienet testnet.toml")
+            .process_group(0)
+            .spawn_with_logs("Launching zombienet", &log_path)?;
+
+        Ok(Self(zombienet_process))
     }
 }
 
 impl Drop for Zombienet {
-    // duct::Handle does not implement kill on drop
     fn drop(&mut self) {
-        // TODO: https://github.com/thrumdev/blobs/issues/228
-        info!("Zombienet process is going to be killed");
-        let _ = self.0.kill();
+        use nix::{sys::signal, unistd::Pid};
+        let Some(id) = self.0.id() else { return };
+        signal::killpg(Pid::from_raw(id as i32), Some(signal::Signal::SIGKILL))
+            .expect("Failed kill zombienet process");
     }
 }

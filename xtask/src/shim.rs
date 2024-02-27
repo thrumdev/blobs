@@ -1,12 +1,17 @@
-use crate::{check_binary, cli::test::ShimParams, logging::create_with_logs};
-use duct::cmd;
-use tracing::info;
+use crate::{
+    check_binary,
+    cli::test::ShimParams,
+    logging::{create_log_file, WithLogs},
+};
 
-pub struct Shim(duct::Handle);
+pub struct Shim(tokio::process::Child);
 
 impl Shim {
     // Try launching the shim, it requires an up an running ikura-node
-    pub fn try_new(project_path: &std::path::Path, params: ShimParams) -> anyhow::Result<Self> {
+    pub async fn try_new(
+        project_path: &std::path::Path,
+        params: ShimParams,
+    ) -> anyhow::Result<Self> {
         check_binary(
             "ikura-shim",
             "'ikura-node' is not found in PATH.  \n \
@@ -14,29 +19,18 @@ impl Shim {
         )?;
 
         tracing::info!("Shim logs redirected to {}", params.log_path);
-        let with_logs = create_with_logs(project_path, params.log_path);
+        let log_path = create_log_file(project_path, &params.log_path);
+
+        let sh = xshell::Shell::new()?;
 
         // Wait for the shim to be connected, which indicates that the network is ready
-        with_logs(
-            "Wait for the network to be ready",
-            cmd!("ikura-shim", "query", "block", "--wait", "1"),
-        )
-        .run()?;
+        xshell::cmd!(sh, "ikura-shim query block --wait 1")
+            .run_with_logs("Wait for the network to be ready", &log_path)
+            .await??;
 
-        let shim_handle = with_logs(
-            "Launching Shim",
-            cmd!("ikura-shim", "serve", "sov", "--submit-dev-alice"),
-        )
-        .start()?;
+        let shim_process = xshell::cmd!(sh, "ikura-shim serve sov --submit-dev-alice")
+            .spawn_with_logs("Launching Shim", &log_path)?;
 
-        Ok(Self(shim_handle))
-    }
-}
-
-impl Drop for Shim {
-    // duct::Handle does not implement kill on drop
-    fn drop(&mut self) {
-        info!("Shim process is going to be killed");
-        let _ = self.0.kill();
+        Ok(Self(shim_process))
     }
 }

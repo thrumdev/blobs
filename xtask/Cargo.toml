@@ -10,9 +10,11 @@ license.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-duct = { workspace = true }
+xshell = { workspace = true }
+nix = { workspace = true, features = ["signal", "process"] }
+tokio = { workspace = true, features = ["rt", "macros", "rt-multi-thread", "time", "process", "sync", "signal"] }
 clap = { workspace = true, features = ["derive"] }
 anyhow = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true, features = ["env-filter"] }
-ctrlc = { workspace = true }
+serde_json = { workspace = true }

@@ -27,9 +27,14 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
+      - name: cargo clean cache
+        run: cargo install cargo-cache --no-default-features --features ci-autoclean cargo-cache && cargo-cache
       - name: cargo build
         run: cargo build --verbose --all
       - name: cargo test
         run: cargo test --verbose --all
       - name: cargo xtask test
         run: cargo xtask test
+      - name: print logs if tests fail
+        run: cat test_log/*.log
+        if: failure()

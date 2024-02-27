@@ -7,70 +7,76 @@ mod zombienet;
 
 use clap::Parser;
 use cli::{test, Cli, Commands};
+use std::{os::unix::process::CommandExt, process::Command as StdCommand};
 use std::{path::PathBuf, str};
+use tokio::{signal, task};
+use xshell::{cmd, Shell};
 
-fn main() -> anyhow::Result<()> {
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
     init_logging()?;
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Test(params) => test(params)?,
-        Commands::Zombienet(params) => zombienet(params)?,
-    }
+        Commands::Test(params) => test(params).await?,
+        Commands::Zombienet(params) => zombienet(params).await?,
+    };
 
     Ok(())
 }
 
-fn test(params: test::Params) -> anyhow::Result<()> {
-    let project_path = obtain_project_path()?;
+async fn test(params: test::Params) -> anyhow::Result<()> {
+    tokio::select!(
+        _ = wait_interrupt() => Ok(()),
+        res = test_procedure(params) => res
+    )
+}
 
+async fn test_procedure(params: test::Params) -> anyhow::Result<()> {
+    let project_path = obtain_project_path()?;
     init_env(&project_path, params.no_infer_bin_path)?;
 
-    build::build(&project_path, params.build)?;
+    build::build(&project_path, params.build).await?;
 
     // the variables must be kept alive and not dropped
     // otherwise the child process will be killed
-    let _zombienet = zombienet::Zombienet::try_new(&project_path, params.zombienet)?;
-    let _shim = shim::Shim::try_new(&project_path, params.shim)?;
-    let sovereign = sovereign::Sovereign::try_new(&project_path, params.sovereign)?;
+    let _zombienet = zombienet::Zombienet::try_new(&project_path, params.zombienet).await?;
+    let _shim = shim::Shim::try_new(&project_path, params.shim).await?;
+    let sovereign = sovereign::Sovereign::try_new(&project_path, params.sovereign).await?;
 
     // TODO: https://github.com/thrumdev/blobs/issues/226
     // Wait for the sovereign rollup to be ready
-    std::thread::sleep(std::time::Duration::from_secs(20));
+    tokio::time::sleep(std::time::Duration::from_secs(30)).await;
 
-    sovereign.test_sovereign_rollup()?;
+    sovereign.test_sovereign_rollup().await?;
 
     Ok(())
 }
 
-fn zombienet(params: crate::cli::zombienet::Params) -> anyhow::Result<()> {
+async fn zombienet(params: crate::cli::zombienet::Params) -> anyhow::Result<()> {
     let project_path = obtain_project_path()?;
-    build::build(&project_path, params.build)?;
-    let _zombienet = zombienet::Zombienet::try_new(&project_path, params.zombienet)?;
-    wait_interrupt();
+    build::build(&project_path, params.build).await?;
+    let _zombienet = zombienet::Zombienet::try_new(&project_path, params.zombienet).await?;
+    wait_interrupt().await??;
     Ok(())
+}
+
+// Wait until ^C signal is delivered to this process
+fn wait_interrupt() -> task::JoinHandle<anyhow::Result<()>> {
+    task::spawn(async { signal::ctrl_c().await.map_err(|e| e.into()) })
+}
+
+// Extract from cargo metadata the specified key using the provided Shell
+fn from_cargo_metadata(sh: &Shell, key: &str) -> anyhow::Result<String> {
+    let cargo_metadata = cmd!(sh, "cargo metadata --format-version 1").read()?;
+    let mut json: serde_json::Value = serde_json::from_str(&cargo_metadata)?;
+    serde_json::from_value(json[key].take()).map_err(|e| e.into())
 }
 
 fn obtain_project_path() -> anyhow::Result<PathBuf> {
-    #[rustfmt::skip]
-    let project_path = duct::cmd!(
-        "sh", "-c",
-        "cargo metadata --format-version 1 | jq -r '.workspace_root'"
-    )
-    .stdout_capture()
-    .run()?;
-    Ok(PathBuf::from(str::from_utf8(&project_path.stdout)?.trim()))
-}
-
-/// Blocks until ^C signal is delivered to this process. Uses global resource, don't proliferate.
-fn wait_interrupt() {
-    use std::sync::mpsc;
-    let (tx, rx) = mpsc::channel();
-    ctrlc::set_handler(move || {
-        let _ = tx.send(());
-    })
-    .unwrap();
-    let _ = rx.recv();
+    let sh = xshell::Shell::new()?;
+    let project_path = from_cargo_metadata(&sh, "workspace_root")?;
+    Ok(PathBuf::from(project_path.trim()))
 }
 
 // Set up environment variables needed by the compilation and testing process.
@@ -94,23 +100,13 @@ fn init_env(project_path: &PathBuf, no_infer_bin_path: bool) -> anyhow::Result<(
 
     let path = std::env::var("PATH").unwrap_or_else(|_| "".to_string());
 
-    #[rustfmt::skip]
-    let chain_target_path = duct::cmd!(
-        "sh", "-c",
-        "cargo metadata --format-version 1 | jq -r '.target_directory'"
-    )
-    .stdout_capture()
-    .run()?;
-    let chain_target_path = str::from_utf8(&chain_target_path.stdout)?.trim();
+    let sh = xshell::Shell::new()?;
 
-    #[rustfmt::skip]
-    let sovereign_target_path = duct::cmd!(
-        "sh", "-c",
-        "cd demo/sovereign && cargo metadata --format-version 1 | jq -r '.target_directory'"
-    )
-    .stdout_capture()
-    .run()?;
-    let sovereign_target_path = str::from_utf8(&sovereign_target_path.stdout)?.trim();
+    sh.change_dir(project_path);
+    let chain_target_path = from_cargo_metadata(&sh, "target_directory")?;
+
+    sh.change_dir(project_path.join("demo/sovereign"));
+    let sovereign_target_path = from_cargo_metadata(&sh, "target_directory")?;
 
     std::env::set_var(
         "PATH",
@@ -134,11 +130,33 @@ fn init_logging() -> anyhow::Result<()> {
 }
 
 fn check_binary(binary: &'static str, error_msg: &'static str) -> anyhow::Result<()> {
-    if let Err(_) = duct::cmd!("sh", "-c", format!("command -v {}", binary))
-        .stdout_null()
+    let sh = xshell::Shell::new()?;
+    if let Err(_) = xshell::cmd!(sh, "sh -c")
+        .arg(format!("command -v {binary}"))
+        .quiet()
+        .ignore_stdout()
         .run()
     {
         anyhow::bail!(error_msg);
     }
     Ok(())
+}
+
+// This is necessary because typically, a shell receiving a ctrl_c (SIGINT) signal will terminate
+// the process and its children but not the processes spawned by them.
+//
+// In this testing tool, grandchild processes are required and need to be managed.
+// Spawn a process with a group ID (pgid) and then call the `killpg` syscall
+// to terminate all processes under the same pgid.
+pub trait ProcessGroupId {
+    // Convert Self into an std::process::Command with the specified pgid
+    fn process_group(self, pgid: i32) -> StdCommand;
+}
+
+impl<'a> ProcessGroupId for xshell::Cmd<'a> {
+    fn process_group(self, pgid: i32) -> StdCommand {
+        let mut command = StdCommand::from(self);
+        command.process_group(pgid);
+        command
+    }
 }

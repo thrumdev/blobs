@@ -1,4 +1,5 @@
-use std::{collections::HashMap, fmt};
+use std::{collections::HashMap, fmt, sync::Arc};
+use tokio::sync::Mutex;
 use tonic::{transport::Server, Request, Response, Status};
 use tracing::info;
 
@@ -57,6 +58,7 @@ struct RollkitDock {
     client: ikura_rpc::Client,
     submit_key: Option<Keypair>,
     namespace: Option<ikura_nmt::Namespace>,
+    cur_nonce: Arc<Mutex<Option<u64>>>,
 }
 
 impl RollkitDock {
@@ -69,6 +71,7 @@ impl RollkitDock {
             client,
             submit_key,
             namespace,
+            cur_nonce: Arc::new(Mutex::new(None)),
         }
     }
 }
@@ -91,8 +94,8 @@ impl da_service_server::DaService for RollkitDock {
         let mut cache = HashMap::new();
         let mut response = GetResponse { blobs: vec![] };
         for (index, id) in ids.into_iter().enumerate() {
-            let blob_id = BlobId::try_from(id)
-                .map_err(|_| Status::invalid_argument(format!("not a valid ID at {index}")))?;
+            let blob_id =
+                BlobId::try_from(id).map_err(|_| RollkitDockError::GetInvalidBlobId { index })?;
             let block_number = blob_id.block_number;
             if !cache.contains_key(&block_number) {
                 let block_hash = self.client.await_finalized_height(block_number).await;
@@ -100,9 +103,7 @@ impl da_service_server::DaService for RollkitDock {
                     .client
                     .await_block_at(Some(block_hash))
                     .await
-                    .map_err(|_| {
-                        Status::internal("failed to retrieve block number {block_number}")
-                    })?;
+                    .map_err(|_| RollkitDockError::GetRetrieveBlock { block_number })?;
                 cache.insert(blob_id.block_number, block);
             }
             // unwrap: at this point we know the block is in the cache, because at this point
@@ -117,7 +118,7 @@ impl da_service_server::DaService for RollkitDock {
                     value: needle.data.clone(),
                 });
             } else {
-                return Err(Status::not_found(format!("blob not found at {blob_id}")));
+                return Err(RollkitDockError::CantResolveBlobId(blob_id).into());
             }
         }
         Ok(Response::new(response))
@@ -158,57 +159,73 @@ impl da_service_server::DaService for RollkitDock {
             .submit_key
             .as_ref()
             .cloned()
-            .ok_or_else(|| Status::failed_precondition("no key for signing blobs"))?;
-        let namespace = self.namespace.ok_or_else(|| {
-            Status::failed_precondition("no namespace provided, and no default namespace set")
-        })?;
+            .ok_or_else(|| RollkitDockError::NoSigningKey)?;
+        let namespace = self
+            .namespace
+            .ok_or_else(|| RollkitDockError::NamespaceNotProvided)?;
         let SubmitRequest {
             blobs,
             gas_price: _,
         } = request.into_inner();
-        let mut response = SubmitResponse {
-            ids: vec![],
-            proofs: vec![],
-        };
         let blob_n = blobs.len();
+
+        // First, prepare a list of extrinsics to submit.
+        let mut extrinsics = vec![];
         for (i, blob) in blobs.into_iter().enumerate() {
             let data_hash = sha2_hash(&blob.value);
-            info!(
-                "submitting blob {i}/{blob_n} (0x{}) to namespace {}",
-                hex::encode(&data_hash),
-                namespace,
-            );
-            let (block_hash, extrinsic_index) = self
-                .client
-                .submit_blob(blob.value, namespace, submit_key.clone())
+            let nonce = self
+                .gen_nonce()
                 .await
-                .map_err(|err| Status::internal(format!("failed to submit blob: {err}")))?;
-            // TODO: getting the whole block is a bit inefficient, consider optimizing.
-            let block_number = match self
+                .map_err(RollkitDockError::NonceGeneration)?;
+            let extrinsic = self
                 .client
-                .await_block_at(Some(block_hash))
+                .make_blob_extrinsic(blob.value, namespace, &submit_key, nonce)
                 .await
-                .map(|block| block.number)
-            {
-                Ok(block_number) => block_number,
-                Err(err) => {
-                    return Err(Status::internal(format!(
-                        "failed to obtain block number for 0x{}: {:?}",
-                        hex::encode(&block_hash),
-                        err,
-                    )));
-                }
-            };
-            let blob_id = BlobId {
-                block_number,
-                extrinsic_index,
-                data_hash,
-            };
-            info!("blob landed: {blob_id}");
-            response.ids.push(blob_id.into());
-            response.proofs.push(pbda::Proof { value: vec![] });
+                .map_err(RollkitDockError::MakeSubmitBlobExtrinsic)?;
+            extrinsics.push((i, data_hash, extrinsic));
         }
-        Ok(Response::new(response))
+
+        // Then, submit the extrinsics in parallel and collect the results.
+        let futs = extrinsics
+            .into_iter()
+            .map(|(i, data_hash, extrinsic)| async move {
+                info!(
+                    "submitting blob {i}/{blob_n} (0x{}) to namespace {}",
+                    hex::encode(&data_hash),
+                    namespace
+                );
+                let (block_hash, extrinsic_index) = self
+                    .client
+                    .submit_blob(&extrinsic)
+                    .await
+                    .map_err(RollkitDockError::SubmitBlob)?;
+                // TODO: getting the whole block is a bit inefficient, consider optimizing.
+                let block_number = match self
+                    .client
+                    .await_block_at(Some(block_hash))
+                    .await
+                    .map(|block| block.number)
+                {
+                    Ok(block_number) => block_number,
+                    Err(err) => {
+                        return Err(RollkitDockError::SubmitRetrieveBlockNumber {
+                            block_hash,
+                            err,
+                        });
+                    }
+                };
+                let blob_id = BlobId {
+                    block_number,
+                    extrinsic_index,
+                    data_hash,
+                };
+                info!("blob landed: {blob_id}");
+                Ok(blob_id.into())
+            });
+
+        let ids: Vec<_> = futures::future::try_join_all(futs).await?;
+        let proofs = ids.iter().map(|_| pbda::Proof { value: vec![] }).collect();
+        Ok(Response::new(SubmitResponse { proofs, ids }))
     }
 
     async fn validate(
@@ -241,9 +258,79 @@ impl da_service_server::DaService for RollkitDock {
     }
 }
 
+impl RollkitDock {
+    /// Generates a new nonce suitable for signing an extrinsic from the signer.
+    async fn gen_nonce(&self) -> anyhow::Result<u64> {
+        let submit_key = self
+            .submit_key
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("no key for signing blobs"))?; // should be unreachable
+        let mut cur_nonce = self.cur_nonce.lock().await;
+        let nonce = match *cur_nonce {
+            Some(nonce) => nonce,
+            None => self.client.get_last_nonce(&submit_key).await?,
+        };
+        cur_nonce.replace(nonce + 1);
+        Ok(nonce)
+    }
+}
+
 fn sha2_hash(data: &[u8]) -> [u8; 32] {
     use sha2::Digest;
     sha2::Sha256::digest(data).into()
+}
+
+enum RollkitDockError {
+    NoSigningKey,
+    MakeSubmitBlobExtrinsic(anyhow::Error),
+    SubmitBlob(anyhow::Error),
+    NonceGeneration(anyhow::Error),
+    GetInvalidBlobId {
+        index: usize,
+    },
+    GetRetrieveBlock {
+        block_number: u64,
+    },
+    SubmitRetrieveBlockNumber {
+        block_hash: [u8; 32],
+        err: anyhow::Error,
+    },
+    CantResolveBlobId(BlobId),
+    NamespaceNotProvided,
+}
+
+impl From<RollkitDockError> for Status {
+    fn from(me: RollkitDockError) -> Status {
+        use RollkitDockError::*;
+        match me {
+            NoSigningKey => {
+                Status::failed_precondition("the key for signing blobs is not provided")
+            }
+            MakeSubmitBlobExtrinsic(err) => {
+                Status::internal(format!("failed to create a submit blob extrinsic: {err}"))
+            }
+            SubmitBlob(err) => Status::internal(format!("failed to submit blob: {err}")),
+            NonceGeneration(err) => Status::internal(format!("failed to generate a nonce: {err}")),
+            GetInvalidBlobId { index } => {
+                Status::invalid_argument(format!("not a valid blob ID at index {index}"))
+            }
+            GetRetrieveBlock { block_number } => {
+                Status::internal(format!("failed to retrieve block number {block_number}"))
+            }
+            SubmitRetrieveBlockNumber { block_hash, err } => Status::internal(format!(
+                "failed to obtain block number for 0x{}: {}",
+                hex::encode(block_hash),
+                err,
+            )),
+            CantResolveBlobId(blob_id) => {
+                Status::not_found(format!("cannot resolve blob ID: {blob_id}"))
+            }
+            NamespaceNotProvided => Status::failed_precondition(
+                "no namespace provided, and no default names
+            pace set",
+            ),
+        }
+    }
 }
 
 struct BlobId {

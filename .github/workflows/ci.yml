@@ -33,3 +33,6 @@ jobs:
         run: cargo test --verbose --all
       - name: cargo xtask test
         run: cargo xtask test
+      - name: print logs
+        run: cat test_log/*.log
+        if: failure()

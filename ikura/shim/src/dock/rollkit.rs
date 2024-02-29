@@ -4,8 +4,8 @@ use tracing::info;
 
 use self::pbda::{
     da_service_server, Blob, CommitRequest, CommitResponse, GetIDsRequest, GetIDsResponse,
-    GetProofsRequest, GetProofsResponse, GetRequest, GetResponse, MaxBlobSizeRequest,
-    MaxBlobSizeResponse, SubmitRequest, SubmitResponse, ValidateRequest, ValidateResponse,
+    GetRequest, GetResponse, MaxBlobSizeRequest, MaxBlobSizeResponse, SubmitRequest,
+    SubmitResponse, ValidateRequest, ValidateResponse,
 };
 
 use crate::{ikura_rpc, key::Keypair};
@@ -87,9 +87,7 @@ impl da_service_server::DaService for RollkitDock {
     }
 
     async fn get(&self, request: Request<GetRequest>) -> Result<Response<GetResponse>, Status> {
-        let GetRequest { ids, namespace } = request.into_inner();
-        // Deliberately ignore the namespace since blob ids uniquely identify the blobs.
-        let _ = namespace;
+        let GetRequest { ids } = request.into_inner();
         let mut cache = HashMap::new();
         let mut response = GetResponse { blobs: vec![] };
         for (index, id) in ids.into_iter().enumerate() {
@@ -130,12 +128,8 @@ impl da_service_server::DaService for RollkitDock {
         &self,
         request: Request<GetIDsRequest>,
     ) -> Result<Response<GetIDsResponse>, Status> {
-        let GetIDsRequest { namespace, height } = request.into_inner();
-        let namespace = self.obtain_namespace(namespace)?;
-        info!(
-            "retrieving IDs from namespace '{}' at {}",
-            &namespace, height
-        );
+        let GetIDsRequest { height } = request.into_inner();
+        info!("retrieving IDs at {}", height);
         let block_hash = self.client.await_finalized_height(height).await;
         let Ok(block) = self.client.await_block_at(Some(block_hash)).await else {
             return Err(Status::internal("failed to retrieve block number {height}"));
@@ -144,7 +138,7 @@ impl da_service_server::DaService for RollkitDock {
         // Collect all extrinsic indices for blobs in the given namespace.
         let mut ids = Vec::with_capacity(block.blobs.len());
         for blob in block.blobs {
-            if blob.namespace == namespace {
+            if self.namespace.map_or(true, |ns| ns == blob.namespace) {
                 let blob_id = BlobId {
                     block_number: height,
                     extrinsic_index: blob.extrinsic_index,
@@ -165,20 +159,24 @@ impl da_service_server::DaService for RollkitDock {
             .as_ref()
             .cloned()
             .ok_or_else(|| Status::failed_precondition("no key for signing blobs"))?;
+        let namespace = self.namespace.ok_or_else(|| {
+            Status::failed_precondition("no namespace provided, and no default namespace set")
+        })?;
         let SubmitRequest {
-            namespace,
             blobs,
             gas_price: _,
         } = request.into_inner();
-        let namespace = self.obtain_namespace(namespace)?;
-        let mut response = SubmitResponse { ids: vec![] };
+        let mut response = SubmitResponse {
+            ids: vec![],
+            proofs: vec![],
+        };
         let blob_n = blobs.len();
         for (i, blob) in blobs.into_iter().enumerate() {
             let data_hash = sha2_hash(&blob.value);
             info!(
                 "submitting blob {i}/{blob_n} (0x{}) to namespace {}",
                 hex::encode(&data_hash),
-                namespace
+                namespace,
             );
             let (block_hash, extrinsic_index) = self
                 .client
@@ -208,23 +206,8 @@ impl da_service_server::DaService for RollkitDock {
             };
             info!("blob landed: {blob_id}");
             response.ids.push(blob_id.into());
+            response.proofs.push(pbda::Proof { value: vec![] });
         }
-        Ok(Response::new(response))
-    }
-
-    async fn get_proofs(
-        &self,
-        request: Request<GetProofsRequest>,
-    ) -> Result<Response<GetProofsResponse>, Status> {
-        // TODO: implement
-        // https://github.com/thrumdev/blobs/issues/257
-        let GetProofsRequest { ids, .. } = request.into_inner();
-        let response = GetProofsResponse {
-            proofs: ids
-                .into_iter()
-                .map(|_| pbda::Proof { value: vec![] })
-                .collect(),
-        };
         Ok(Response::new(response))
     }
 
@@ -255,38 +238,6 @@ impl da_service_server::DaService for RollkitDock {
                 .collect(),
         };
         Ok(Response::new(response))
-    }
-}
-
-impl RollkitDock {
-    /// Returns the namespace to be used, either from the request or from the configuration.
-    ///
-    /// If the namespace is not provided in the request, it will use the namespace from the
-    /// configuration.
-    fn obtain_namespace(
-        &self,
-        supplied_ns: Option<pbda::Namespace>,
-    ) -> Result<ikura_nmt::Namespace, Status> {
-        Ok(match supplied_ns {
-            Some(pbda::Namespace {
-                value: raw_namespace_bytes,
-            }) => {
-                let raw_namespace_bytes = raw_namespace_bytes.as_slice();
-                if raw_namespace_bytes.len() != 16 {
-                    return Err(Status::invalid_argument("namespace must be 16 bytes long"));
-                }
-                let mut namespace = [0u8; 16];
-                namespace.copy_from_slice(raw_namespace_bytes);
-                ikura_nmt::Namespace::from_raw_bytes(namespace)
-            }
-            None => {
-                if let Some(namespace) = &self.namespace {
-                    namespace.clone()
-                } else {
-                    return Err(Status::invalid_argument("namespace must be provided"));
-                }
-            }
-        })
     }
 }
 

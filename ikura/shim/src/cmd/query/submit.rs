@@ -20,7 +20,11 @@ pub async fn run(params: Params) -> anyhow::Result<()> {
     let namespace = read_namespace(&namespace)?;
     let client = connect_rpc(rpc).await?;
     tracing::info!("submitting blob to namespace {}", namespace);
-    let (block_hash, _) = client.submit_blob(blob, namespace, key).await?;
+    let nonce = client.get_last_nonce(&key).await?;
+    let blob_extrinsic = client
+        .make_blob_extrinsic(blob, namespace, &key, nonce)
+        .await?;
+    let (block_hash, _) = client.submit_blob(&blob_extrinsic).await?;
     tracing::info!("submitted blob to block hash 0x{}", hex::encode(block_hash));
     Ok(())
 }

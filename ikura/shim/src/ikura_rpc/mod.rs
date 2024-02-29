@@ -5,8 +5,16 @@ use anyhow::Context;
 use ikura_nmt::Namespace;
 use ikura_subxt::{
     ikura::runtime_types::pallet_ikura_blobs::namespace_param::UnvalidatedNamespace, Header,
+    IkuraConfig,
 };
-use subxt::{config::Header as _, error::BlockError, rpc_params, utils::H256};
+use subxt::{
+    config::Header as _,
+    error::BlockError,
+    rpc_params,
+    tx::{Signer, SubmittableExtrinsic},
+    utils::H256,
+    OnlineClient,
+};
 use tokio::sync::watch;
 use tracing::Level;
 
@@ -193,6 +201,27 @@ impl Client {
         Block::from_header_and_extrinsics(self.await_header_and_extrinsics(block_hash).await)
     }
 
+    /// Creates a submit blob extrinsic with the given data, namespace and signed with the given key
+    /// and nonce.
+    pub async fn make_blob_extrinsic(
+        &self,
+        blob: Vec<u8>,
+        namespace: ikura_nmt::Namespace,
+        key: &Keypair,
+        nonce: u64,
+    ) -> anyhow::Result<BlobExtrinsic> {
+        let conn = self.connector.ensure_connected().await;
+        let extrinsic = ikura_subxt::ikura::tx()
+            .blobs()
+            .submit_blob(UnvalidatedNamespace(namespace.to_raw_bytes()), blob);
+        let signed = conn
+            .subxt
+            .tx()
+            .create_signed_with_nonce(&extrinsic, key, nonce, Default::default())
+            .with_context(|| format!("failed to validate or sign extrinsic"))?;
+        Ok(BlobExtrinsic(signed))
+    }
+
     /// Submit a blob with the given namespace and signed with the given key. The block is submitted
     /// at best effort. Not much is done to ensure that the blob is actually included. If this
     /// function returned an error, that does not mean that the blob was not included.
@@ -201,31 +230,46 @@ impl Client {
     #[tracing::instrument(level = Level::DEBUG, skip(self))]
     pub async fn submit_blob(
         &self,
-        blob: Vec<u8>,
-        namespace: ikura_nmt::Namespace,
-        key: Keypair,
+        blob_extrinsic: &BlobExtrinsic,
     ) -> anyhow::Result<([u8; 32], u32)> {
-        let extrinsic = ikura_subxt::ikura::tx()
-            .blobs()
-            .submit_blob(UnvalidatedNamespace(namespace.to_raw_bytes()), blob);
-
-        let conn = self.connector.ensure_connected().await;
-        let signed = conn
-            .subxt
-            .tx()
-            .create_signed(&extrinsic, &key, Default::default())
-            .await
-            .with_context(|| format!("failed to validate or sign extrinsic"))?;
+        let BlobExtrinsic(signed) = blob_extrinsic;
         let events = signed
             .submit_and_watch()
             .await
             .with_context(|| format!("failed to submit extrinsic"))?
             .wait_for_finalized_success()
             .await?;
-
         let block_hash = events.block_hash();
         let extrinsic_index = events.extrinsic_index();
         Ok((block_hash.0, extrinsic_index))
+    }
+
+    /// Returns the last nonce observed on the account of the signer.
+    pub async fn get_last_nonce(&self, key: &Keypair) -> anyhow::Result<u64> {
+        let conn = self.connector.ensure_connected().await;
+        let nonce = conn
+            .subxt
+            .tx()
+            .account_nonce(
+                &<subxt_signer::sr25519::Keypair as Signer<IkuraConfig>>::account_id(key),
+            )
+            .await?;
+        Ok(nonce)
+    }
+}
+
+/// Signed blob extrinsic. The extirnsic is signed against a certain nonce value.
+/// The extrinsic is ready to be submitted to the network.
+pub struct BlobExtrinsic(SubmittableExtrinsic<IkuraConfig, OnlineClient<IkuraConfig>>);
+
+impl fmt::Debug for BlobExtrinsic {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let hash = self.0.hash();
+        let len = self.0.encoded().len();
+        f.debug_struct("BlobExtrinsic")
+            .field("hash", &hash)
+            .field("len", &len)
+            .finish()
     }
 }
 

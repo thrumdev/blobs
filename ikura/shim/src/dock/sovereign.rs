@@ -1,5 +1,8 @@
+use std::sync::Arc;
+
 use ikura_shim_common_sovereign::{Block, SovereignRPCServer};
 use jsonrpsee::{server::Server, types::ErrorObjectOwned};
+use tokio::sync::Mutex;
 use tracing::info;
 
 use super::rpc_error as err;
@@ -32,11 +35,16 @@ pub async fn run(config: Config) -> anyhow::Result<()> {
 struct SovereignDock {
     client: ikura_rpc::Client,
     submit_key: Option<Keypair>,
+    cur_nonce: Arc<Mutex<Option<u64>>>,
 }
 
 impl SovereignDock {
     fn new(client: ikura_rpc::Client, submit_key: Option<Keypair>) -> Self {
-        Self { client, submit_key }
+        Self {
+            client,
+            submit_key,
+            cur_nonce: Arc::new(Mutex::new(None)),
+        }
     }
 }
 
@@ -81,11 +89,33 @@ impl SovereignRPCServer for SovereignDock {
             .as_ref()
             .cloned()
             .ok_or_else(err::no_signing_key)?;
+        let nonce = self.gen_nonce().await.map_err(err::nonce_obtain_error)?;
+        let blob_extrinsic = self
+            .client
+            .make_blob_extrinsic(blob, namespace, &submit_key, nonce)
+            .await
+            .map_err(err::submit_extrinsic_error)?;
         self.client
-            .submit_blob(blob, namespace, submit_key)
+            .submit_blob(&blob_extrinsic)
             .await
             .map_err(err::submission_error)?;
         Ok(())
+    }
+}
+
+impl SovereignDock {
+    async fn gen_nonce(&self) -> anyhow::Result<u64> {
+        let submit_key = self
+            .submit_key
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("no key for signing blobs"))?; // should be unreachable
+        let mut cur_nonce = self.cur_nonce.lock().await;
+        let nonce = match *cur_nonce {
+            Some(nonce) => nonce,
+            None => self.client.get_last_nonce(&submit_key).await?,
+        };
+        cur_nonce.replace(nonce + 1);
+        Ok(nonce)
     }
 }
 

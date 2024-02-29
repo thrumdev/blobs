@@ -7,7 +7,6 @@ Blobchains on Polkadot and Kusama
 <pre>
 <a href=".">blobs</a>: The Ikura monorepo.
 ├──<a href="./adapters">adapters</a>: Adapters for various rollup development kits (RDK).
-│   ├── <a href="./adapters/rollkit">rollkit</a>: An adapter connecting Rollkit to Ikura
 │   ├── <a href="./adapters/sovereign">sovereign</a>: An adapter connecting Sovereign to Ikura.
 ├──<a href="./demo">demo</a>: Projects showcasing integration of RDKs with Ikura.
 │   ├── <a href="./demo/rollkit">rollkit</a>: Rollkit's GM rollup.
@@ -42,16 +41,15 @@ Now you can launch 2 polkadot validators and one ikura-chain collator
 ./zombienet.sh
 ```
 
-Then launch the ikura-shim with:
-
-``` sh
-cd ikura/shim/
-cargo run -p ikura-shim -- serve --submit-dev-alice
-``````
-
 ### Sovereign Demo
 
-launch the demo rollup with:
+launch the ikura-shim with:
+
+``` sh
+cargo run -p ikura-shim -- serve sov --submit-dev-alice
+``````
+
+then launch the demo rollup with:
 
 ``` sh
 cd demo/sovereign/demo-rollup
@@ -77,6 +75,10 @@ make clean
 ```
 
 ### Rollkit Demo
+
+```sh
+cargo run -p ikura-shim -- serve rollkit --port 26650 --submit-dev-alice --namespace 01
+```
 
 [Original instructions](https://rollkit.dev/tutorials/gm-world) should work. Make sure to check them
 out for prerequisites and other details. Below is a quick summary for reference.

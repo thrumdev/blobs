@@ -31,6 +31,11 @@ jobs:
         run: cargo build --verbose --all
       - name: cargo test
         run: cargo test --verbose --all
+      - name: cargo clean release builds
+        run: |
+          cargo clean -p ikura-node --release
+          cargo clean -p ikura-shim --release
+          cargo clean -p sov-demo-rollup --release --manifest-path demo/sovereign/Cargo.toml
       - name: cargo xtask test
         run: cargo xtask test
       - name: print logs

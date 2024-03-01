@@ -24,7 +24,7 @@ pub async fn build(project_path: &std::path::Path, params: BuildParams) -> anyho
         .run_with_logs("Building ikura-node", &log_path)
         .await??;
 
-    cmd!(sh, "{cargo} build -p ikura-node --release")
+    cmd!(sh, "{cargo} build -p ikura-shim --release")
         .run_with_logs("Building ikura-shim", &log_path)
         .await??;
 

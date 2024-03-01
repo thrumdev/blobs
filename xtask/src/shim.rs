@@ -14,7 +14,7 @@ impl Shim {
     ) -> anyhow::Result<Self> {
         check_binary(
             "ikura-shim",
-            "'ikura-node' is not found in PATH.  \n \
+            "'ikura-shim' is not found in PATH.  \n \
              cd to 'ikura/shim' and run 'cargo build --release' and add the result into your PATH.",
         )?;
 

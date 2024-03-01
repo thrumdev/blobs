@@ -55,6 +55,7 @@ async fn test_procedure(params: test::Params) -> anyhow::Result<()> {
 
 async fn zombienet(params: crate::cli::zombienet::Params) -> anyhow::Result<()> {
     let project_path = obtain_project_path()?;
+    init_env(&project_path, params.no_infer_bin_path)?;
     build::build(&project_path, params.build).await?;
     let _zombienet = zombienet::Zombienet::try_new(&project_path, params.zombienet).await?;
     wait_interrupt().await??;

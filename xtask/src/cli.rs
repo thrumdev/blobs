@@ -109,9 +109,11 @@ pub mod zombienet {
 
     #[derive(Debug, Args)]
     pub struct Params {
-        /// If the test is executed in CI
+        /// By default, binary paths are extracted using the `cargo metadata` command under the key `target_directory`.
+        ///
+        /// To disable this behavior and manually add all binaries to the path, you need to specify this flag
         #[clap(long, default_value = "false")]
-        pub ci: bool,
+        pub no_infer_bin_path: bool,
 
         #[clap(flatten)]
         pub build: BuildParams,

@@ -48,6 +48,9 @@ pub struct KeyManagementParams {
     ///
     /// This key is enabled when running ikura-node in the local development mode.
     ///
+    /// NOTE: Submitting blobs is assumed to have complete control over the signing key. In case
+    /// there is another process running with the same key, it may cause error during submission.
+    ///
     /// Cannot be used in conjunction with the `--submit-private-key` flag.
     #[arg(long)]
     pub submit_dev_alice: bool,
@@ -56,6 +59,9 @@ pub struct KeyManagementParams {
     ///
     /// The keyfile should be 32 bytes of unencrypted, hex-encoded sr25519
     /// seed material.
+    ///
+    /// NOTE: Submitting blobs is assumed to have complete control over the signing key. In case
+    /// there is another process running with the same key, it may cause error during submission.
     ///
     /// Cannot be used in conjunction with the `--submit-dev-alice` flag.
     #[arg(long, value_name = "PATH")]
